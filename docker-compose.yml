@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  frontend:
+    container_name: site_ishikawa_educampo
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    # O Docker vai ler o seu ficheiro .env local e injetar no contentor
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - ishikawa_network
+
+networks:
+  ishikawa_network:
+    driver: bridge
