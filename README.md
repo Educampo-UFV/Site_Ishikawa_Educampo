@@ -241,6 +241,14 @@ gitGraph
     branch develop
     checkout develop
     commit id: "Início do Git Flow"
+    
+    %% --- Conclusão da Tarefa 1 ---
+    commit id: "chore: infra e suite de testes configurados"
+
+    %% --- Início da Tarefa 2 ---
+    branch feature/estado-global-validacoes
+    checkout feature/estado-global-validacoes
+    commit id: "docs: planejamento do estado global"
 
 ```
 
@@ -253,12 +261,12 @@ A estratégia de implementação adota uma construção incremental em blocos. O
 #### ✅ Concluído
 - [x] Definição da Arquitetura e do *Security by Design*.
 - [x] Elaboração da Documentação Mestra (`README.md`).
+- [x] **Setup de Infraestrutura e Ferramentas:** Configurar contêineres Docker, Next.js, Tailwind CSS, Zustand e as suítes de teste (Jest/JSDOM).
 
 #### 🚧 Em Desenvolvimento (WIP: 1)
-- [ ] **Setup de Infraestrutura e Ferramentas:** Configurar contêineres Docker, Next.js, Tailwind CSS, Zustand e as suítes de teste (Jest/JSDOM).
+- [ ] **Estado Global e Validações:** Criar os testes unitários e implementar a `useFazendaStore` juntamente com os *schemas* do Zod para os inputs da fazenda.
 
 #### 🎯 A Fazer
-- [ ] **Estado Global e Validações:** Criar os testes unitários e implementar a `useFazendaStore` juntamente com os *schemas* do Zod para os inputs da fazenda.
 - [ ] **Barreira de Segurança (Auth):** Desenvolver a rota interna `api/auth/route.ts` (com *mock* de credenciais), o Middleware Edge validando o JWT e a **Tela de Login**. *(Validar com `tests/security/auth.spec.ts`)*.
 - [ ] **Coleta e Injeção de Estado:** Construir a **Tela de Coleta de Dados**, integrando o formulário para salvar as métricas diretamente no Zustand validado pelo Zod.
 - [ ] **Integração Real (BFF):** Implementar o proxy `api/diagnostico/route.ts` apontando para a API real do Educampo e a **Tela de Carregamento**. Aqui a tela consome o Zustand, envia para o BFF, recebe a resposta real e injeta de volta na *store*. *(Validar com `tests/api/bff.spec.ts`)*.
