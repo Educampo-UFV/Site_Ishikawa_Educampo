@@ -10,7 +10,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useFazendaStore } from '@/store/useFazendaStore';
@@ -28,15 +28,26 @@ import {
 export default function DashboardPage() {
   const router = useRouter();
   const { dadosFazenda, diagnosticoIA } = useFazendaStore();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    if (!dadosFazenda) {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Aguarda a montagem para evitar redirecionamento prematuro antes do Zustand hidratar os dados persistidos
+    if (isMounted && !dadosFazenda) {
       router.push('/formulario');
     }
-  }, [dadosFazenda, router]);
+  }, [dadosFazenda, isMounted, router]);
 
-  if (!dadosFazenda) {
-    return null;
+  // Aguarda a hidratação do cliente para evitar erros do Next.js com dados persistidos
+  if (!isMounted || !dadosFazenda) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="h-12 w-12 border-4 border-[#1973d3] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
   /**
@@ -82,11 +93,11 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">Produção por Vaca</p>
               <div className="mt-2">
                 {/* Nó de texto unificado para acessibilidade (Leitores de Tela) e Testes Estritos (A Lei) */}
-                <span className="sr-only">{dadosFazenda.producao_vaca.toFixed(1)} L/dia</span>
+                <span className="sr-only">{Number(dadosFazenda?.producao_vaca || 0).toFixed(1)} L/dia</span>
                 
                 {/* Renderização visual com tamanhos divididos (oculta da árvore de acessibilidade) */}
                 <div aria-hidden="true" className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-gray-800">{dadosFazenda.producao_vaca.toFixed(1)}</span>
+                  <span className="text-3xl font-bold text-gray-800">{Number(dadosFazenda?.producao_vaca || 0).toFixed(1)}</span>
                   <span className="text-base font-normal text-gray-500">L/dia</span>
                 </div>
               </div>
@@ -99,7 +110,7 @@ export default function DashboardPage() {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">Qualidade do Leite</p>
               <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-bold text-gray-800">CCS: {dadosFazenda.ccs}</span>
+                <span className="text-3xl font-bold text-gray-800">CCS: {dadosFazenda?.ccs || 0}</span>
               </div>
               <p className={`text-sm font-semibold mt-2 ${status.qualidade.color}`}>
                 {status.qualidade.label}
@@ -110,7 +121,7 @@ export default function DashboardPage() {
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">Preço Recebido</p>
               <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-bold text-gray-800">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(dadosFazenda.preco_leite)}</span>
+                <span className="text-3xl font-bold text-gray-800">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(dadosFazenda?.preco_leite || 0))}</span>
               </div>
               <p className={`text-sm font-semibold mt-2 ${status.mercado.color}`}>
                 {status.mercado.label}
@@ -136,7 +147,7 @@ export default function DashboardPage() {
                 <Activity className="text-[#1973d3]" size={32} />
               </div>
               <p className="text-lg leading-relaxed text-blue-50">
-                {diagnosticoIA?.resumo_geral || diagnosticoIA?.resumo || "Carregando análise técnica..."}
+                {diagnosticoIA?.resumo_geral?.visao_geral || diagnosticoIA?.resumo || "Carregando análise técnica..."}
               </p>
             </div>
             <div className="mt-8 flex items-center gap-2 font-semibold text-blue-200 group-hover:text-white transition-colors">

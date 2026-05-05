@@ -7,6 +7,7 @@
  */
 
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { FazendaFormData } from '../lib/schemas';
 
 /**
@@ -29,29 +30,29 @@ interface FazendaState {
  * Hook customizado useFazendaStore.
  * @description
  * Implementa a store com suporte a mutações simples e seguras.
+ * Foi adicionado o middleware persist para manter os dados no sessionStorage.
  */
-export const useFazendaStore = create<FazendaState>((set) => ({
-  dadosFazenda: null,
-  diagnosticoIA: null,
+export const useFazendaStore = create<FazendaState>()(
+  persist(
+    (set) => ({
+      dadosFazenda: null,
+      diagnosticoIA: null,
 
-  setDadosFazenda: (dados) => {
-    /**
-     * @description Atualiza o estado global com os novos dados validados.
-     */
-    set({ dadosFazenda: dados });
-  },
+      setDadosFazenda: (dados) => {
+        set({ dadosFazenda: dados });
+      },
 
-  setDiagnosticoIA: (diagnosticoIA) => {
-    /**
-     * @description Atualiza o estado global com o resultado do diagnóstico da IA.
-     */
-    set({ diagnosticoIA });
-  },
+      setDiagnosticoIA: (diagnosticoIA) => {
+        set({ diagnosticoIA });
+      },
 
-  limparDados: () => {
-    /**
-     * @description Garante a limpeza agressiva de estado para segurança e logout.
-     */
-    set({ dadosFazenda: null, diagnosticoIA: null });
-  },
-}));
+      limparDados: () => {
+        set({ dadosFazenda: null, diagnosticoIA: null });
+      },
+    }),
+    {
+      name: 'educampo-storage',
+      storage: createJSONStorage(() => sessionStorage),
+    }
+  )
+);
