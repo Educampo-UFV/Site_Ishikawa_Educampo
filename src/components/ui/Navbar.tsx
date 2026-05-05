@@ -29,7 +29,7 @@ export function Navbar() {
           <div className="flex items-center">
             <Link href="/">
               <Image
-                src="/logo_educampo.png"
+                src="/banner_educampo.png"
                 alt="Logo Educampo"
                 width={150}
                 height={40}
@@ -55,14 +55,14 @@ export function Navbar() {
         {isMenuOpen && (
           <div className="absolute top-2 right-4 w-[28rem] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden origin-top-right transition-all animate-in fade-in zoom-in-95 duration-200 z-[55]">
             
-            {/* Espaçador neutro para a área onde o botão "X" vai ficar flutuando */}
-            <div className="h-14 w-full bg-transparent cursor-default"></div>
-
-            {/* Metade Superior: Diagnóstico */}
+            {/* FOCO DA MUDANÇA:
+                O Link agora começa no topo da caixa. 
+                'pt-16' garante que o texto "Diagnóstico" não bata no botão "X".
+            */}
             <Link 
               href="/diagnostico" 
               onClick={() => setIsMenuOpen(false)}
-              className="block px-8 pb-8 pt-2 hover:bg-blue-50/50 transition-colors border-b border-gray-100 group"
+              className="block pt-16 pb-8 px-8 hover:bg-blue-50/50 transition-colors border-b border-gray-100 group"
             >
               <div className="flex items-center gap-4 mb-3">
                 <div className="p-3 bg-blue-100 text-[#1973d3] rounded-lg group-hover:bg-[#1973d3] group-hover:text-white transition-colors">
