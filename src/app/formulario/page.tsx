@@ -116,7 +116,7 @@ export default function FormularioPage() {
   return (
     <div className="min-h-screen bg-fundo-alt pb-12">
       {/* Cabeçalho */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header> 
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Image 
             src="/banner_educampo.png" 
