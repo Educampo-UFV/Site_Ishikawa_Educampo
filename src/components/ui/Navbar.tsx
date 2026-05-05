@@ -10,7 +10,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { BarChart2, Lightbulb, Settings, Menu, X } from 'lucide-react';
+import { BarChart2, Lightbulb, Settings } from 'lucide-react';
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,13 +39,17 @@ export function Navbar() {
             </Link>
           </div>
           
-          {/* Botão Hamburger / X - Z-index [60] para flutuar SEMPRE acima do menu */}
+          {/* Botão Hamburger com Animação Morph (Hamburger -> X) 
+              Z-index [60] para flutuar SEMPRE acima do menu 
+          */}
           <button
             onClick={toggleMenu}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative z-[60]"
+            className="w-11 h-11 flex flex-col items-center justify-center gap-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative z-[60]"
             aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            <span className={`block h-0.5 w-6 bg-current rounded-full transition-all duration-300 ease-out ${isMenuOpen ? 'translate-y-2 rotate-45' : ''}`}></span>
+            <span className={`block h-0.5 w-6 bg-current rounded-full transition-all duration-300 ease-out ${isMenuOpen ? 'opacity-0 scale-50' : 'opacity-100 scale-100'}`}></span>
+            <span className={`block h-0.5 w-6 bg-current rounded-full transition-all duration-300 ease-out ${isMenuOpen ? '-translate-y-2 -rotate-45' : ''}`}></span>
           </button>
         </div>
 
@@ -53,7 +57,7 @@ export function Navbar() {
             'top-2 right-4' faz o menu sobrepor o cabeçalho, envolvendo o botão X.
         */}
         {isMenuOpen && (
-          <div className="absolute top-2 right-4 w-[28rem] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden origin-top-right transition-all animate-in fade-in zoom-in-95 duration-200 z-[55]">
+          <div className="absolute top-2 right-4 w-[28rem] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden origin-top transition-all animate-in fade-in slide-in-from-top-8 duration-300 ease-out z-[55]">
             
             {/* FOCO DA MUDANÇA:
                 O Link agora começa no topo da caixa. 
