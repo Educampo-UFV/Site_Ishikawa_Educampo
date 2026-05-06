@@ -10,7 +10,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFazendaStore } from '@/store/useFazendaStore';
 import { Navbar } from '@/components/ui/Navbar';
@@ -198,35 +198,52 @@ export default function DiagnosticoPage() {
 
         {/* SEÇÃO 3: DIAGNÓSTICO DETALHADO (ISHIKAWA) */}
         <section id="diagnostico" className="mt-4 flex flex-col gap-6">
-          {/* Navegação de Indicadores - Estilo Círculos Numerados */}
-          <div className="flex flex-wrap justify-center gap-6 md:gap-12 border-b border-gray-300 pb-8 mb-4">
+          {/* Navegação de Indicadores - Estilo Stepper (Círculos e Linhas) */}
+          <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-between w-full max-w-5xl mx-auto gap-6 md:gap-0 border-b border-gray-300 pb-8 mb-4">
             {TABS.map((tab, index) => {
               const isActive = activeTab === tab.id;
+              const isNextActive = index < TABS.length - 1 && activeTab === TABS[index + 1].id;
               
               return (
-                <div key={tab.id} className="flex flex-col items-center gap-3 w-24">
-                  <button
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`
-                      group flex items-center justify-center w-16 h-16 rounded-full font-black text-2xl transition-all duration-200 border
-                      ${isActive
-                        ? 'bg-[#1973d3] text-white border-[#003e7d] shadow-[inset_0_4px_8px_rgba(0,0,0,0.4)] translate-y-1'
-                        : 'bg-white text-gray-600 border-gray-200 shadow-md hover:shadow-lg hover:border-[#1973d3] hover:-translate-y-1'
-                      }
-                    `}
-                    aria-label={`Ver indicador ${tab.label}`}
-                  >
-                    {index + 1}
-                  </button>
-                  <span 
-                    className={`text-center text-sm font-bold leading-tight transition-colors duration-200 ${
-                      isActive ? 'text-[#003e7d]' : 'text-gray-500'
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {tab.label}
-                  </span>
-                </div>
+                <React.Fragment key={tab.id}>
+                  {/* Card Circular */}
+                  <div className="flex flex-col items-center gap-3 w-24 shrink-0 relative z-10">
+                    <button
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`
+                        relative z-10 group flex items-center justify-center w-16 h-16 rounded-full font-black text-2xl transition-all duration-200 border
+                        ${isActive
+                          ? 'bg-[#1973d3] text-white border-[#003e7d] shadow-[inset_0_4px_8px_rgba(0,0,0,0.4)] translate-y-1'
+                          : 'bg-white text-gray-600 border-gray-200 shadow-md hover:shadow-lg hover:border-[#1973d3] hover:-translate-y-1'
+                        }
+                      `}
+                      aria-label={`Ver indicador ${tab.label}`}
+                    >
+                      {index + 1}
+                    </button>
+                    <span 
+                      className={`text-center text-sm font-bold leading-tight transition-colors duration-200 ${
+                        isActive ? 'text-[#003e7d]' : 'text-gray-500'
+                      }`}
+                      aria-hidden="true"
+                    >
+                      {tab.label}
+                    </span>
+                  </div>
+
+                  {/* Linha Conectora (Oculta no Mobile) */}
+                  {index < TABS.length - 1 && (
+                    <div 
+                      className={`
+                        hidden md:block flex-grow h-[2px] mt-8 -mx-6 z-0 transition-colors duration-300
+                        ${isActive ? 'bg-gradient-to-r from-[#1973d3] to-gray-200' : ''}
+                        ${isNextActive ? 'bg-gradient-to-r from-gray-200 to-[#1973d3]' : ''}
+                        ${!isActive && !isNextActive ? 'bg-gray-200' : ''}
+                      `}
+                      aria-hidden="true"
+                    />
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
