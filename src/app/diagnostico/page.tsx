@@ -23,10 +23,10 @@ import {
 
 const TABS = [
   { id: 'ccs', label: 'CCS' },
-  { id: 'producao_vaca', label: 'Produção Média Diária por Vaca' },
-  { id: 'producao_area', label: 'Produção por Área' },
-  { id: 'producao_funcionario', label: 'Produção por Funcionário' },
-  { id: 'preco_leite', label: 'Preço do Leite' },
+  { id: 'producao_vaca', label: 'Produção/Vaca' },
+  { id: 'producao_area', label: 'Produção/Área' },
+  { id: 'producao_funcionario', label: 'Produção/Func.' },
+  { id: 'preco_leite', label: 'Preço Leite' },
 ];
 
 export default function DiagnosticoPage() {
@@ -198,21 +198,37 @@ export default function DiagnosticoPage() {
 
         {/* SEÇÃO 3: DIAGNÓSTICO DETALHADO (ISHIKAWA) */}
         <section id="diagnostico" className="mt-4 flex flex-col gap-6">
-          {/* Navegação de Indicadores */}
-          <div className="flex flex-wrap gap-2 border-b border-gray-300 pb-4">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-5 py-2.5 rounded-t-lg font-semibold text-sm transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'bg-[#1973d3] text-white shadow-sm'
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-transparent border-b-0'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Navegação de Indicadores - Estilo Círculos Numerados */}
+          <div className="flex flex-wrap justify-center gap-6 md:gap-12 border-b border-gray-300 pb-8 mb-4">
+            {TABS.map((tab, index) => {
+              const isActive = activeTab === tab.id;
+              
+              return (
+                <div key={tab.id} className="flex flex-col items-center gap-3 w-24">
+                  <button
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`
+                      group flex items-center justify-center w-16 h-16 rounded-full font-black text-2xl transition-all duration-200 border
+                      ${isActive
+                        ? 'bg-[#1973d3] text-white border-[#003e7d] shadow-[inset_0_4px_8px_rgba(0,0,0,0.4)] translate-y-1'
+                        : 'bg-white text-gray-600 border-gray-200 shadow-md hover:shadow-lg hover:border-[#1973d3] hover:-translate-y-1'
+                      }
+                    `}
+                    aria-label={`Ver indicador ${tab.label}`}
+                  >
+                    {index + 1}
+                  </button>
+                  <span 
+                    className={`text-center text-sm font-bold leading-tight transition-colors duration-200 ${
+                      isActive ? 'text-[#003e7d]' : 'text-gray-500'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {tab.label}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {processedData ? (
