@@ -23,10 +23,10 @@ import {
 
 const TABS = [
   { id: 'ccs', label: 'CCS' },
-  { id: 'producao_vaca', label: 'Produção/Vaca' },
-  { id: 'producao_area', label: 'Produção/Área' },
-  { id: 'producao_funcionario', label: 'Produção/Funcionário' },
-  { id: 'preco_leite', label: 'Preço Leite' },
+  { id: 'producao_vaca', label: 'Produção Média Diária' },
+  { id: 'producao_area', label: 'Produção por Área' },
+  { id: 'producao_funcionario', label: 'Produção por Funcionário' },
+  { id: 'preco_leite', label: 'Preço do Leite' },
 ];
 
 export default function DiagnosticoPage() {

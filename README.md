@@ -383,6 +383,11 @@ Quando a fase de implementação e testes locais for concluída, a publicação 
 3. As variáveis do arquivo `.env` (como o `API_TOKEN` real) deverão ser cadastradas diretamente no painel de *Environment Variables* do Render, garantindo a proteção total dos segredos.
 
 ### Comandos uteis
+Executar os testes
+```bash
+npm run test 
+```
+
 Desliga e liga o compose
 ```bash
 docker-compose down; docker-compose up -d --build

@@ -1,13 +1,15 @@
 /**
  * @file route.ts
  * @description Implementação do Endpoint BFF para Diagnóstico.
- * * Este arquivo atua como um Proxy Seguro entre o Frontend e a API Python no Render.
+ * * Este arquivo atua como um Proxy Inteligente e Seguro entre o Frontend e a API Python no Render.
  * * Lógica de Funcionamento:
  * 1. Recebe a requisição POST do navegador.
  * 2. Valida o payload utilizando o Schema do Zod para garantir integridade.
  * 3. Verifica a Feature Flag de criptografia para preparo de segurança futura.
- * 4. Injeta o Token de Autenticação (Bearer) oculto no servidor.
- * 5. Encaminha a chamada para a API real e trata possíveis falhas de conexão (Resiliência).
+ * 4. Injeta o Token de Autenticação (Bearer) oculto no servidor e encaminha a chamada para a API real.
+ * 5. Implementa um timeout de 30 segundos para resiliência contra APIs lentas.
+ * 6. Captura metadados de custo e performance (`X-IA-Total-Tokens`, `X-IA-Cost-USD`) dos headers da resposta para logging.
+ * 7. Trata possíveis falhas de conexão e da API externa (Resiliência).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -60,23 +62,42 @@ export async function POST(req: NextRequest) {
     // 3. Comunicação Segura com a API Externa (Render)
     const apiUrl = `${process.env.API_BASE_URL}/api/diagnostico`;
     
-    console.log(`[BFF Debug] Chamando API Externa: ${apiUrl}`);
-    
-    const apiResponse = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.API_TOKEN}`,
-        'X-API-KEY': process.env.API_TOKEN || ''
-      },
-      body: JSON.stringify(payloadToSend),
-    });
+    let apiResponse: Response;
+    try {
+      console.log(`[BFF Debug] Chamando API Externa: ${apiUrl}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // Timeout de 30 segundos
 
-    // 4. Tratamento de Resiliência (Bad Gateway)
+      apiResponse = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.API_TOKEN}`,
+          'X-API-KEY': process.env.API_TOKEN || ''
+        },
+        body: JSON.stringify(payloadToSend),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('[BFF Timeout] A API externa demorou muito para responder.');
+        return NextResponse.json(
+            { error: 'A API de diagnóstico demorou muito para responder. Tente novamente mais tarde.' },
+            { status: 504 } // Gateway Timeout
+        );
+      }
+      // Re-lança outros erros de fetch para serem pegos pelo catch principal
+      throw error;
+    }
+
+    // 4. Tratamento de Resiliência e Códigos de Status da API
     if (!apiResponse.ok) {
       if (apiResponse.status === 422 || apiResponse.status === 400) {
         const errorData = await apiResponse.json().catch(() => null);
-        console.error("[ERRO DE VALIDAÇÃO DA API PYTHON]:", JSON.stringify(errorData, null, 2));
+        console.error("[BFF Error] Erro de validação da API Python:", JSON.stringify(errorData, null, 2));
         return NextResponse.json(
           { error: 'Falha na validação da API', detalhes: errorData },
           { status: apiResponse.status }
@@ -99,11 +120,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Sucesso: Repassa os dados processados pela IA para o Frontend
+    // 5. Sucesso: Captura metadados e repassa os dados da IA para o Frontend
     const data = await apiResponse.json();
+
+    // 5.1 Captura e loga os metadados de performance e custo da IA (dos headers)
+    const totalTokens = apiResponse.headers.get('X-IA-Total-Tokens');
+    const custoEstimado = apiResponse.headers.get('X-IA-Cost-USD');
+
+    if (totalTokens || custoEstimado) {
+      console.log(`[BFF Metrics] Tokens: ${totalTokens || 'N/A'}, Custo (USD): ${custoEstimado || 'N/A'}`);
+    }
+
     return NextResponse.json(data, { status: 200 });
 
   } catch (error) {
+    // Erro genérico não tratado (ex: falha de rede, erro de programação no BFF)
     console.error('[BFF Critical Error]:', error);
     return NextResponse.json(
       { error: 'Erro interno no servidor de processamento.' },

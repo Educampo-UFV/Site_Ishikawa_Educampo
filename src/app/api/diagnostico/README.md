@@ -1,26 +1,39 @@
-# 🛡️ Camada de Proxy: Diagnóstico (BFF)
+# 📖 Visão Geral
+Este endpoint atua como um **BFF (Backend-For-Frontend)**. Ele recebe os dados operacionais da fazenda, valida a integridade das informações e atua como um proxy seguro para a API de Inteligência Artificial (Python), injetando as chaves de autenticação necessárias.
 
-Este diretório contém a lógica de integração segura para o processamento de diagnósticos zootécnicos.
+## 🛠️ Contrato de Dados
 
-## O Que Este Código Faz?
-Esta rota atua como um **Backend-For-Frontend (BFF)**. Ela recebe os dados da fazenda enviados pelo produtor e os encaminha para a inteligência central do projeto Educampo.
+### Entrada (Request)
+A requisição deve ser um `POST` contendo o objeto JSON validado pelo schema da fazenda.
 
-### Responsabilidades:
-1.  **Ocultação de Segredos:** Garante que o `API_TOKEN` e a `API_BASE_URL` nunca fiquem expostos no navegador do usuário.
-2.  **Validação Estrita:** Utiliza o `Zod` para validar se os dados enviados pelo formulário são verídicos e seguros antes de enviá-los à API externa.
-3.  **Segurança Flexível:** Possui suporte nativo via *Feature Flag* para ativação de criptografia de payload.
-4.  **Tratamento de Erros:** Converte falhas técnicas complexas da API externa em mensagens amigáveis e códigos de status HTTP semânticos (ex: 502 Bad Gateway).
+| Campo | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `sistema_producao` | `string` | `compost_barn`, `semi_confinado` ou `confinado`. |
+| `regiao_sebrae` | `string` | Slug da região (ex: `triangulo`). |
+| `total_vacas` | `int` | Total de vacas no rebanho. |
+| `vacas_lactacao` | `int` | Quantidade de vacas produzindo atualmente. |
+| `ccs` | `float` | Contagem de Células Somáticas (x1000). |
+| `producao_vaca` | `float` | Média de produção (L/vaca/dia). |
+| `preco_recebido` | `float` | Valor pago ao produtor (R$/L). |
+| `preco_referencia` | `float` | Valor médio regional para comparação. |
 
-## Segurança
-A comunicação é protegida pelo protocolo HTTPS e utiliza autenticação via Bearer Token injetada em nível de servidor.
+### Saída (Response)
+A API retorna um objeto rico em metadados para renderização imediata.
 
-### 🔐 Feature Flags (Criptografia de Payload - Futuro)
-A arquitetura do BFF foi desenhada com *Security by Design*, prevendo a necessidade de criptografia avançada do payload (dados sensíveis da fazenda) antes do envio à API em Python.
+#### 1. `resumo_geral`
+Usado na seção superior da tela de diagnóstico.
+* `visao_geral`: Texto narrativo da IA.
+* `prioridades`: Array de strings para a seção "O que focar agora".
+* `proximos_passos`: Lista de ações práticas.
 
-⚠️ **Status Atual:** Esta funcionalidade é **opcional e atualmente não está implementada** (marcada com um `TODO` no código-fonte em `route.ts`). 
+#### 2. `benchmarking`
+Uma lista de objetos para renderizar os **Cards de Comparação Regional**.
+* Cada card possui: `titulo`, `valor_produtor`, `valor_referencia`, `unidade`, `status_comparacao` (positivo, neutro, negativo) e mensagens de texto já formatadas.
 
-Ela foi preparada para ser controlada pelas seguintes variáveis no arquivo `.env`:
-*   `ENABLE_PAYLOAD_ENCRYPTION=true`: Habilita o desvio de fluxo para criptografar os dados.
-*   `ENCRYPTION_SECRET_KEY`: Receberá a chave simétrica gerada (ex: para criptografia AES-256).
-
-> **Atenção:** Ative essa *Feature Flag* no ambiente de produção apenas após a lógica AES ser totalmente implementada neste frontend **e** a API em Python ter sido devidamente atualizada para descriptografar os dados com a mesma chave.
+#### 3. `indicadores`
+Objeto contendo os 5 indicadores técnicos. Cada indicador (ex: `ccs`) contém:
+* `status`: `bom`, `regular` ou `critico`.
+* `impacto_pilares`: Dicionário com a % de peso de cada pilar no problema (ideal para **Gráfico de Radar/Aranha**).
+* `causas`: Lista de causas para o **Diagrama de Ishikawa**, agora incluindo:
+    * `severidade`: `critica`, `atencao`, `monitorar` ou `neutra`.
+    * `analise`: O racional da IA para aquela causa específica.

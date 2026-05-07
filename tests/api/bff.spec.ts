@@ -100,6 +100,9 @@ describe('BFF Proxy API - POST /api/diagnostico', () => {
      */
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
+      headers: {
+        get: jest.fn().mockImplementation((key) => key === 'X-IA-Total-Tokens' ? '1250' : null)
+      },
       json: async () => mockApiResponse,
     });
 
@@ -136,6 +139,7 @@ describe('BFF Proxy API - POST /api/diagnostico', () => {
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
+      headers: { get: jest.fn() },
       json: async () => mockApiResponse,
     });
 
@@ -150,6 +154,28 @@ describe('BFF Proxy API - POST /api/diagnostico', () => {
     // Futuramente, podemos testar se o `body` enviado no fetch foi efetivamente criptografado.
     expect(response.status).toBe(200);
     expect(global.fetch).toHaveBeenCalled();
+  });
+
+  it('deve retornar erro 504 se a API externa demorar muito para responder (Timeout)', async () => {
+    /**
+     * @description Teste de resiliência. Simula o AbortError disparado pelo
+     * AbortController quando o timeout de 30 segundos da requisição é atingido.
+     */
+    const abortError = new Error('The operation was aborted');
+    abortError.name = 'AbortError';
+    
+    (global.fetch as jest.Mock).mockRejectedValueOnce(abortError);
+
+    const req = new NextRequest('http://localhost:3000/api/diagnostico', {
+      method: 'POST',
+      body: JSON.stringify(mockValidPayload),
+    });
+
+    const response = await POST(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(504);
+    expect(data.error).toBe('A API de diagnóstico demorou muito para responder. Tente novamente mais tarde.');
   });
 
   it('deve retornar erro 502 (Bad Gateway) se a API externa do Educampo falhar', async () => {
