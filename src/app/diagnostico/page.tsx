@@ -23,6 +23,13 @@ import {
 } from 'lucide-react';
 import { StatusComparacao, BenchmarkingCardData } from '../../types/diagnostico';
 
+export interface FatorImpacto {
+  valor_atual: number;
+  regras: {
+    [key: string]: string; // Ex: { "bom": "< 200", "critico": "> 500" }
+  };
+}
+
 const TABS = [
   { id: 'ccs', label: 'CCS' },
   { id: 'producao_vaca', label: 'Produção Média Diária' },
@@ -278,23 +285,14 @@ export default function DiagnosticoPage() {
                         return <p className="text-sm text-gray-500 italic text-center">Nenhum fator de impacto detalhado para este indicador.</p>;
                       }
 
-                      return fatoresKeys.map((chave) => {
-                        let config = fatores[chave];
-                        
-                        // FIX TEMPORÁRIO: API retornando fórmula para volume
-                        // TODO: Remover hardcode assim que a API Python calcular as medianas de volume
-                        if (chave === 'volume') {
-                           config = { bom: "> 2500", regular: "1000 - 2500", critico: "< 1000" };
-                        }
-
-                        const valorFator = (dadosFazenda as any)?.[chave] ?? undefined;
-                        
+                      return Object.entries(fatores).map(([chave, dadosFator]) => {
+                        const fator = dadosFator as FatorImpacto;
                         return (
                           <ImpactFactorBar 
                             key={chave} 
                             label={chave} 
-                            valor={valorFator}
-                            thresholds={config} 
+                            valor={fator.valor_atual}
+                            thresholds={fator.regras as any} 
                           />
                         );
                       });
