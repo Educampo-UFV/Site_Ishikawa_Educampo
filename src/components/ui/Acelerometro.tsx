@@ -26,8 +26,8 @@ export function Acelerometro({
   unidade, 
   status, 
   thresholds,
-  minimo = 50,
-  maximo = 700 
+  minimo,
+  maximo 
 }: AcelerometroProps) {
   
   const allThresholdsStr = `${thresholds?.bom || ''} ${thresholds?.regular || ''} ${thresholds?.critico || ''}`;
@@ -36,6 +36,13 @@ export function Acelerometro({
   
   const minBound = uniqueNumbers.length > 0 ? uniqueNumbers[0] : 200;
   const maxBound = uniqueNumbers.length > 1 ? uniqueNumbers[1] : 500;
+
+  // Cálculo dinâmico dos extremos do gráfico baseado na distância entre os limites (thresholds)
+  const diff = maxBound - minBound > 0 ? maxBound - minBound : maxBound * 0.5;
+  const calcMinimo = minimo !== undefined ? minimo : Math.max(0, minBound - diff);
+  const calcMaximo = maximo !== undefined ? maximo : maxBound + diff;
+  const displayMin = Number.isInteger(calcMinimo) ? calcMinimo : Number(calcMinimo).toFixed(2);
+  const displayMax = Number.isInteger(calcMaximo) ? calcMaximo : Number(calcMaximo).toFixed(2);
 
   const bomStr = thresholds?.bom || '';
   const criticoStr = thresholds?.critico || '';
@@ -84,10 +91,10 @@ export function Acelerometro({
 
           {/* VALORES EXTREMOS (Base Esquerda e Direita - não rotacionam) */}
           <text x="25" y="120" textAnchor="middle" fontSize="11" fill="#6b7280" fontWeight="700">
-            {minimo}
+            {displayMin}
           </text>
           <text x="175" y="120" textAnchor="middle" fontSize="11" fill="#6b7280" fontWeight="700">
-            {maximo}
+            {displayMax}
           </text>
 
           {/* MARCADOR ESQUERDO (-25 graus) */}
