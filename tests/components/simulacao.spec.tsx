@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SimulacaoPage from '../../src/app/simulacao/page';
 import { useFazendaStore } from '../../src/store/useFazendaStore';
 
@@ -36,6 +36,50 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
     ccs: 150,
   };
 
+  const mockNovaRespostaSimulacao = {
+    metricas: [
+      {
+        metrica: "ccs",
+        inferior: 127.75,
+        intermediario: 156.62,
+        superior: 309.18
+      },
+      {
+        metrica: "producao_vaca",
+        inferior: 22.52,
+        intermediario: 24.67,
+        superior: 26.15
+      },
+      {
+        metrica: "producao_diaria",
+        inferior: 2675.54,
+        intermediario: 2896.18,
+        superior: 3862.67
+      },
+      {
+        metrica: "custo_estimado",
+        inferior: {
+          estimativa_produtor: 0,
+          media_estimativa_grupo: 0,
+          margem_lucro_percentual: 100,
+          texto_margem: "Está a vender o leite a R$ 3.20 e o seu custo estimado é de R$ 0.00..."
+        },
+        intermediario: {
+          estimativa_produtor: 0,
+          media_estimativa_grupo: 0,
+          margem_lucro_percentual: 100,
+          texto_margem: "Está a vender o leite a R$ 3.20 e o seu custo estimado é de R$ 0.00..."
+        },
+        superior: {
+          estimativa_produtor: 0,
+          media_estimativa_grupo: 0,
+          margem_lucro_percentual: 100,
+          texto_margem: "Está a vender o leite a R$ 3.20 e o seu custo estimado é de R$ 0.00..."
+        }
+      }
+    ]
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     (useFazendaStore as unknown as jest.Mock).mockImplementation((selector) => {
@@ -48,9 +92,21 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
             superior: { producao_diaria: 4500, preco: 3.5 }
           }
         },
+        resultadoSimulacao: mockNovaRespostaSimulacao,
+        setResultadoSimulacao: jest.fn(),
       };
       return selector ? selector(state) : state;
     });
+    
+    // Injeta o Mock global do fetch para a nova estrutura de resposta
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockNovaRespostaSimulacao,
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('Deve renderizar os sliders (painel esquerdo) com os valores iniciais da store', () => {
@@ -87,5 +143,26 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
     fireEvent.click(btnSuperior);
     // Verifica se a Tab foi ativada assumindo a classe principal
     expect(btnSuperior).toHaveClass('bg-primary'); 
+  });
+
+  it('Deve bloquear o botão e exibir contador de 60s ao receber erro 429 (Rate Limit)', async () => {
+    // 1. Forçamos o fetch a devolver o erro 429
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      json: async () => ({ error: "Muitas requisições" }),
+    });
+
+    render(<SimulacaoPage />);
+
+    // 2. Simulamos o clique no botão de Análise
+    const btnAnalisar = screen.getByRole('button', { name: /Analisar Cenário/i });
+    fireEvent.click(btnAnalisar);
+
+    // 3. Esperamos que a interface mude para o modo de bloqueio e exiba o contador
+    await waitFor(() => {
+      expect(btnAnalisar).toBeDisabled();
+      expect(btnAnalisar).toHaveTextContent(/Aguarde 60s/i); 
+    });
   });
 });

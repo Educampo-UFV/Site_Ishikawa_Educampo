@@ -91,9 +91,9 @@ describe('Tela de Ajustes (AjustesPage)', () => {
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
     expect(botaoSubmit).toBeDisabled();
-    expect(botaoSubmit).toHaveTextContent(/Aguarde 30s/i);
+    expect(botaoSubmit).toHaveTextContent(/Aguarde 12s/i);
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 12; i++) {
       await act(async () => {
         jest.advanceTimersByTime(1000);
       });

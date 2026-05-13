@@ -8,10 +8,11 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Navbar } from '@/components/ui/Navbar';
 import { useFazendaStore } from '@/store/useFazendaStore';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 /**
  * @description Renderiza um gráfico de barra comparativo puro, sem dependências.
@@ -92,7 +93,7 @@ const BarChartSimulacao = ({
  * descartáveis sem corromper o diagnóstico original do produtor.
  */
 export default function SimulacaoPage() {
-  const { dadosFazenda } = useFazendaStore();
+  const { dadosFazenda, resultadoSimulacao, setResultadoSimulacao } = useFazendaStore();
   
   // Estado local para a Simulação (não altera a store principal para não estragar o diagnóstico real)
   const [simulacao, setSimulacao] = useState({
@@ -105,8 +106,19 @@ export default function SimulacaoPage() {
   });
 
   const [isSimulando, setIsSimulando] = useState(false);
-  const [resultadoSimulacao, setResultadoSimulacao] = useState<any>(null);
   const [cenarioAtivo, setCenarioAtivo] = useState<'inferior' | 'intermediario' | 'superior'>('intermediario');
+  
+  // NOVO: Estado para a barreira do Rate Limiting
+  const [tempoBloqueio, setTempoBloqueio] = useState(0);
+
+  // Efeito que diminui o contador automaticamente a cada segundo
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (tempoBloqueio > 0) {
+      interval = setInterval(() => setTempoBloqueio((prev) => prev - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [tempoBloqueio]);
 
   // Valores de referência do Educampo (Mockados temporariamente para a simulação funcionar de imediato)
   // Numa etapa futura, isso pode vir direto de `diagnosticoIA.cenarios`
@@ -159,13 +171,22 @@ export default function SimulacaoPage() {
    * externa a projeção avançada de custo (Machine Learning) e re-divisão dos quartis.
    */
   const executarSimulacao = async () => {
+    if (!dadosFazenda) return;
+
     setIsSimulando(true);
-    
-    // Mesclamos o estado original com as modificações dos sliders e injetamos a faixa calculada
+
     const payloadSimulacao = {
-      ...dadosFazenda,
-      ...simulacao,
+      sistema_producao: dadosFazenda.sistema_producao,
+      regiao_sebrae: dadosFazenda.regiao,
       faixa_producao: getFaixaProducao(calculos.producao_diaria),
+      total_vacas: simulacao.total_vacas,
+      vacas_lactacao: simulacao.vacas_lactacao,
+      area_atividade: simulacao.area_atividade,
+      numero_trabalhadores: dadosFazenda.mao_obra_total,
+      preco_concentrado: dadosFazenda.preco_concentrado || 1.81, // Fallback de segurança
+      producao_vaca: simulacao.producao_vaca,
+      preco_recebido: simulacao.preco_leite,
+      ccs: simulacao.ccs
     };
 
     try {
@@ -175,9 +196,15 @@ export default function SimulacaoPage() {
         body: JSON.stringify(payloadSimulacao),
       });
 
+      // --- NOVO: Intercepta o Rate Limit (429 Too Many Requests) ---
+      if (response.status === 429) {
+        setTempoBloqueio(60); // Aplica punição de 60 segundos
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
-        setResultadoSimulacao(data); // Pode ser usado no 9º quadrante para mostrar o Custo Estimado
+        setResultadoSimulacao(data); // Atualiza o cache global no Zustand
       } else {
         console.error("Falha na simulação");
       }
@@ -198,7 +225,15 @@ export default function SimulacaoPage() {
   };
 
   if (!dadosFazenda) {
-    return <div className="p-8 text-center text-red-500 font-bold">Sem dados para simular.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-8">
+        <div className="text-center text-red-500 font-bold text-2xl mb-4">Nenhum dado encontrado.</div>
+        <p className="text-gray-600 mb-8 text-center max-w-md">Por favor, preencha o formulário inicial para gerar um diagnóstico antes de tentar simular cenários.</p>
+        <Link href="/formulario" className="bg-primary hover:bg-[#003e7d] text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-200">
+          Ir para Coleta de Dados
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -285,10 +320,16 @@ export default function SimulacaoPage() {
 
             <button 
               onClick={executarSimulacao}
-              disabled={isSimulando}
-              className={`w-full py-3 mt-4 rounded-xl font-bold text-white transition-all shadow-md ${isSimulando ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-[#003e7d]'}`}
+              disabled={isSimulando || tempoBloqueio > 0}
+              className={`w-full py-3 mt-4 rounded-xl font-bold text-white transition-all shadow-md ${
+                tempoBloqueio > 0 || isSimulando ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-[#003e7d]'
+              }`}
             >
-              {isSimulando ? 'Calculando com ML...' : 'Analisar Cenário (ML)'}
+              {tempoBloqueio > 0 
+                ? `Aguarde ${tempoBloqueio}s` 
+                : isSimulando 
+                  ? 'A Calcular...' 
+                  : 'Analisar Cenário (ML)'}
             </button>
           </div>
         </aside>
@@ -313,78 +354,89 @@ export default function SimulacaoPage() {
             ))}
           </div>
 
-          {/* GRID 3x3: 9 Gráficos Comparativos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            
-            <BarChartSimulacao 
-              titulo="Produção Diária" 
-              valorSimulado={calculos.producao_diaria} 
-              valorReferencia={calculos.producao_diaria_ref} 
-              unidade="Litros / Dia" 
-            />
-            
-            <BarChartSimulacao 
-              titulo="Prod. Vaca / Dia" 
-              valorSimulado={simulacao.producao_vaca} 
-              valorReferencia={referencias[cenarioAtivo].producao} 
-              unidade="L / Vaca / Dia" 
-            />
-
-            <BarChartSimulacao 
-              titulo="Receita Bruta Diária" 
-              valorSimulado={calculos.receita_bruta} 
-              valorReferencia={calculos.receita_bruta_ref} 
-              unidade="R$ / Dia" 
-            />
-
-            <BarChartSimulacao 
-              titulo="Taxa de Lactação" 
-              valorSimulado={calculos.taxa_lactacao} 
-              valorReferencia={calculos.taxa_lactacao_ref} 
-              unidade="% do Rebanho" 
-            />
-
-            <BarChartSimulacao 
-              titulo="Prod. por Área" 
-              valorSimulado={calculos.prod_area} 
-              valorReferencia={calculos.prod_area_ref} 
-              unidade="L / ha / ano" 
-            />
-
-            <BarChartSimulacao 
-              titulo="Preço Recebido" 
-              valorSimulado={simulacao.preco_leite} 
-              valorReferencia={referencias[cenarioAtivo].preco} 
-              unidade="R$ / Litro" 
-            />
-
-            <BarChartSimulacao 
-              titulo="Qualidade (CCS)" 
-              valorSimulado={simulacao.ccs} 
-              valorReferencia={referencias[cenarioAtivo].ccs} 
-              unidade="CCS x1000" 
-              inverterCores={true} /* CCS menor é melhor */
-            />
-
-            <BarChartSimulacao 
-              titulo="Área de Atividade" 
-              valorSimulado={simulacao.area_atividade} 
-              valorReferencia={referencias[cenarioAtivo].area} 
-              unidade="Hectares (ha)" 
-              inverterCores={true} /* Depende da estratégia, usando menor=melhor para eficiência temporal */
-            />
-
-            {/* O 9º Gráfico pode ser uma métrica sintética como Eficiência Financeira */}
-            <div className="bg-gradient-to-br from-[#003e7d] to-[#1973d3] p-6 rounded-xl shadow-md text-white flex flex-col justify-center items-center h-64 text-center">
-              <h3 className="text-lg font-bold mb-2">Simulação Ativa</h3>
-              <p className="text-blue-100 text-sm mb-4">Cenário Base: {cenarioAtivo.toUpperCase()}</p>
-              <div className="text-4xl font-black mb-1">
-                R$ {calculos.receita_bruta.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
-              </div>
-              <p className="text-xs text-blue-200">Receita Bruta Estimada por Dia</p>
+          {/* 
+            ESTADOS DE RENDERIZAÇÃO:
+            1. isSimulando && !resultado: Primeira carga -> Mostra 5 Skeletons genéricos.
+            2. resultado?.metricas: Dados presentes -> Mostra os gráficos reais (com Overlay de carregamento se estiver recalculando).
+            3. Fallback/Vazio: Caso a API falhe ou os dados ainda não tenham sido pré-carregados.
+          */}
+          {isSimulando && !resultadoSimulacao?.metricas ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-500">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col h-64 items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gray-50 opacity-50"></div>
+                  <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+                  <span className="text-sm font-bold text-gray-400">Projetando cenários...</span>
+                </div>
+              ))}
             </div>
+          ) : resultadoSimulacao?.metricas ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-500">
+              {resultadoSimulacao.metricas.map((item: any) => {
+                
+                // Card Financeiro Especial para Custo Estimado
+                if (item.metrica === 'custo_estimado') {
+                  const dadosCusto = item[cenarioAtivo];
+                  return (
+                    <div key={item.metrica} className="relative h-full">
+                      {/* OVERLAY DE RECARREGAMENTO */}
+                      {isSimulando && (
+                        <div className="absolute inset-0 z-20 bg-[#003e7d]/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center">
+                          <Loader2 className="w-10 h-10 text-white animate-spin" />
+                        </div>
+                      )}
+                      <div className="bg-gradient-to-br from-[#003e7d] to-[#1973d3] p-6 rounded-xl shadow-md text-white flex flex-col justify-center items-center h-64 text-center">
+                        <h3 className="text-lg font-bold mb-2">Insight Financeiro (IA)</h3>
+                        <div className="text-3xl font-black mb-2 text-green-300">
+                          {dadosCusto.margem_lucro_percentual}% <span className="text-sm font-normal text-blue-100">Margem</span>
+                        </div>
+                        <p className="text-blue-50 text-xs leading-relaxed line-clamp-4">
+                          {dadosCusto.texto_margem}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
 
-          </div>
+                // Gráficos Padrão
+                const nomeFormatado = item.metrica.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                const inverter = item.metrica === 'ccs' || item.metrica === 'area_atividade';
+                
+                let valorSimulado = 0;
+                if (item.metrica === 'producao_diaria') valorSimulado = calculos.producao_diaria;
+                else if (item.metrica === 'receita_bruta_diaria') valorSimulado = calculos.receita_bruta;
+                else if (item.metrica === 'producao_area') valorSimulado = calculos.prod_area;
+                else if (item.metrica === 'perc_vacas_lactacao') valorSimulado = calculos.taxa_lactacao;
+                else if (item.metrica === 'preco_recebido') valorSimulado = simulacao.preco_leite;
+                else valorSimulado = (simulacao as any)[item.metrica] || 0;
+
+                const ChartComponent = (
+                   <BarChartSimulacao 
+                    key={item.metrica}
+                    titulo={nomeFormatado} 
+                    valorSimulado={valorSimulado}
+                    valorReferencia={item[cenarioAtivo]}
+                    unidade=""
+                    inverterCores={inverter}
+                  />
+                );
+
+                return (
+                  <div key={item.metrica} className="relative h-full">
+                    {/* OVERLAY DE RECARREGAMENTO */}
+                    {isSimulando && (
+                      <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center">
+                        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                      </div>
+                    )}
+                    {ChartComponent}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+             <div className="flex justify-center items-center h-64 text-gray-400">Aguardando dados...</div>
+          )}
         </section>
 
       </main>

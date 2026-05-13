@@ -18,10 +18,14 @@ interface FazendaState {
   dadosFazenda: FazendaFormData | null;
   /** Dados do diagnóstico retornado pela API da IA. */
   diagnosticoIA: any | null; // TODO: Substituir 'any' pelo tipo correto extraído do Zod (ex: DiagnosticoData)
+  /** Dados da simulação inicial retornado pela API de ML. */
+  resultadoSimulacao: any | null;
   /** Define os dados da fazenda no estado global. */
   setDadosFazenda: (dados: FazendaFormData) => void;
   /** Define os dados do diagnóstico no estado global. */
   setDiagnosticoIA: (diagnosticoIA: any) => void;
+  /** Define os dados da simulação no estado global. */
+  setResultadoSimulacao: (resultado: any) => void;
   /** Reseta a store para o estado inicial (limpeza de sessão). */
   limparDados: () => void;
 }
@@ -37,6 +41,7 @@ export const useFazendaStore = create<FazendaState>()(
     (set) => ({
       dadosFazenda: null,
       diagnosticoIA: null,
+      resultadoSimulacao: null,
 
       setDadosFazenda: (dados) => {
         set({ dadosFazenda: dados });
@@ -46,8 +51,12 @@ export const useFazendaStore = create<FazendaState>()(
         set({ diagnosticoIA });
       },
 
+      setResultadoSimulacao: (resultado) => {
+        set({ resultadoSimulacao: resultado });
+      },
+
       limparDados: () => {
-        set({ dadosFazenda: null, diagnosticoIA: null });
+        set({ dadosFazenda: null, diagnosticoIA: null, resultadoSimulacao: null });
       },
     }),
     {

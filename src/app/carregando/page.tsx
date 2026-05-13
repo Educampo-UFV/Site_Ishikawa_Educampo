@@ -12,12 +12,27 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useFazendaStore } from "@/store/useFazendaStore";
+import { FazendaFormData } from "@/lib/schemas";
+import { useFazendaStore } from "@/store/useFazendaStore"; 
 import Image from "next/image";
+
+/**
+ * @description Define a faixa estatística de produção baseada no volume gerado.
+ * É essencial como insumo (feature) para o modelo de Machine Learning no backend.
+ * @param diaria Volume diário total projetado.
+ * @returns String contendo o quartil estatístico.
+ */
+const getFaixaProducao = (diaria: number) => {
+  if (diaria < 500) return "< 500";
+  if (diaria <= 1000) return "500-1000";
+  if (diaria <= 2000) return "1000-2000";
+  if (diaria <= 5000) return "2000-5000";
+  return "> 5000";
+};
 
 export default function CarregandoPage() {
   const router = useRouter();
-  const { dadosFazenda, setDiagnosticoIA } = useFazendaStore();
+  const { dadosFazenda, setDiagnosticoIA, setResultadoSimulacao } = useFazendaStore();
   const [mensagem, setMensagem] = useState("Preparando análise...");
 
   useEffect(() => {
@@ -32,26 +47,53 @@ export default function CarregandoPage() {
       }
 
       try {
-        setMensagem("A Inteligência Artificial está analisando seus dados...");
-        
-        const response = await fetch("/api/diagnostico", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dadosFazenda),
-        });
+        setMensagem("A Inteligência Artificial está projetando seus cenários...");
 
-        if (!response.ok) throw new Error("Erro na comunicação com o servidor.");
+        // Prepara os payloads para as duas requisições
+        const producaoDiaria = (dadosFazenda.producao_vaca || 0) * (dadosFazenda.vacas_lactacao || 0);
+        const payloadSimulacao = {
+          sistema_producao: dadosFazenda.sistema_producao,
+          regiao_sebrae: dadosFazenda.regiao,
+          faixa_producao: getFaixaProducao(producaoDiaria),
+          total_vacas: dadosFazenda.total_vacas,
+          vacas_lactacao: dadosFazenda.vacas_lactacao,
+          area_atividade: dadosFazenda.area_atividade,
+          numero_trabalhadores: dadosFazenda.mao_obra_total,
+          preco_concentrado: dadosFazenda.preco_concentrado || 1.81,
+          producao_vaca: dadosFazenda.producao_vaca,
+          preco_recebido: dadosFazenda.preco_leite,
+          ccs: dadosFazenda.ccs,
+        };
 
-        const data = await response.json();
-        
-        // Injeta o diagnóstico real retornado da API Python no estado global
-        setDiagnosticoIA(data);
-        
+        // Dispara as duas requisições em paralelo para otimizar o tempo de espera
+        const [diagResponse, simResponse] = await Promise.all([
+          fetch("/api/diagnostico", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dadosFazenda),
+          }),
+          fetch("/api/simulacao", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payloadSimulacao),
+          }),
+        ]);
+
+        if (!diagResponse.ok || !simResponse.ok) {
+          throw new Error("Erro na comunicação com os servidores de análise.");
+        }
+
+        const diagData = await diagResponse.json();
+        const simData = await simResponse.json();
+
+        // Injeta os dois resultados no estado global
+        setDiagnosticoIA(diagData);
+        setResultadoSimulacao(simData);
+
         setMensagem("Análise concluída! Montando seu Diagnóstico...");
-        
+
         // Pequeno delay para garantir que o usuário veja a conclusão antes da troca de tela
         setTimeout(() => router.push("/diagnostico"), 1500);
-
       } catch (error) {
         console.error("Falha no processamento:", error);
         setMensagem("Ocorreu um erro ao processar os dados. Redirecionando...");
@@ -60,7 +102,7 @@ export default function CarregandoPage() {
     };
 
     processarAnalise();
-  }, [dadosFazenda, router, setDiagnosticoIA]);
+  }, [dadosFazenda, router, setDiagnosticoIA, setResultadoSimulacao]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-fundo p-6">

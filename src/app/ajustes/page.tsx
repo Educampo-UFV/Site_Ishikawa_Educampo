@@ -281,7 +281,7 @@ export default function AjustesPage() {
                 ) : cooldown > 0 ? (
                   `Aguarde ${cooldown}s`
                 ) : (
-                  'Atualizar dados'
+                  'Atualizar Dados'
                 )}
               </button>
             </div>
