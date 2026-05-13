@@ -75,6 +75,7 @@ export default function FormularioPage() {
     producao_vaca: '',
     preco_leite: '',
     preco_referencia: '',
+    preco_concentrado: '',
     ccs: '',
     regiao: '',
   });
@@ -206,6 +207,12 @@ export default function FormularioPage() {
                 dica="Área total destinada à pecuária de leite em hectares."
                 value={formData.area_atividade} onChange={handleChange} min={0.1} max={50000} required 
               />
+              <InputComDica 
+                id="preco_concentrado" name="preco_concentrado" type="number" step="0.01" 
+                label="Preço do Concentrado" unidade="R$/kg" placeholder="2.30"
+                dica="Custo médio do quilograma de concentrado utilizado na alimentação do rebanho."
+                value={formData.preco_concentrado} onChange={handleChange} min={0} max={100} required 
+              />
               <div className="md:col-span-2">
                 <InputComDica 
                   id="mao_obra_total" name="mao_obra_total" type="number" 
@@ -302,6 +309,7 @@ export default function FormularioPage() {
               producao_vaca: '35.0',
               preco_leite: '3.20',
               preco_referencia: '2.50',
+              preco_concentrado: '2.30',
               ccs: '150',
               regiao: 'triangulo',
             })}

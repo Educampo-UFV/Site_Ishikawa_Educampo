@@ -14,6 +14,7 @@ import { Navbar } from '@/components/ui/Navbar';
 import { IshikawaDiagram } from '@/components/ui/IshikawaDiagram';
 import { Acelerometro } from '@/components/ui/Acelerometro';
 import { ImpactFactorBar } from '@/components/ui/ImpactFactorBar';
+import { TextoComCitacoes } from '@/components/ui/TextoComCitacoes';
 import { 
   TrendingUp, 
   Activity,
@@ -198,9 +199,17 @@ export default function DiagnosticoPage() {
                 <h2 className="text-2xl font-bold">Resumo Estratégico</h2>
                 <Activity className="text-[#1973d3]" size={32} />
               </div>
-              <p className="text-lg leading-relaxed text-blue-50">
-                {diagnosticoIA?.resumo_geral?.visao_geral || diagnosticoIA?.resumo || "Carregando análise técnica..."}
-              </p>
+              {/* Mantemos compatibilidade com strings antigas (diagnosticoIA?.resumo) e suportamos o novo objeto */}
+              {diagnosticoIA?.resumo_geral ? (
+                <TextoComCitacoes 
+                  texto={diagnosticoIA.resumo_geral.visao_geral} 
+                  raciocinios={diagnosticoIA.resumo_geral.raciocinios} 
+                />
+              ) : (
+                <p className="text-lg leading-relaxed text-blue-50">
+                  {diagnosticoIA?.resumo || "Carregando análise técnica..."}
+                </p>
+              )}
             </div>
           </div>
 

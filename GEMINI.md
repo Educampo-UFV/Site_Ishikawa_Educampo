@@ -14,14 +14,6 @@ Preste atenção às seguintes diretrizes cruciais deste projeto:
 
 
 ## 🚀 Comandos uteis
-Fazer os testes
-```bash
-# Testar tudo
-clear; pytest
-
-# Testar um arquivo especifico
-pytest tests/test_engine.py
-```
 
 Desliga e liga o compose
 ```bash

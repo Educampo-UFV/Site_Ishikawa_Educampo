@@ -33,6 +33,13 @@ describe('Feature: Hub Central de Diagnóstico', () => {
       regiao: 'triangulo',
     },
     diagnosticoIA: {
+      resumo_geral: {
+        visao_geral: "Sua fazenda é ótima [1]. E o leite está bom [2].",
+        raciocinios: [
+          { id: "1", analise_tecnica: "A margem bruta está positiva devido ao custo baixo." },
+          { id: "2", analise_tecnica: "A qualidade sanitária eleva o preço base." }
+        ]
+      },
       ccs: {
         status: 'bom',
         textos_analise: 'O CCS está excelente.',

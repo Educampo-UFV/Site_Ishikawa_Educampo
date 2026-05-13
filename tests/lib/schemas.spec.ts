@@ -21,6 +21,7 @@ describe('Validações Zod: fazendaSchema', () => {
     producao_vaca: 35.0,
     preco_leite: 3.20,
     preco_referencia: 2.50,
+    preco_concentrado: 2.30,
     ccs: 150,
     regiao: 'triangulo',
   };

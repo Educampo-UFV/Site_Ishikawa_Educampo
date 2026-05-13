@@ -80,6 +80,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
     await user.type(screen.getByLabelText(/Qualidade/i), '150');
     await user.type(screen.getByLabelText(/Preço Recebido/i), '3.20');
     await user.type(screen.getByLabelText(/Preço de Referência/i), '3.00');
+    await user.type(screen.getByLabelText(/Preço do Concentrado/i), '2.30');
     await user.selectOptions(screen.getByLabelText(/Região/i), 'sul');
 
     const botaoAvancar = screen.getByRole('button', { name: /Avançar/i });
@@ -113,6 +114,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
     await user.type(screen.getByLabelText(/Prod. por Vaca/i), '35');
     await user.type(screen.getByLabelText(/Preço Recebido/i), '3.20');
     await user.type(screen.getByLabelText(/Preço de Referência/i), '2.50');
+    await user.type(screen.getByLabelText(/Preço do Concentrado/i), '2.30');
     await user.type(screen.getByLabelText(/Qualidade/i), '150');
     
     const regiaoSelect = screen.getByLabelText(/Região/i);

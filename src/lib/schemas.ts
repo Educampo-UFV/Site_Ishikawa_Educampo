@@ -58,6 +58,9 @@ export const fazendaSchema = z.object({
   
   preco_referencia: z.coerce.number().min(0).max(15),
   
+  /** Preço médio do concentrado em R$/kg, essencial para o modelo de ML na Simulação. */
+  preco_concentrado: z.coerce.number().min(0, 'O preço não pode ser negativo').max(100),
+  
   ccs: z.coerce.number().int().min(0).max(9999),
   
   regiao: RegiaoEnum,

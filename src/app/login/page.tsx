@@ -39,6 +39,9 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
+        // Disparamos a requisição em formato "fire-and-forget" (sem await).
+        // Isso acorda o Render em background enquanto o usuário preenche o formulário.
+        fetch('/api/ping').catch((err) => console.warn('Aviso: Falha ao despertar a API em background', err));
         router.push('/formulario');
       } else {
         const data = await response.json();
