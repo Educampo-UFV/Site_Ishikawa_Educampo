@@ -371,7 +371,7 @@ export default function SimulacaoPage() {
         <section className="flex-1 flex flex-col">
           
           {/* Topo: Tabs de Cenário Educampo */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 flex gap-2 mb-6 w-max mx-auto md:mx-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 flex gap-2 mb-6 w-max mx-auto">
             {(['inferior', 'intermediario', 'superior'] as const).map(cenario => (
               <button
                 key={cenario}
