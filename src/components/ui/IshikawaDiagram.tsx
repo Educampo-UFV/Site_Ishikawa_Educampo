@@ -25,7 +25,10 @@ interface IshikawaProps {
  * Iterage internamente acionando os subcomponentes `CausaItem`.
  */
 export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares }) => {
-  const [selectedCategory, setSelectedCategory] = useState<{ id: string, title: string, items: IshikawaItem[] } | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<{ 
+    category: { id: string, title: string, items: IshikawaItem[] }, 
+    initialCauseIndex?: number 
+  } | null>(null);
 
   /**
    * @description Localiza, a prova de falhas de digitação ('obra', 'mão'),
@@ -65,7 +68,7 @@ export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares 
           <div 
             key={cat.id} 
             className="p-5 border border-gray-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setSelectedCategory(cat)}
+            onClick={() => setSelectedCategory({ category: cat })}
             title="Clique para ver os detalhes e práticas recomendadas"
           >
             <div className="flex justify-between items-center mb-3 border-b border-gray-100 pb-2">
@@ -85,6 +88,10 @@ export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares 
                     pratica={item.pratica} 
                     severidade={(item as any).severidade} 
                     analise={(item as any).analise} 
+                    onClickCausa={(e) => {
+                      e.stopPropagation();
+                      setSelectedCategory({ category: cat, initialCauseIndex: idx });
+                    }}
                   />
                 ))
               ) : (
@@ -102,7 +109,7 @@ export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares 
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-primary">{selectedCategory.title}</h2>
+              <h2 className="text-2xl font-bold text-primary">{selectedCategory.category.title}</h2>
               <button 
                 onClick={() => setSelectedCategory(null)}
                 className="text-gray-500 hover:text-gray-800 transition-colors p-1"
@@ -115,15 +122,17 @@ export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares 
             </div>
 
             <div className="p-6 overflow-y-auto flex-1">
-              {selectedCategory.items.length > 0 ? (
+              {selectedCategory.category.items.length > 0 ? (
                 <div className="space-y-4">
-                  {selectedCategory.items.map((item, idx) => (
+                  {selectedCategory.category.items.map((item, idx) => (
                     <CausaItem 
                       key={idx} 
                       causa={item.causa} 
                       pratica={item.pratica} 
                       severidade={(item as any).severidade} 
                       analise={(item as any).analise} 
+                      isAccordion={true}
+                      defaultExpanded={selectedCategory.initialCauseIndex === idx}
                     />
                   ))}
                 </div>
