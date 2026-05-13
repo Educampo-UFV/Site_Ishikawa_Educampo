@@ -374,25 +374,6 @@ export default function DiagnosticoPage() {
                 </h2>
                 <IshikawaDiagram data={processedData.ishikawa} impactoPilares={processedData.impacto_pilares} />
               </div>
-
-              {/* Ranking de Prioridade (Rodapé) */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold text-[#003e7d] mb-4">Plano de Ação - Top Prioridades</h2>
-                {processedData.ranking && processedData.ranking.length > 0 ? (
-                  <ol className="space-y-3">
-                    {processedData.ranking.map((item: string, index: number) => (
-                      <li key={index} className="flex items-start gap-3 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs shrink-0">
-                          {index + 1}
-                        </span>
-                        <span className="text-gray-800 font-medium">{item}</span>
-                      </li>
-                    ))}
-                  </ol>
-                ) : (
-                  <p className="text-gray-500 italic text-sm">Nenhuma ação prioritária definida neste pilar.</p>
-                )}
-              </div>
             </div>
           ) : (
             <div className="text-center p-8 bg-white rounded-xl shadow-sm border border-gray-100">
