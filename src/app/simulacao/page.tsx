@@ -37,34 +37,52 @@ const BarChartSimulacao = ({
   const alturaSimulado = `${(valorSimulado / maxVal) * 100}%`;
   const alturaReferencia = `${(valorReferencia / maxVal) * 100}%`;
 
-  // Lógica de cores: Se for maior que a referência, é verde? (Depende do inverterCores)
-  const isMelhor = inverterCores ? valorSimulado <= valorReferencia : valorSimulado >= valorReferencia;
-  const corBarraSimulada = isMelhor ? 'bg-green-500' : 'bg-red-500';
+  // Lógica de cores: Verde (Melhor), Vermelho (Pior), Cinza (Igual)
+  let corBarraSimulada = 'bg-gray-400';
+  let corTextoSimulado = 'text-gray-600';
+
+  if (valorSimulado !== valorReferencia) {
+    const isMelhor = inverterCores ? valorSimulado < valorReferencia : valorSimulado > valorReferencia;
+    corBarraSimulada = isMelhor ? 'bg-green-500' : 'bg-red-500';
+    corTextoSimulado = isMelhor ? 'text-green-600' : 'text-red-600';
+  }
+
+  // Cálculos do Indicador Percentual (Top Right)
+  const diff = valorSimulado - valorReferencia;
+  const pct = valorReferencia > 0 ? (diff / valorReferencia) * 100 : 0;
+  
+  let indicatorColor = 'text-gray-500 bg-gray-100';
+  let prefix = '';
+  let Icon = Minus;
+
+  if (diff > 0) {
+    Icon = TrendingUp;
+    prefix = '+';
+    indicatorColor = inverterCores ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50';
+  } else if (diff < 0) {
+    Icon = TrendingDown;
+    prefix = '-';
+    indicatorColor = inverterCores ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+  }
 
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col h-64">
-      <h3 className="text-sm font-bold text-gray-700 text-center mb-4">{titulo}</h3>
+    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col h-64 relative">
+      {/* Badge Indicador de Diferença Percentual */}
+      <div 
+        className={`absolute top-3 right-3 flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${indicatorColor}`}
+        title="Diferença em relação à referência"
+      >
+        <Icon size={12} strokeWidth={2.5} />
+        <span>{prefix}{Math.abs(pct).toFixed(1)}%</span>
+      </div>
+
+      <h3 className="text-sm font-bold text-gray-700 text-center mb-4 px-10">{titulo}</h3>
       
       {/* Container das Barras (Cresce de baixo para cima) */}
       <div className="flex-1 flex items-end justify-center gap-6 pb-2">
-        {/* Barra de Referência (Educampo) */}
-        <div className="flex flex-col items-center justify-end w-16 group h-full">
-          <span className="text-xs text-gray-500 mb-1 font-medium">{valorReferencia.toLocaleString('pt-BR')}</span>
-          <div 
-            className="w-full bg-slate-300 rounded-t-sm transition-all duration-500 ease-out relative"
-            style={{ height: alturaReferencia }}
-          >
-            {/* Tooltip Hover */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
-              Referência Base
-            </div>
-          </div>
-          <span className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wider">Ref</span>
-        </div>
-
         {/* Barra Simulada (Em Tempo Real) */}
         <div className="flex flex-col items-center justify-end w-16 group h-full">
-          <span className={`text-xs font-bold mb-1 ${isMelhor ? 'text-green-600' : 'text-red-600'}`}>
+          <span className={`text-xs font-bold mb-1 ${corTextoSimulado}`}>
             {valorSimulado.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}
           </span>
           <div 
@@ -76,7 +94,22 @@ const BarChartSimulacao = ({
               Valor Simulado
             </div>
           </div>
-          <span className="text-[10px] font-bold text-primary mt-2 uppercase tracking-wider">Sim</span>
+          <span className="text-[10px] font-bold text-gray-500 mt-2 uppercase tracking-wider">Simulação</span>
+        </div>
+
+        {/* Barra de Referência (Educampo) */}
+        <div className="flex flex-col items-center justify-end w-16 group h-full">
+          <span className="text-xs text-gray-500 mb-1 font-medium">{valorReferencia.toLocaleString('pt-BR')}</span>
+          <div 
+            className="w-full bg-primary rounded-t-sm transition-all duration-500 ease-out relative"
+            style={{ height: alturaReferencia }}
+          >
+            {/* Tooltip Hover */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
+              Referência Base
+            </div>
+          </div>
+          <span className="text-[10px] font-bold text-primary mt-2 uppercase tracking-wider">Referência</span>
         </div>
       </div>
       
