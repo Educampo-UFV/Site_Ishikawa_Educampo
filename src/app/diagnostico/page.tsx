@@ -29,6 +29,9 @@ import { StatusComparacao, BenchmarkingCardData } from '../../types/diagnostico'
  */
 export interface FatorImpacto {
   valor_atual: number;
+  unidade?: string;
+  grafico_min?: number;
+  grafico_max?: number;
   regras: {
     [key: string]: string; // Ex: { "bom": "< 200", "critico": "> 500" }
   };
@@ -325,6 +328,8 @@ export default function DiagnosticoPage() {
                     unidade={processedData.unidade || ''} 
                     status={processedData.status || ''} 
                     thresholds={processedData.thresholds} 
+                    minimo={processedData.thresholds?.grafico_min}
+                    maximo={processedData.thresholds?.grafico_max}
                   />
                 </div>
 
@@ -347,6 +352,9 @@ export default function DiagnosticoPage() {
                             key={chave} 
                             label={chave} 
                             valor={fator.valor_atual}
+                            unidade={fator.unidade}
+                            minimo={fator.grafico_min}
+                            maximo={fator.grafico_max}
                             thresholds={fator.regras as any} 
                           />
                         );

@@ -14,6 +14,7 @@ interface Thresholds {
   bom_baixo?: string;
   critico_alto?: string;
   critico_baixo?: string;
+  direcao_otimizacao?: string;
 }
 
 interface AcelerometroProps {
@@ -37,6 +38,7 @@ export function Acelerometro({
   const bomStr = thresholds?.bom || thresholds?.bom_alto || thresholds?.bom_baixo || '';
   const criticoStr = thresholds?.critico || thresholds?.critico_alto || thresholds?.critico_baixo || '';
   const regularStr = thresholds?.regular || '';
+  const direcao = thresholds?.direcao_otimizacao;
 
   const allThresholdsStr = `${bomStr} ${regularStr} ${criticoStr}`;
   const numbers = allThresholdsStr.match(/-?\d+(\.\d+)?/g)?.map(Number) || [];
@@ -45,31 +47,41 @@ export function Acelerometro({
   const minBound = uniqueNumbers.length > 0 ? uniqueNumbers[0] : 200;
   const maxBound = uniqueNumbers.length > 1 ? uniqueNumbers[uniqueNumbers.length - 1] : (uniqueNumbers.length === 1 ? (uniqueNumbers[0] === 0 ? 100 : uniqueNumbers[0] * 1.5) : 500);
 
-  // Cálculo dinâmico dos extremos do gráfico baseado na distância entre os limites (thresholds)
+  // Usamos as margens fornecidas pela API, ou criamos um fallback
   const diff = maxBound - minBound > 0 ? maxBound - minBound : maxBound * 0.5;
-  const calcMinimo = minimo !== undefined ? minimo : Math.max(0, minBound - diff);
-  const calcMaximo = maximo !== undefined ? maximo : maxBound + diff;
+  const calcMinimo = minimo !== undefined ? Number(minimo) : Math.max(0, minBound - diff);
+  const calcMaximo = maximo !== undefined ? Number(maximo) : maxBound + diff;
   const displayMin = Number.isInteger(calcMinimo) ? calcMinimo : Number(calcMinimo).toFixed(2);
   const displayMax = Number.isInteger(calcMaximo) ? calcMaximo : Number(calcMaximo).toFixed(2);
 
-  const isLowerBetter = bomStr.includes('<') || bomStr.includes('&lt;') || criticoStr.includes('>') || criticoStr.includes('&gt;');
+  // Determinação clara de cor baseada na diretriz da API, se existir
+  const isLowerBetter = direcao ? direcao === 'menor_melhor' : (bomStr.includes('<') || bomStr.includes('&lt;') || criticoStr.includes('>') || criticoStr.includes('&gt;'));
 
+  // Lógica Matemática Contínua: Faz a agulha varrer proporcionalmente o arco inteiro
   let rotation = 0;
+  const val = Number(valor);
   
-  switch (status?.toLowerCase()) {
-    case 'bom':
-    case 'positivo':
-      rotation = isLowerBetter ? -55 : 55; 
-      break;
-    case 'regular':
-    case 'atencao':
-    case 'alerta':
-      rotation = 0; 
-      break;
-    case 'critico':
-    case 'negativo':
-      rotation = isLowerBetter ? 55 : -55; 
-      break;
+  if (!isNaN(val)) {
+    if (val <= minBound) {
+      // Zona Esquerda (Ângulos de -90 a -25 graus)
+      const range = minBound - calcMinimo || 1;
+      const p = Math.max(0, (val - calcMinimo) / range);
+      rotation = -90 + (p * 65);
+    } else if (val <= maxBound) {
+      // Zona Central (Ângulos de -25 a +25 graus)
+      const range = maxBound - minBound || 1;
+      const p = (val - minBound) / range;
+      rotation = -25 + (p * 50);
+    } else {
+      // Zona Direita (Ângulos de +25 a +90 graus)
+      const range = calcMaximo - maxBound || 1;
+      const p = Math.min(1, (val - maxBound) / range);
+      rotation = 25 + (p * 65);
+    }
+  } else {
+    // Fallback caso seja um texto que não é número
+    if (status?.toLowerCase() === 'bom' || status?.toLowerCase() === 'positivo') rotation = isLowerBetter ? -55 : 55;
+    else if (status?.toLowerCase() === 'critico' || status?.toLowerCase() === 'negativo') rotation = isLowerBetter ? 55 : -55;
   }
 
   const colorBom = '#22c55e';

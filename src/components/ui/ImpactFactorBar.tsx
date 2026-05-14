@@ -11,10 +11,12 @@ interface ImpactFactorBarProps {
   label: string;
   valor?: number | string;
   unidade?: string;
+  minimo?: number;
+  maximo?: number;
   thresholds: ImpactThresholds;
 }
 
-export function ImpactFactorBar({ label, valor, unidade, thresholds }: ImpactFactorBarProps) {
+export function ImpactFactorBar({ label, valor, unidade, minimo, maximo, thresholds }: ImpactFactorBarProps) {
   // Tenta extrair o valor e unidade das props ou do objeto thresholds
   const rawValor = valor !== undefined ? valor : thresholds?.valor;
   const numValor = Number(rawValor) || 0;
@@ -24,8 +26,9 @@ export function ImpactFactorBar({ label, valor, unidade, thresholds }: ImpactFac
   const bomStr = tAny?.bom || tAny?.bom_alto || tAny?.bom_baixo || '';
   const criticoStr = tAny?.critico || tAny?.critico_alto || tAny?.critico_baixo || '';
   const regularStr = tAny?.regular || '';
+  const direcao = tAny?.direcao_otimizacao;
 
-  const isLowerBetter = bomStr.includes('<') || bomStr.includes('&lt;') || criticoStr.includes('>') || criticoStr.includes('&gt;');
+  const isLowerBetter = direcao ? direcao === 'menor_melhor' : (bomStr.includes('<') || bomStr.includes('&lt;') || criticoStr.includes('>') || criticoStr.includes('&gt;'));
 
   // Extrair números das strings de limites para calcular a amplitude e extremos
   const allThresholdsStr = `${bomStr} ${regularStr} ${criticoStr}`;
@@ -38,24 +41,23 @@ export function ImpactFactorBar({ label, valor, unidade, thresholds }: ImpactFac
   let diff = maxBound - minBound;
   if (diff === 0) diff = maxBound > 0 ? maxBound * 0.5 : 100;
 
-  // Expande a escala visual levemente (15% de cada lado)
-  let displayMin = minBound - diff * 0.15;
-  let displayMax = maxBound + diff * 0.15;
+  // Usa os limites rígidos da API se fornecidos, senão expande 15% visualmente
+  let displayMin = minimo !== undefined ? Number(minimo) : minBound - diff * 0.15;
+  let displayMax = maximo !== undefined ? Number(maximo) : maxBound + diff * 0.15;
 
-  // Assegura que a bolha fique contida nos limites caso o valor extrapole a escala padrao
-  if (numValor < displayMin) {
-    displayMin = numValor - diff * 0.1;
-  }
-  if (numValor > displayMax) {
-    displayMax = numValor + diff * 0.1;
-  }
+  // Previne bugs matemáticos caso maximo seja igual ou menor que o minimo
+  if (displayMax <= displayMin) displayMax = displayMin + 100;
 
   const totalRange = displayMax - displayMin;
 
-  // Cálculos de largura proporcional para cada faixa de cor (0 a 100%)
-  const p1 = Math.max(0, ((minBound - displayMin) / totalRange) * 100);
-  const p2 = Math.max(0, ((maxBound - minBound) / totalRange) * 100);
-  const p3 = Math.max(0, ((displayMax - maxBound) / totalRange) * 100);
+  // Trava (clampa) as faixas internas para nunca ultrapassarem o espaço de exibição SVG/CSS
+  const clampedMinBound = Math.max(displayMin, Math.min(displayMax, minBound));
+  const clampedMaxBound = Math.max(displayMin, Math.min(displayMax, maxBound));
+
+  // Cálculos precisos de largura proporcional em tela para cada faixa de cor
+  const p1 = ((clampedMinBound - displayMin) / totalRange) * 100;
+  const p2 = ((clampedMaxBound - clampedMinBound) / totalRange) * 100;
+  const p3 = ((displayMax - clampedMaxBound) / totalRange) * 100;
 
   let percentage = ((numValor - displayMin) / totalRange) * 100;
   // Garantir que a seta fique contida nos limites de 0% e 100% da barra
