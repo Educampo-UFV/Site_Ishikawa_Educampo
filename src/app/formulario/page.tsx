@@ -59,11 +59,19 @@ const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, place
   </div>
 );
 
+/**
+ * @description Componente principal da página de formulário.
+ * Renderiza os quadrantes de entrada e gerencia os estados locais da coleta de dados.
+ * @returns {JSX.Element} A interface completa da etapa de Coleta de Dados.
+ */
 export default function FormularioPage() {
   const router = useRouter();
   const setDadosFazenda = useFazendaStore((state: any) => state.setDadosFazenda);
 
-  // Estados dos formulários (tipados e inicializados)
+  /**
+   * @description Estado local dos campos do formulário para vinculação (two-way binding)
+   * com os elementos HTML tipados e devidamente inicializados.
+   */
   const [formData, setFormData] = useState({
     nome_fazenda: '',
     sistema_producao: '',
@@ -82,24 +90,36 @@ export default function FormularioPage() {
 
   const [erros, setErros] = useState<string[]>([]);
 
+  /**
+   * @description Captura e atualiza o estado local conforme a interação com os campos de entrada (inputs e selects).
+   * @param {React.ChangeEvent<HTMLInputElement | HTMLSelectElement>} e - O evento de mudança disparado pelo DOM.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * @description Lida com o processo de submissão do formulário. Realiza a validação usando Zod,
+   * mapeia erros potenciais para a interface e, se válido, persiste temporariamente os dados na store (Zustand).
+   * @param {React.FormEvent} e - O evento de submissão do formulário nativo.
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErros([]);
 
-    // Validação real usando o Schema centralizado do projeto (z.coerce fará a conversão numérica)
+    /**
+     * @description Executa a validação real através do schema do projeto.
+     * z.coerce cuidará automaticamente de transpor strings em numéricos.
+     */
     const validacao = fazendaSchema.safeParse(formData);
 
     if (!validacao.success) {
-      // Garante suporte robusto para extrair a lista de erros, evitando falhas de prototype no JSDOM
+      /** @description Evita falhas de prototipagem no JSDOM criando um suporte robusto para listas de erros. */
       const errorData = validacao.error as any;
       const errorList = Array.isArray(errorData) ? errorData : (errorData?.issues || errorData?.errors || [{ message: 'Dados inválidos', path: ['Formulário'] }]);
       
-      // Mapeia os erros do Zod para mensagens amigáveis na interface
+      /** @description Converte e formata o resultado dos erros do Zod em mensagens de texto humanamente legíveis. */
       const mensagensErro = errorList.map((err: any) => {
         const path = err.path && Array.isArray(err.path) ? err.path.join(' ') : 'Campo';
         return `${path}: ${err.message}`;
@@ -109,7 +129,7 @@ export default function FormularioPage() {
       return;
     }
 
-    // Se for sucesso, os dados já vêm tipados e tratados pelo Zod
+    /** @description Cenário de Sucesso: injeta os dados já tipados, higienizados e convertidos na store. */
     setDadosFazenda(validacao.data);
     router.push('/carregando');
   };

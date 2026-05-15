@@ -178,20 +178,27 @@ site_ishikawa_educampo/
 │   ├── app/                                         # Rotas e páginas do Next.js (App Router)
 │   │   ├── ajustes/                                 # Tela de edição e ajuste de dados.
 │   │   │   └── page.tsx
+│   │   │   └── README.md
 │   │   ├── api/                                     # Backend-For-Frontend (BFF) - Rotas de API internas
 │   │   │   ├── auth/                                # Gerencia o login e injeta o token via Cookie HttpOnly.
 │   │   │   ├── diagnostico/                         # Proxy seguro: mascara as chaves e chama a API real da IA.
 │   │   │   └── simulacao/                           # Rota para simulação interativa.
+│   │   │   └── README.md
 │   │   ├── carregando/                              # Tela de feedback visual e validação de hidratação de dados.
 │   │   │   └── page.tsx
+│   │   │   └── README.md
 │   │   ├── diagnostico/                             # Painel central unificado: Benchmarking, IA e Diagrama de Ishikawa.
 │   │   │   └── page.tsx
+│   │   │   └── README.md
 │   │   ├── formulario/                              # Tela de coleta de dados operacionais da fazenda.
 │   │   │   └── page.tsx
+│   │   │   └── README.md
 │   │   ├── login/                                   # Tela de autenticação do produtor.
 │   │   │   └── page.tsx
+│   │   │   └── README.md
 │   │   ├── simulacao/                               # Simulador iterativo de cenários zootécnicos.
 │   │   │   └── page.tsx
+│   │   │   └── README.md
 │   │   ├── globals.css                              # Estilos globais e cores do Tailwind.
 │   │   ├── layout.tsx                               # Layout global, fontes e base visual da aplicação.
 │   │   ├── page.tsx                                 # Página raiz.
@@ -214,7 +221,8 @@ site_ishikawa_educampo/
 │   │   ├── schemas.ts                               # Zod schemas para validação estrita (Input Validation).
 │   │   └── README.md                                # Documentação das lógicas utilitárias.
 │   ├── types/                                       # Tipagens do TypeScript
-│   │   └── diagnostico.ts
+│   │   ├── diagnostico.ts
+│   │   └── README.md
 │   ├── middleware.ts                                # Guardião de Rotas (Edge): Valida tokens e protege acessos.
 │   └── README.md                                    # Visão geral da arquitetura do código-fonte (src).
 │

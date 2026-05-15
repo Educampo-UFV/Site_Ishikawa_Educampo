@@ -1,11 +1,14 @@
-# Diretório: `/src/app/login`
+# Módulo de Autenticação (`/app/login`)
 
-Responsável por armazenar a interface pública de autenticação, sendo a porta de entrada para os produtores/consultores que utilizarão o Diagnóstico Ishikawa.
+## 📖 O que este diretório faz?
 
-## 📄 Arquivos Principais
+Este diretório contém a interface pública de autenticação da plataforma. Ele atua como a porta de entrada segura para os produtores rurais e consultores que utilizarão o Diagnóstico Ishikawa.
 
-* **`page.tsx`:**
-  A interface reativa (`'use client'`) que apresenta o formulário de login.
-  - **Separação de Responsabilidades Visual:** Não lida com breakpoints complexos ou fundos. Ela delega a formatação visual ao componente `SplitScreenLayout`.
-  - **Segurança Prática (Zero-Token-Exposure):** O componente tem a missão estrita de coletar usuário/senha e disparar para o nosso BFF (`/api/auth`). Ele **não processa, não lê e não salva** tokens localmente (como `localStorage`), garantindo que o frontend fique cego para credenciais sensíveis e dependa dos cookies injetados pelo servidor.
-  - **Atalho de Desenvolvimento:** Contém a função `fillTestCredentials` para acelerar o fluxo de testes funcionais.
+### Funcionalidades e Regras de Negócio
+* **Acesso Seguro (Zero-Token-Exposure):** O formulário tem o objetivo estrito de coletar as credenciais (usuário e senha) e enviá-las ao nosso intermediário de segurança (BFF). Ele garante que o frontend permaneça cego para tokens sensíveis, não armazenando dados no navegador (como `localStorage`).
+* **Interface Focada:** A tela delega toda a complexidade visual (responsividade, fundos, imagens) para o componente de layout estrutural, mantendo sua responsabilidade restrita apenas ao fluxo e feedback de login.
+* **Facilitador de Testes:** Conta com atalhos para auto-preenchimento de credenciais em tela, agilizando as validações de fluxo.
+
+## 🧩 Arquivos deste Módulo
+* `page.tsx`: A interface reativa principal que apresenta o formulário de login e lida com o estado de carregamento e erros da autenticação.
+* `README.md`: Este guia de documentação do diretório.

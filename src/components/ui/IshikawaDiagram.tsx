@@ -1,9 +1,6 @@
 /**
  * @file src/components/ui/IshikawaDiagram.tsx
- * @description Componente visual que renderiza os pilares do Diagrama de Ishikawa.
- * Em vez de um gráfico complexo, utiliza um design de grid com 6 cards responsivos,
- * facilitando a leitura em dispositivos móveis e desktops. Apresenta também um Modal 
- * interativo para detalhamento das práticas recomendadas.
+ * @description Lógica de distribuição das categorias em layout de Grid com sistema de Modais.
  */
 
 import React, { useState } from 'react';
@@ -11,8 +8,9 @@ import { IshikawaItem, IshikawaCategorias } from '../../types/diagnostico';
 import { CausaItem } from './CausaItem';
 
 /**
- * @description Tipagem dos dados brutos estruturados e a tabela
- * de impacto percentual calculada para cada um dos 6Ms.
+ * @description Objeto tipado utilizado para injetar a visão em blocos do método Ishikawa.
+ * @property {IshikawaCategorias} data - Categorias padronizadas e mapeadas em listas de itens.
+ * @property {Record<string, number>} [impactoPilares] - Tabela hash extra opcional baseada nos cálculos parciais da API.
  */
 interface IshikawaProps {
   data: IshikawaCategorias;
@@ -20,9 +18,11 @@ interface IshikawaProps {
 }
 
 /**
- * @description Renderiza o diagrama responsivo e lida com o estado 
- * do modal expansivo quando o usuário clica sobre a estrutura de um pilar específico.
- * Iterage internamente acionando os subcomponentes `CausaItem`.
+ * @description Trata o objeto `data` iterando com um `map` sob a árvore dos 6 Ms clássicos da metodologia.
+ * Mantém a memória `selectedCategory` na Store Local baseando o state React para disparar overlays de tela 
+ * Modal caso uma das listagens do grid seja selecionada pelo usuário.
+ * @param {IshikawaProps} props - Propriedades requeridas no diagrama.
+ * @returns {React.JSX.Element} Composição iterada do Grid injetando os subcomponentes filho `CausaItem`.
  */
 export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares }) => {
   const [selectedCategory, setSelectedCategory] = useState<{ 

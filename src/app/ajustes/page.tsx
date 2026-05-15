@@ -15,6 +15,16 @@ import { Navbar } from '@/components/ui/Navbar'; // Assumindo que a Navbar exist
 import { Info, AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 
+/**
+ * Componente auxiliar genérico para renderizar um rótulo (label) com uma dica (tooltip) interativa.
+ * 
+ * @param {Object} props - Propriedades do componente.
+ * @param {string} props.htmlFor - O ID do input associado a este rótulo, auxiliando na acessibilidade.
+ * @param {string} props.label - O texto principal do rótulo.
+ * @param {string} [props.unidade] - Texto opcional representando a unidade de medida (ex: R$/L).
+ * @param {string} [props.dica] - Texto opcional para o tooltip (balão de dica) mostrado ao passar o mouse.
+ * @returns {JSX.Element} Elemento JSX contendo o rótulo e o ícone de informação com tooltip embutido (se houver dica).
+ */
 const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, label: string, unidade?: string, dica?: string }) => (
   <div className="flex items-center gap-2 mb-1">
     <label htmlFor={htmlFor} className="text-sm font-semibold text-gray-700">
@@ -32,6 +42,16 @@ const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, labe
   </div>
 );
 
+/**
+ * Página de Ajustes de Dados da Fazenda.
+ * 
+ * Consume o estado global (`useFazendaStore`) para inicializar o formulário de forma controlada.
+ * Esta página permite que o produtor faça alterações pontuais dos dados e recalcule o diagnóstico
+ * inteiro refazendo o fetch ao BFF (`/api/diagnostico`). 
+ * A lógica restringe requisições utilizando mecanismos de 'cooldown' limitados por tempo.
+ * 
+ * @returns {JSX.Element} A renderização estrutural do formulário de ajustes.
+ */
 export default function AjustesPage() {
   const { dadosFazenda, setDadosFazenda, setDiagnosticoIA } = useFazendaStore();
   
@@ -42,15 +62,23 @@ export default function AjustesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
-  // Efeito para gerir a contagem decrescente do botão
+  /**
+   * Efeito colateral para gerenciar a contagem decrescente do tempo de recarga (Cooldown).
+   * Implementa um timeout que roda a cada segundo subtraindo a variável `cooldown` até atingir 0,
+   * ajudando a mitigar duplicação de submissões à API externa.
+   */
   useEffect(() => {
     if (cooldown > 0) {
       const timerId = setTimeout(() => setCooldown(cooldown - 1), 1000);
-      return () => clearTimeout(timerId); // Limpa o timeout se o componente desmontar ou atualizar
+      return () => clearTimeout(timerId);
     }
   }, [cooldown]);
 
-  // Efeito para esconder o popup de sucesso automaticamente após 5 segundos
+  /**
+   * Efeito colateral de interface visual (Toast).
+   * Esconde e desmonta automaticamente as notificações flutuantes (feedback) do tipo 'sucesso' 
+   * de volta para `null` após a duração de 5000ms.
+   */
   useEffect(() => {
     if (feedback?.type === 'success') {
       const timerId = setTimeout(() => setFeedback(null), 5000);
@@ -59,7 +87,9 @@ export default function AjustesPage() {
   }, [feedback]);
 
   /**
-   * Manipula as alterações nos campos do formulário.
+   * Controla e manipula as alterações do usuário nos elementos do formulário.
+   * Captura as entradas e preenche o estado unificado do formulário `formData`.
+   * 
    * @param {React.ChangeEvent<HTMLInputElement | HTMLSelectElement>} e - O evento de alteração do input/select.
    */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -70,6 +100,13 @@ export default function AjustesPage() {
 
   /**
    * Intercepta a submissão do formulário, valida os dados no Zod e envia para a API recalcular o diagnóstico.
+   * 
+   * Fluxo da Função:
+   * 1. Bloqueia se o sistema estiver operando ou sob tempo de penalidade (cooldown).
+   * 2. Tenta forçar os dados atuais pelo schema de validação (Zod).
+   * 3. Faz proxying e dispara requisição POST contra o BFF (`/api/diagnostico`).
+   * 4. Atualiza a *store* (Zustand) com os novos parâmetros e os novos resultados.
+   * 
    * @param {React.FormEvent} e - O evento de submissão do formulário.
    */
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,7 +159,7 @@ export default function AjustesPage() {
     }
   };
 
-  // Se não houver dados, idealmente redirecionar ou mostrar aviso
+  // Intercepta e renderiza um aviso de escape rápido se a fazenda base não existir na store
   if (!dadosFazenda) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-8">

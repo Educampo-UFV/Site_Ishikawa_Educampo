@@ -19,6 +19,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SplitScreenLayout } from '@/components/ui/SplitScreenLayout';
 
+/**
+ * Componente principal da página de Login.
+ * Renderiza o formulário de autenticação e gerencia o estado local dos inputs.
+ * 
+ * @returns {JSX.Element} Interface do formulário de login envolta no SplitScreenLayout.
+ */
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +32,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  /**
+   * Processa a submissão do formulário de login.
+   * Exibe estado de carregamento e dispara a requisição POST para o BFF (/api/auth) para validar as credenciais.
+   * Em caso de sucesso (cookies injetados pelo servidor), redireciona para a tela de formulário.
+   * 
+   * @param {React.FormEvent} e - Evento de submissão do formulário.
+   */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -51,6 +64,10 @@ export default function LoginPage() {
     }
   };
 
+  /**
+   * Preenche automaticamente os campos de usuário e senha com credenciais de teste.
+   * Função utilitária para agilizar validações funcionais no ambiente de desenvolvimento.
+   */
   const fillTestCredentials = () => {
     setUsername('educampo');
     setPassword('leite123');

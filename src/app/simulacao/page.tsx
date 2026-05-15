@@ -28,16 +28,20 @@ const BarChartSimulacao = ({
   valorSimulado, 
   valorReferencia, 
   unidade, 
-  inverterCores = false // Ex: Para CCS, menor é melhor (inverter = true)
+  inverterCores = false 
 }: { 
   titulo: string, valorSimulado: number, valorReferencia: number, unidade: string, inverterCores?: boolean 
 }) => {
-  // Encontra o teto para calcular a altura percentual lidando com possíveis valores negativos (ex: margem)
+  /**
+   * Encontra o teto para calcular a altura percentual lidando com possíveis valores negativos (ex: margem)
+   */
   const maxVal = Math.max(Math.abs(valorSimulado), Math.abs(valorReferencia), 0.01); 
   const alturaSimulado = `${(Math.abs(valorSimulado) / maxVal) * 100}%`;
   const alturaReferencia = `${(Math.abs(valorReferencia) / maxVal) * 100}%`;
 
-  // Lógica de cores: Verde (Melhor), Vermelho (Pior), Cinza (Igual)
+  /**
+   * Lógica de cores: Verde (Melhor), Vermelho (Pior), Cinza (Igual)
+   */
   let corBarraSimulada = 'bg-gray-400';
   let corTextoSimulado = 'text-gray-600';
 
@@ -47,7 +51,9 @@ const BarChartSimulacao = ({
     corTextoSimulado = isMelhor ? 'text-green-600' : 'text-red-600';
   }
 
-  // Cálculos do Indicador Percentual (Top Right)
+  /**
+   * Cálculos do Indicador Percentual para o canto superior direito do componente.
+   */
   const diff = valorSimulado - valorReferencia;
   const pct = Math.abs(valorReferencia) > 0 ? (diff / Math.abs(valorReferencia)) * 100 : 0;
   
@@ -61,11 +67,15 @@ const BarChartSimulacao = ({
     indicatorColor = inverterCores ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50';
   } else if (diff < 0) {
     Icon = TrendingDown;
-    prefix = '-'; // Exibido com o Math.abs abaixo
+    prefix = '-';
     indicatorColor = inverterCores ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
   }
 
-  // Formatação para grandes números (K) e moedas/frações pequenas
+  /**
+   * Formatação para grandes números (K) e moedas/frações pequenas
+   * @param num O número a ser formatado.
+   * @returns A representação formatada em string do número fornecido.
+   */
   const formatNumber = (num: number) => {
     if (Math.abs(num) >= 1000) {
       return num.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
@@ -138,7 +148,9 @@ const BarChartSimulacao = ({
 export default function SimulacaoPage() {
   const { dadosFazenda, resultadoSimulacao, setResultadoSimulacao } = useFazendaStore();
   
-  // Estado local para a Simulação (não altera a store principal para não estragar o diagnóstico real)
+  /**
+   * Estado local para a Simulação (não altera a store principal para não estragar o diagnóstico real do produtor).
+   */
   const [simulacao, setSimulacao] = useState({
     total_vacas: dadosFazenda?.total_vacas || 100,
     vacas_lactacao: dadosFazenda?.vacas_lactacao || 85,
@@ -153,10 +165,14 @@ export default function SimulacaoPage() {
   const [isSimulando, setIsSimulando] = useState(false);
   const [cenarioAtivo, setCenarioAtivo] = useState<'inferior' | 'intermediario' | 'superior'>('intermediario');
   
-  // NOVO: Estado para a barreira do Rate Limiting
+  /**
+   * Estado para a barreira do Rate Limiting que impede cliques em massa no botão de simulação.
+   */
   const [tempoBloqueio, setTempoBloqueio] = useState(0);
 
-  // Efeito que diminui o contador automaticamente a cada segundo
+  /**
+   * Efeito que diminui o contador automaticamente a cada segundo quando acionado o bloqueio de taxa.
+   */
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (tempoBloqueio > 0) {
@@ -194,15 +210,17 @@ export default function SimulacaoPage() {
         body: JSON.stringify(payloadSimulacao),
       });
 
-      // --- NOVO: Intercepta o Rate Limit (429 Too Many Requests) ---
+      /**
+       * Intercepta o Rate Limit (429 Too Many Requests)
+       */
       if (response.status === 429) {
-        setTempoBloqueio(60); // Aplica punição de 60 segundos
+        setTempoBloqueio(60);
         return;
       }
 
       if (response.ok) {
         const data = await response.json();
-        setResultadoSimulacao(data); // Atualiza o cache global no Zustand
+        setResultadoSimulacao(data);
       } else {
         console.error("Falha na simulação");
       }
@@ -222,7 +240,9 @@ export default function SimulacaoPage() {
     setSimulacao(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
   };
 
-  // Extrai os limites seguros retornados pela IA, ou provê hardcodes de segurança (fallback)
+  /**
+   * Extrai os limites seguros retornados pela IA, ou provê hardcodes de segurança predefinidos (fallback).
+   */
   const params = resultadoSimulacao?.parametros_painel || {
     total_vacas: { min: 10, max: 500, step: 1 },
     vacas_lactacao: { min: 0, max: 500, step: 1 },

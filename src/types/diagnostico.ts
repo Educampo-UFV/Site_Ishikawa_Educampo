@@ -4,9 +4,19 @@
  * Garante a integridade dos dados entre a resposta da IA (BFF), o Zustand e a Interface.
  */
 
+/**
+ * Define o status visual de uma comparação de benchmarking.
+ */
 export type StatusComparacao = 'positivo' | 'neutro' | 'negativo' | 'alerta';
+
+/**
+ * Define a severidade de uma causa identificada no diagrama de Ishikawa.
+ */
 export type SeveridadeCausa = 'critica' | 'atencao' | 'monitorar' | 'neutra';
 
+/**
+ * Estrutura de dados para os cards de benchmarking.
+ */
 export interface BenchmarkingCardData {
   titulo: string;
   valor_produtor: number | string;
@@ -17,6 +27,9 @@ export interface BenchmarkingCardData {
   mensagem_detalhada: string;
 }
 
+/**
+ * Representa um item (causa) individual dentro do Diagrama de Ishikawa.
+ */
 export interface IshikawaItem {
   causa: string;
   pratica?: string;
@@ -24,6 +37,9 @@ export interface IshikawaItem {
   analise?: string;             // Adicionado para tooltip/justificativa no Modal
 }
 
+/**
+ * Agrupa as causas do Diagrama de Ishikawa em suas respectivas categorias (Os 6 Ms).
+ */
 export interface IshikawaCategorias {
   mao_de_obra: IshikawaItem[];
   maquina: IshikawaItem[];
@@ -33,6 +49,9 @@ export interface IshikawaCategorias {
   material: IshikawaItem[];
 }
 
+/**
+ * Define os limites (thresholds) de impacto para um determinado indicador.
+ */
 export interface ImpactThresholds {
   bom?: string;
   regular?: string;
@@ -41,6 +60,9 @@ export interface ImpactThresholds {
   unidade?: string;
 }
 
+/**
+ * Estrutura que representa a análise detalhada de um indicador específico.
+ */
 export interface IndicadorData {
   status: 'bom' | 'regular' | 'critico';
   impacto_pilares?: Record<string, number>; // Novo: % de peso de cada pilar para UI futura
@@ -54,12 +76,18 @@ export interface IndicadorData {
   ranking?: string[];
 }
 
+/**
+ * Estrutura do resumo geral estratégico gerado pela IA.
+ */
 export interface ResumoGeral {
   visao_geral: string;
   prioridades: string[];
   proximos_passos: string[];
 }
 
+/**
+ * Resposta completa consolidada enviada pela API de Diagnóstico (BFF) após análise da IA.
+ */
 export interface DiagnosticoIAResponse {
   resumo_geral?: ResumoGeral;
   resumo?: string; // Fallback temporário para versões anteriores

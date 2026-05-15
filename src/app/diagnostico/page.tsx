@@ -26,6 +26,7 @@ import { StatusComparacao, BenchmarkingCardData } from '../../types/diagnostico'
 
 /**
  * @description Estrutura das pontuações dos limitadores do Acelerômetro por métrica.
+ * Define como os limites (thresholds) e os valores gráficos são tipados para o cálculo e renderização.
  */
 export interface FatorImpacto {
   valor_atual: number;
@@ -37,6 +38,10 @@ export interface FatorImpacto {
   };
 }
 
+/**
+ * @description Constante que define as abas (tabs) disponíveis para a navegação de indicadores no Stepper.
+ * Mapeia o id (utilizado como chave de acesso nos objetos de resposta da IA) para o seu rótulo de exibição.
+ */
 const TABS = [
   { id: 'ccs', label: 'CCS' },
   { id: 'producao_vaca', label: 'Produção Média Diária' },
@@ -51,6 +56,7 @@ const TABS = [
  * 1. O painel de Benchmarking
  * 2. O Resumo de Inteligência e as Citações
  * 3. O Diagrama de Ishikawa de acordo com o indicador no Stepper.
+ * @returns Componente React renderizando o dashboard analítico.
  */
 export default function DiagnosticoPage() {
   const router = useRouter();
@@ -58,12 +64,20 @@ export default function DiagnosticoPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState(TABS[0].id);
 
+  /**
+   * @description Efeito colateral disparado na montagem do componente no cliente.
+   * Marca `isMounted` como true para evitar problemas de "hydration mismatch" do Next.js.
+   */
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  /**
+   * @description Efeito de proteção da rota (Route Guard) visual.
+   * Se o componente montou e não há `dadosFazenda` populado no Zustand (ex: carregamento direto pela URL),
+   * força o redirecionamento imperativo para a etapa inicial em `/formulario`.
+   */
   useEffect(() => {
-    // Aguarda a montagem para evitar redirecionamento prematuro antes do Zustand hidratar os dados persistidos
     if (isMounted && !dadosFazenda) {
       router.push('/formulario');
     }
@@ -81,8 +95,8 @@ export default function DiagnosticoPage() {
   /**
    * @description Dicionário visual que atua como tradutor semântico.
    * Converte a string de "status" crua em estilos e iconografia do Tailwind.
-   * @param status String classificada (positivo, negativo, alerta).
-   * @returns Objetos definidos com classes tailwind e elemento JSX de ícone.
+   * @param {StatusComparacao | string} status String classificada da métrica (ex: positivo, negativo, alerta).
+   * @returns {Object} Objeto contendo propriedades 'bg', 'text', 'border' com as classes utilitárias do Tailwind e 'icon' com elemento JSX.
    */
   const getStatusUI = (status?: StatusComparacao | string) => {
     switch (status) {
@@ -111,20 +125,29 @@ export default function DiagnosticoPage() {
     }
   };
 
-  // Extração do array processado pelo BFF Global State (Segurança contra falhas com fallback para array vazio)
+  /**
+   * @description Extração segura do array de benchmarking processado pela IA e armazenado no estado global.
+   * Aplica um array vazio como fallback de segurança caso os dados ainda não estejam carregados ou o objeto esteja malformado.
+   * @type {BenchmarkingCardData[]}
+   */
   const benchmarks: BenchmarkingCardData[] = diagnosticoIA?.benchmarking || [];
 
   // ============================================================================
   // LÓGICA DE DIAGNÓSTICO (Trazida da antiga tela diagnostico/page.tsx)
   // ============================================================================
+  /**
+   * @description Pega o nó bruto contendo as análises para o indicador atualmente selecionado (`activeTab`).
+   * Tenta acessá-lo aninhado em `.indicadores` e possui fallback direto no nível da raiz de `diagnosticoIA`.
+   */
   const rawData = diagnosticoIA?.indicadores?.[activeTab] || diagnosticoIA?.[activeTab];
 
   /**
    * @description Responsável pelo "ETL" final no frontend. Mapeia a estrutura bruta 
    * da Inteligência Artificial em um formato diretamente consumível pelo componente IshikawaDiagram.
-   * @param data Nó cru vindo do `diagnosticoIA` da API externa.
-   * @param tabId O indicador selecionado no momento (ex: ccs).
-   * @returns O objeto processado com as causas e práticas ramificadas por pilar.
+   * Categoriza iterativamente as causas enviadas nos 6 pilares (Ms) do Ishikawa e unifica métricas auxiliares.
+   * @param {any} data Nó cru vindo do `diagnosticoIA` da API externa referente ao indicador.
+   * @param {string} tabId O identificador do indicador selecionado no momento (ex: "ccs").
+   * @returns {Object|null} O objeto processado com as causas ramificadas por pilar, valores atuais unificados, e lista de fatores de impacto, ou `null` caso `data` seja indefinido.
    */
   const processarDados = (data: any, tabId: string) => {
     if (!data) return null;
@@ -169,6 +192,10 @@ export default function DiagnosticoPage() {
     };
   };
 
+  /**
+   * @description Resultado processado pronto para ser fornecido aos componentes de visualização da análise específica do indicador.
+   * É gerado dinamicamente sempre que `activeTab` muda ou que `rawData` reidrata.
+   */
   const processedData = processarDados(rawData, activeTab);
 
   return (
@@ -189,6 +216,12 @@ export default function DiagnosticoPage() {
                 const isComparativo = card.valor_referencia !== undefined;
                 const ui = getStatusUI(card.status_comparacao);
                 
+                /**
+                 * @description Função utilitária para formatar os valores numéricos no padrão de localização pt-BR.
+                 * Executa parsing seguro testando os tipos primitivos e strings antes de executar toLocaleString.
+                 * @param {any} val Valor bruto recebido da API.
+                 * @returns {string} String do valor já formatada.
+                 */
                 const formatValor = (val: any) => {
                   if (val === undefined || val === null) return '';
                   if (typeof val === 'number') return val.toLocaleString('pt-BR');

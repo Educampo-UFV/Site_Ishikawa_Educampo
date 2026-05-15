@@ -1,8 +1,6 @@
 /**
  * @file src/components/ui/TextoComCitacoes.tsx
- * @description Componente responsável por ler o texto da IA (visao_geral),
- * identificar marcações de citação (ex: [1], [2]) via Regex, e substituí-las
- * por botões interativos. Ao clicar, exibe um Modal com a analise_tecnica respectiva.
+ * @description Algoritmo de Regex em string e conversão para nós HTML (botões e tooltips).
  */
 
 'use client';
@@ -11,8 +9,9 @@ import React, { useState } from 'react';
 import { X, BookOpen } from 'lucide-react';
 
 /**
- * @description Contrato do objeto com explicação técnica ligada a um ID de 
- * referência devolvido pela IA Gerativa (OpenRouter).
+ * @description Contrato para mapear o id da String de Citação.
+ * @property {string | number} id - O Id referenciado como gancho do texto (ex: `1`).
+ * @property {string} analise_tecnica - O subtexto completo extraído associado àquele id.
  */
 interface Raciocinio {
   id: string | number;
@@ -20,8 +19,9 @@ interface Raciocinio {
 }
 
 /**
- * @description Propriedades mínimas a serem resolvidas no texto 
- * mestre do Visão Global da propriedade.
+ * @description Argumentos repassados para a varredura primária do componente.
+ * @property {string} texto - Texto longo contendo marcações de Regex entre colchetes a ser analisado.
+ * @property {Raciocinio[]} [raciocinios] - O array correspondente indexado de chaves e detalhes.
  */
 interface TextoComCitacoesProps {
   texto: string;
@@ -29,10 +29,10 @@ interface TextoComCitacoesProps {
 }
 
 /**
- * @description Varredor Textual baseada em Regex. Lida com a string crua que chega 
- * do backend, separa padrões envoltos em colchetes como '[1]' ou '[2]' e as transforma
- * em botões interativos renderizados em Sobrescrito, mantendo preservado o restante 
- * da frase.
+ * @description Escaneia o bloco de string usando `split(regex)` e isolando em fragmentos.
+ * Se há casamento numérico (`[1]`), injeta um HTML Elemento Button no DOM; caso contrário, joga o React Fragment do texto bruto, preservando assim o fluxo contínuo do parágrafo.
+ * @param {TextoComCitacoesProps} props - Propriedades iteradas.
+ * @returns {React.JSX.Element} Documento HTML dinâmico com eventos em hooks que ativam Modal Flutuante para os botões recriados.
  */
 export const TextoComCitacoes: React.FC<TextoComCitacoesProps> = ({ texto, raciocinios = [] }) => {
   const [citacaoAtiva, setCitacaoAtiva] = useState<Raciocinio | null>(null);

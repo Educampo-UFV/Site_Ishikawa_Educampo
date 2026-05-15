@@ -1,7 +1,6 @@
 /**
  * @file src/components/ui/CausaItem.tsx
- * @description Renderiza uma causa individual dentro do Diagrama de Ishikawa.
- * Inclui uma flag visual de severidade que, ao ser clicada, exibe a análise técnica.
+ * @description Lógica de renderização de um item de causa com popup expansível.
  */
 
 'use client';
@@ -10,7 +9,14 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle, Flag, X, ChevronDown } from 'lucide-react';
 
 /**
- * @description Estrutura de dados exigida para exibir a linha individual e a "flag".
+ * @description Propriedades para configurar a exibição de uma causa e suas práticas associadas.
+ * @property {string} causa - Descrição da causa do problema processada no backend.
+ * @property {string} [pratica] - Ação recomendada pela IA associada à causa.
+ * @property {string} [severidade] - Nível de severidade retornado pela IA.
+ * @property {string} [analise] - Detalhamento textual vindo da análise técnica avançada.
+ * @property {boolean} [isAccordion] - Se renderiza em formato accordion (dentro do Modal) em vez de popover card (dentro do Grid).
+ * @property {boolean} [defaultExpanded] - Se a lógica da interface dita que o accordion inicia expandido.
+ * @property {(e: React.MouseEvent) => void} [onClickCausa] - Callback acionado ao clicar na causa principal.
  */
 interface CausaItemProps {
   causa: string;
@@ -23,9 +29,11 @@ interface CausaItemProps {
 }
 
 /**
- * @description Linha que compõe a espinha do Diagrama de Ishikawa.
- * Identifica a presença do nível de severidade e renderiza a bandeira (flag) que, 
- * ao ser clicada, aciona o modal contendo a análise técnica avançada gerada pela IA.
+ * @description Gerencia os estados locais de visibilidade (`mostrarAnalise`, `isExpanded`) com base nas propriedades externas.
+ * Executa uma mutação visual alterando o DOM para formatar Accordion condicionalmente com base na flag `isAccordion`.
+ * Processa o texto de severidade recebido para extrair cor semântica baseada nas lógicas de Design System usando expressões RegEx/Includes.
+ * @param {CausaItemProps} props - Propriedades mapeadas da causa individual.
+ * @returns {React.JSX.Element} O fragmento iterável da linha (popover ou accordion).
  */
 export const CausaItem: React.FC<CausaItemProps> = ({ causa, pratica, severidade, analise, isAccordion, defaultExpanded, onClickCausa }) => {
   const [mostrarAnalise, setMostrarAnalise] = useState(false);

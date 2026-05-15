@@ -1,8 +1,6 @@
 /**
- * @file Navbar.tsx
- * @description Componente de cabeçalho e navegação global. 
- * Exibe o logotipo do Educampo à esquerda e um botão de menu (hamburger/X) à direita.
- * O Menu Expandido respeita o container centralizado para alinhar-se perfeitamente ao botão "X".
+ * @file src/components/ui/Navbar.tsx
+ * @description Lógica do Menu de Navegação Global (App Router Header).
  */
 
 "use client";
@@ -12,6 +10,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { BarChart2, Lightbulb, Settings } from 'lucide-react';
 
+/**
+ * @description Inicia refs do DOM (menuRef, buttonRef) para verificar coordenadas no handler global `handleClickOutside`.
+ * Executa mutações de classe usando `isMenuOpen` injetando escalas em spans para simular animação CSS (Hamburger -> X) 
+ * evitando bibliotecas de animação de terceiros para perfomance máxima.
+ * @returns {React.JSX.Element} Cabeçalho injetado com interatividade isolada de cliente ('use client').
+ */
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

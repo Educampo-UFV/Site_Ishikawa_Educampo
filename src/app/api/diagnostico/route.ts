@@ -1,8 +1,10 @@
 /**
  * @file route.ts
  * @description Implementação do Endpoint BFF para Diagnóstico.
- * * Este arquivo atua como um Proxy Inteligente e Seguro entre o Frontend e a API Python no Render.
- * * Lógica de Funcionamento:
+ * 
+ * Este arquivo atua como um Proxy Inteligente e Seguro entre o Frontend e a API Python no Render.
+ * 
+ * Lógica de Funcionamento (Como):
  * 1. Recebe a requisição POST do navegador.
  * 2. Valida o payload utilizando o Schema do Zod para garantir integridade.
  * 3. Verifica a Feature Flag de criptografia para preparo de segurança futura.
@@ -18,8 +20,17 @@ import { DiagnosticoIAResponse } from '../../../types/diagnostico';
 
 /**
  * Manipula requisições POST para gerar o diagnóstico da fazenda.
- * * @param req - Objeto da requisição NextRequest contendo os dados da fazenda.
- * @returns NextResponse com o diagnóstico da IA ou mensagens de erro tratadas.
+ * 
+ * Como a função opera internamente:
+ * - O JSON da requisição é extraído e submetido à função `safeParse` do `fazendaSchema` (Zod).
+ * - Os campos validados sofrem um mapeamento de nomenclatura para adaptar a estrutura do Next.js ao padrão Pydantic esperado pelo backend em Python (ex: `animais_rebanho` para `total_rebanho`).
+ * - Instancia um `AbortController` atrelado ao `fetch` para garantir um timeout global de 30 segundos.
+ * - Os headers `Authorization` e `X-API-KEY` são enriquecidos com variáveis de ambiente sigilosas, blindando o cliente.
+ * - Verifica os status HTTP de erro (400, 401, 403, 422) retornados pela API real e faz o proxy formatando mensagens customizadas para o client.
+ * - Ao finalizar com sucesso (200), extrai e loga as métricas de performance dos cabeçalhos da resposta antes de retornar o objeto tipado como `DiagnosticoIAResponse`.
+ * 
+ * @param req - Objeto da requisição NextRequest contendo o JSON dos dados da fazenda.
+ * @returns NextResponse contendo o diagnóstico da IA em caso de sucesso (status 200) ou detalhes do erro de validação/comunicação (status 400, 502, 504, 500).
  */
 export async function POST(req: NextRequest) {
   try {

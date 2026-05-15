@@ -1,7 +1,6 @@
 /**
  * @file src/components/ui/Acelerometro.tsx
- * @description Widget de diagnóstico completo em formato de velocímetro (Gauge Chart).
- * Renderiza o gráfico, o valor numérico, a unidade, os limites (thresholds) e a legenda.
+ * @description Implementa a renderização do Acelerômetro usando SVG.
  */
 
 import React from 'react';
@@ -17,6 +16,15 @@ interface Thresholds {
   direcao_otimizacao?: string;
 }
 
+/**
+ * @description Propriedades para renderização do componente Acelerometro.
+ * @property {number | string} valor - Valor atual a ser exibido e apontado pela agulha.
+ * @property {string} [unidade] - Unidade de medida associada ao valor.
+ * @property {string} status - Status do indicador para fallback da cor do marcador.
+ * @property {Thresholds} [thresholds] - Limites lógicos para cálculo das zonas percentuais de cor.
+ * @property {number} [minimo] - Valor mínimo explícito do gráfico.
+ * @property {number} [maximo] - Valor máximo explícito do gráfico.
+ */
 interface AcelerometroProps {
   valor: number | string;
   unidade?: string;
@@ -26,6 +34,12 @@ interface AcelerometroProps {
   maximo?: number; 
 }
 
+/**
+ * @description Calcula matematicamente a rotação contínua da agulha usando proporcionalidade aos arcos
+ * SVG e distribui os offsets baseando-se nos valores contidos nas props (ou fallback dinâmico).
+ * @param {AcelerometroProps} props - Propriedades do componente.
+ * @returns {React.JSX.Element} Estrutura SVG e HTML renderizando o acelerômetro.
+ */
 export function Acelerometro({ 
   valor, 
   unidade, 

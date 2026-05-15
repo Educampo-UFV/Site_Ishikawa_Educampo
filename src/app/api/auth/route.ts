@@ -18,6 +18,19 @@ const SECRET_KEY = new TextEncoder().encode(
   process.env.ENCRYPTION_SECRET_KEY || 'chave_secreta_padrao_para_desenvolvimento_educampo'
 );
 
+/**
+ * Manipula as requisições POST para a rota de autenticação.
+ * 
+ * COMO FUNCIONA:
+ * Extrai o corpo da requisição em formato JSON para obter as credenciais do usuário.
+ * Realiza uma validação das credenciais fornecidas contra valores predefinidos (mock).
+ * Em caso de sucesso, gera um token JWT assinado contendo o nome de usuário (username)
+ * e o injeta como um cookie HttpOnly, Secure e SameSite na resposta, blindando contra 
+ * ataques XSS e CSRF. Retorna erro 401 para credenciais inválidas ou 500 para falhas no servidor.
+ *
+ * @param {NextRequest} request - O objeto da requisição HTTP contendo as credenciais.
+ * @returns {Promise<NextResponse>} Resposta com o cookie injetado ou mensagem de erro.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

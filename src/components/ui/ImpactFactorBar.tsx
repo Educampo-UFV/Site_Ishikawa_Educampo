@@ -1,12 +1,20 @@
 /**
  * @file src/components/ui/ImpactFactorBar.tsx
- * @description Componente visual para exibir os Fatores de Impacto de um indicador,
- * apresentando uma barra linear colorida e um marcador indicando a posição do valor atual do produtor.
+ * @description Lógica de cálculo e renderização da barra base percentual linear e marcadores posicionais.
  */
 
 import React from 'react';
 import { ImpactThresholds } from '../../types/diagnostico';
 
+/**
+ * @description Propriedades exigidas para alimentar a barra de fator de impacto de um indicador isolado.
+ * @property {string} label - Rótulo/Nome do fator sendo exibido.
+ * @property {number | string} [valor] - Valor numérico a ser apontado como tooltip superior na barra.
+ * @property {string} [unidade] - Sufixo da unidade para renderização visual da bolha.
+ * @property {number} [minimo] - Fundo matemático de escala (Start Point).
+ * @property {number} [maximo] - Topo matemático de escala (End Point).
+ * @property {ImpactThresholds} thresholds - Objeto contendo os limites avaliativos para colorir a barra.
+ */
 interface ImpactFactorBarProps {
   label: string;
   valor?: number | string;
@@ -16,6 +24,13 @@ interface ImpactFactorBarProps {
   thresholds: ImpactThresholds;
 }
 
+/**
+ * @description Converte strings de limiares (ex: `> 500`) fornecidos em `thresholds` para delimitar e
+ * calcular frações de exibição (larguras percentuais relativas) das faixas Verde, Amarelo e Vermelho.
+ * Ajusta a coordenada horizontal (left) em porcentagem clampleando matematicamente sobre toda a amplitude (Range).
+ * @param {ImpactFactorBarProps} props - Propriedades do fator.
+ * @returns {React.JSX.Element} Div renderizada como linha CSS manipulada por estilos dinâmicos em `style=`.
+ */
 export function ImpactFactorBar({ label, valor, unidade, minimo, maximo, thresholds }: ImpactFactorBarProps) {
   // Tenta extrair o valor e unidade das props ou do objeto thresholds
   const rawValor = valor !== undefined ? valor : thresholds?.valor;

@@ -3,16 +3,15 @@
  * @description Tela de transição e processamento de dados.
  * Responsabilidades:
  * 1. Recuperar os dados da fazenda salvos no Zustand.
- * 2. Enviar os dados para a API interna (BFF).
+ * 2. Enviar os dados para as APIs internas (BFF) de Diagnóstico e Simulação em paralelo.
  * 3. Gerenciar o estado de espera visual do usuário com feedback elegante.
- * 4. Salvar o diagnóstico retornado no estado global e redirecionar para o Diagnóstico.
+ * 4. Salvar os resultados retornados no estado global e redirecionar para a Tela de Diagnóstico.
  */
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { FazendaFormData } from "@/lib/schemas";
 import { useFazendaStore } from "@/store/useFazendaStore"; 
 import Image from "next/image";
 
@@ -20,6 +19,7 @@ export default function CarregandoPage() {
   const router = useRouter();
   const { dadosFazenda, setDiagnosticoIA, setResultadoSimulacao } = useFazendaStore();
   const [mensagem, setMensagem] = useState("Preparando análise...");
+  const processamentoIniciado = useRef(false);
 
   useEffect(() => {
     /**
@@ -31,6 +31,9 @@ export default function CarregandoPage() {
         router.push("/formulario");
         return;
       }
+      
+      if (processamentoIniciado.current) return;
+      processamentoIniciado.current = true;
 
       try {
         setMensagem("A Inteligência Artificial está projetando seus cenários...");

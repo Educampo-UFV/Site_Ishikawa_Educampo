@@ -1,22 +1,29 @@
 /**
  * @file src/components/ui/SplitScreenLayout.tsx
- * @description Componente de layout estrutural que gerencia a responsividade e a identidade visual da marca.
- * * * COMO ESTE CÓDIGO FUNCIONA:
- * 1. Composição de Interface: Utiliza o padrão 'children' do React para injetar conteúdos dinâmicos.
- * 2. Responsividade: Implementa split-screen (50/50) apenas em 'lg'. Oculta a barra lateral em telas pequenas.
- * 3. Identidade Visual: Aplica o gradiente institucional (#003e7d a #1973d3) via Tailwind v4.
- * 4. Gestão de Assets: Serve logos da pasta /public de forma otimizada.
+ * @description Implementa a estrutura wrapper 50/50 com injeção de children de rotas internas.
  */
 
 import Image from 'next/image';
 import React, { ReactNode } from 'react';
 
+/**
+ * @description Define as propriedades injetáveis no lado ativo da tela dividida.
+ * @property {string} title - O Título exposto nativamente acima do seu componente central.
+ * @property {string} [subtitle] - O Texto descritivo base posicionado abaixo de Title.
+ * @property {ReactNode} children - Conteúdo JSX processado a ser encapsulado dentro do layout direito.
+ */
 interface SplitScreenLayoutProps {
   title: string;
   subtitle?: string;
   children: ReactNode;
 }
 
+/**
+ * @description Gerencia a árvore do DOM alocando as Views (`children`) em um wrapper flex div `w-1/2`.
+ * Processa as mídias SVG no painel invisível em mobile e aciona a regra Tailwind `hidden lg:flex` baseando-se no viewport.
+ * @param {SplitScreenLayoutProps} props - Propriedades contendo elementos dinâmicos do NextJS.
+ * @returns {React.JSX.Element} Envelopamento nativo do template principal.
+ */
 export function SplitScreenLayout({ title, subtitle, children }: SplitScreenLayoutProps) {
   return (
     <div className="min-h-screen flex w-full font-sans bg-fundo">
