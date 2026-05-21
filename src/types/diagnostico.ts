@@ -21,7 +21,7 @@ export interface BenchmarkingCardData {
   titulo: string;
   valor_produtor: number | string;
   valor_referencia?: number | string;
-  unidade?: string;
+  unidade_medida?: string;
   status_comparacao?: StatusComparacao;
   mensagem_curta?: string;
   mensagem_detalhada: string;
@@ -31,7 +31,7 @@ export interface BenchmarkingCardData {
  * Representa um item (causa) individual dentro do Diagrama de Ishikawa.
  */
 export interface IshikawaItem {
-  causa: string;
+  resumo_pratica: string;
   pratica?: string;
   severidade?: SeveridadeCausa; // Adicionado para exibir as bolinhas coloridas (UX)
   analise?: string;             // Adicionado para tooltip/justificativa no Modal
@@ -57,7 +57,10 @@ export interface ImpactThresholds {
   regular?: string;
   critico?: string;
   valor?: number;
-  unidade?: string;
+  unidade_medida?: string;
+  direcao_ideal?: string;
+  limite_inferior?: number;
+  limite_superior?: number;
 }
 
 /**
@@ -70,7 +73,7 @@ export interface IndicadorData {
   ishikawa?: IshikawaCategorias;            
   textos_analise?: string;
   fatores_impacto?: Record<string, ImpactThresholds>;
-  unidade?: string;
+  unidade_medida?: string;
   thresholds?: ImpactThresholds;
   valor_atual?: number | string;
   ranking?: string[];

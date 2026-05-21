@@ -10,7 +10,7 @@ import { AlertCircle, Flag, X, ChevronDown } from 'lucide-react';
 
 /**
  * @description Propriedades para configurar a exibição de uma causa e suas práticas associadas.
- * @property {string} causa - Descrição da causa do problema processada no backend.
+ * @property {string} resumo_pratica - Descrição da causa do problema processada no backend.
  * @property {string} [pratica] - Ação recomendada pela IA associada à causa.
  * @property {string} [severidade] - Nível de severidade retornado pela IA.
  * @property {string} [analise] - Detalhamento textual vindo da análise técnica avançada.
@@ -19,7 +19,7 @@ import { AlertCircle, Flag, X, ChevronDown } from 'lucide-react';
  * @property {(e: React.MouseEvent) => void} [onClickCausa] - Callback acionado ao clicar na causa principal.
  */
 interface CausaItemProps {
-  causa: string;
+  resumo_pratica: string;
   pratica?: string;
   severidade?: string;
   analise?: string;
@@ -35,7 +35,7 @@ interface CausaItemProps {
  * @param {CausaItemProps} props - Propriedades mapeadas da causa individual.
  * @returns {React.JSX.Element} O fragmento iterável da linha (popover ou accordion).
  */
-export const CausaItem: React.FC<CausaItemProps> = ({ causa, pratica, severidade, analise, isAccordion, defaultExpanded, onClickCausa }) => {
+export const CausaItem: React.FC<CausaItemProps> = ({ resumo_pratica, pratica, severidade, analise, isAccordion, defaultExpanded, onClickCausa }) => {
   const [mostrarAnalise, setMostrarAnalise] = useState(false);
   const [isExpanded, setIsExpanded] = useState(defaultExpanded || false);
 
@@ -70,7 +70,7 @@ export const CausaItem: React.FC<CausaItemProps> = ({ causa, pratica, severidade
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-start gap-2 flex-1">
-            <span className="text-sm text-gray-800 font-medium leading-tight flex-1">{causa}</span>
+            <span className="text-sm text-gray-800 font-medium leading-tight flex-1">{resumo_pratica}</span>
             {severidade && (
               <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-xs font-bold shrink-0 ${colorClass}`}>
                 <Flag size={12} strokeWidth={3} />
@@ -117,7 +117,7 @@ export const CausaItem: React.FC<CausaItemProps> = ({ causa, pratica, severidade
         className="flex items-start justify-between gap-2 p-2 bg-white border border-gray-100 rounded-lg shadow-sm cursor-pointer hover:border-blue-300 transition-colors"
         onClick={onClickCausa}
       >
-        <span className="text-sm text-gray-700 font-medium leading-tight">{causa}</span>
+        <span className="text-sm text-gray-700 font-medium leading-tight">{resumo_pratica}</span>
         
         {/* Flag de Severidade (Botão) */}
         {severidade && analise && (

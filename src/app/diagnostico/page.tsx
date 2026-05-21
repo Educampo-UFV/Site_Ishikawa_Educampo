@@ -29,10 +29,11 @@ import { StatusComparacao, BenchmarkingCardData } from '../../types/diagnostico'
  * Define como os limites (thresholds) e os valores gráficos são tipados para o cálculo e renderização.
  */
 export interface FatorImpacto {
+  titulo?: string;
   valor_atual: number;
-  unidade?: string;
-  grafico_min?: number;
-  grafico_max?: number;
+  unidade_medida?: string;
+  limite_inferior?: number;
+  limite_superior?: number;
   regras: {
     [key: string]: string; // Ex: { "bom": "< 200", "critico": "> 500" }
   };
@@ -164,7 +165,7 @@ export default function DiagnosticoPage() {
       data.causas.forEach((item: any) => {
         const pilar = (item.pilar || '').toLowerCase();
         const causaObj = { 
-          causa: item.causa, 
+          resumo_pratica: item.resumo_pratica, 
           pratica: item.pratica,
           severidade: item.severidade,
           analise: item.analise
@@ -224,8 +225,8 @@ export default function DiagnosticoPage() {
                  */
                 const formatValor = (val: any) => {
                   if (val === undefined || val === null) return '';
-                  if (typeof val === 'number') return val.toLocaleString('pt-BR');
-                  if (!isNaN(Number(val)) && String(val).trim() !== '') return Number(val).toLocaleString('pt-BR');
+                  if (typeof val === 'number') return val.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+                  if (!isNaN(Number(val)) && String(val).trim() !== '') return Number(val).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
                   return String(val);
                 };
 
@@ -237,13 +238,13 @@ export default function DiagnosticoPage() {
                         {isComparativo && ui.icon}
                       </div>
                       <div className="mt-2">
-                        <span className="sr-only">{card.valor_produtor} {card.unidade || ''}</span>
+                        <span className="sr-only">{card.valor_produtor} {card.unidade_medida || ''}</span>
                         <div aria-hidden="true" className="flex items-baseline gap-2">
                           <span className="text-3xl font-bold text-gray-800">
                             {formatValor(card.valor_produtor)}
                           </span>
-                          {card.unidade && (
-                            <span className="text-base font-normal text-gray-500">{card.unidade}</span>
+                          {card.unidade_medida && (
+                            <span className="text-base font-normal text-gray-500">{card.unidade_medida}</span>
                           )}
                         </div>
                       </div>
@@ -258,7 +259,7 @@ export default function DiagnosticoPage() {
                         {card.mensagem_detalhada}
                         {isComparativo && (
                           <span className="block mt-1 font-medium text-gray-400">
-                            (Ref: {formatValor(card.valor_referencia)} {card.unidade || ''})
+                            (Ref: {formatValor(card.valor_referencia)} {card.unidade_medida || ''})
                           </span>
                         )}
                       </p>
@@ -358,11 +359,11 @@ export default function DiagnosticoPage() {
                   <span className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-4">Status Atual</span>
                   <Acelerometro 
                     valor={processedData.valor_atual} 
-                    unidade={processedData.unidade || ''} 
+                    unidade={processedData.unidade_medida || ''} 
                     status={processedData.status || ''} 
                     thresholds={processedData.thresholds} 
-                    minimo={processedData.thresholds?.grafico_min}
-                    maximo={processedData.thresholds?.grafico_max}
+                    minimo={processedData.thresholds?.limite_inferior}
+                    maximo={processedData.thresholds?.limite_superior}
                   />
                 </div>
 
@@ -384,10 +385,11 @@ export default function DiagnosticoPage() {
                           <ImpactFactorBar 
                             key={chave} 
                             label={chave} 
+                            titulo={fator.titulo}
                             valor={fator.valor_atual}
-                            unidade={fator.unidade}
-                            minimo={fator.grafico_min}
-                            maximo={fator.grafico_max}
+                            unidade={fator.unidade_medida}
+                            minimo={fator.limite_inferior}
+                            maximo={fator.limite_superior}
                             thresholds={fator.regras as any} 
                           />
                         );

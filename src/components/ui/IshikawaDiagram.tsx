@@ -75,7 +75,7 @@ export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares 
               <h3 className="font-bold text-lg text-primary">{cat.title}</h3>
               {cat.impacto !== undefined && (
                 <span className="font-bold text-primary bg-blue-50 px-2 py-0.5 rounded-md text-sm">
-                  {cat.impacto}%
+                  {Number(cat.impacto).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%
                 </span>
               )}
             </div>
@@ -84,7 +84,7 @@ export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares 
                 cat.items.map((item, idx) => (
                   <CausaItem 
                     key={idx} 
-                    causa={item.causa} 
+                    resumo_pratica={(item as any).resumo_pratica || (item as any).causa} 
                     pratica={item.pratica} 
                     severidade={(item as any).severidade} 
                     analise={(item as any).analise} 
@@ -127,7 +127,7 @@ export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares 
                   {selectedCategory.category.items.map((item, idx) => (
                     <CausaItem 
                       key={idx} 
-                      causa={item.causa} 
+                      resumo_pratica={(item as any).resumo_pratica || (item as any).causa} 
                       pratica={item.pratica} 
                       severidade={(item as any).severidade} 
                       analise={(item as any).analise} 

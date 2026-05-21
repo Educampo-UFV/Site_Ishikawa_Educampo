@@ -79,7 +79,7 @@ Para rotas protegidas, o seguinte header é mandatório:
           "titulo": "Qualidade do Leite (CCS)",
           "valor_produtor": 150.0,
           "valor_referencia": 350.0,
-          "unidade": "x1000 cél/mL",
+          "unidade_medida": "x1000 cél/mL",
           "status_comparacao": "positivo",
           "mensagem_curta": "Excelente",
           "mensagem_detalhada": "Sua CCS está 57.1% melhor que a mediana da sua região."
@@ -89,17 +89,18 @@ Para rotas protegidas, o seguinte header é mandatório:
         "producao_vaca": {
           "status": "critico",
           "textos_analise": "A produção de 18.5 L/vaca/dia está abaixo do esperado e a CCS de 650 indica um Gargalo Sanitário...",
-          "unidade": "L/vaca/dia",
+          "unidade_medida": "L/vaca/dia",
           "impacto_pilares": {
-            "mao_de_obra": 45.5,
-            "meio_ambiente": 12.0
+            "Mão de Obra": 45.5,
+            "Meio Ambiente": 12.0
           },
           "tag": "Gargalo Sanitário",
           "thresholds": {
             "valor_atual": 18.5,
-            "unidade": "L/vaca/dia",
-            "grafico_min": 12.0,
-            "grafico_max": 38.5,
+            "unidade_medida": "L/vaca/dia",
+            "direcao_ideal": "maior_melhor",
+            "limite_inferior": 12.0,
+            "limite_superior": 38.5,
             "bom": "> 26.89",
             "regular": "> 22.39 AND <= 26.89",
             "critico": "<= 22.39"
@@ -107,9 +108,10 @@ Para rotas protegidas, o seguinte header é mandatório:
           "fatores_impacto": {
             "ccs": {
               "valor_atual": 650.0,
-              "unidade": "x1000 cél/mL",
-              "grafico_min": 0.0,
-              "grafico_max": 1000.0,
+              "unidade_medida": "x1000 cél/mL",
+              "direcao_ideal": "menor_melhor",
+              "limite_inferior": 0.0,
+              "limite_superior": 1000.0,
               "regras": {
                 "bom": "< 200",
                 "critico": "> 500"
@@ -120,7 +122,7 @@ Para rotas protegidas, o seguinte header é mandatório:
             {
               "id": "producao_vaca-mao_de_obra-1",
               "pilar": "mao_de_obra",
-              "causa": "Falha na rotina de ordenha",
+              "resumo_pratica": "Falha na rotina de ordenha",
               "pratica": "Estabelecer POP de ordenha e treinar os funcionários...",
               "severidade": "critica",
               "analise": "A CCS de 650 aponta para problemas graves de higiene na ordenha..."
@@ -325,7 +327,7 @@ Para evitar alucinações matemáticas e refletir a realidade do campo, a IA obe
 
 ### 📊 Proteção contra Outliers nos Gráficos (A Abordagem Híbrida)
 
-Nas rotas de diagnóstico, a API fornece as chaves `grafico_min` e `grafico_max` dentro dos nós `thresholds` (indicador principal) e `fatores_impacto` (subindicadores).
+Nas rotas de diagnóstico, a API fornece as chaves `limite_inferior` e `limite_superior` dentro dos nós `thresholds` (indicador principal) e `fatores_impacto` (subindicadores).
 
 O objetivo dessas chaves é proteger a interface visual (ex: componentes de Velocímetro ou Barras de Progresso) de **Outliers Extremos** que deformam a proporção do gráfico.
 A API gera esses limites usando uma **Abordagem Híbrida**:
@@ -334,7 +336,7 @@ A API gera esses limites usando uma **Abordagem Híbrida**:
 2.  **Cálculo Estatístico Dinâmico (Cercas de Tukey - IQR)**: Variáveis suscetíveis ao mercado (ex: `Preço do Leite`, `Volume Diário`, `Produção por Área`) têm os limites renderizados dinamicamente. A API varre a base de dados da região e do sistema do produtor, encontra o 1º Quartil (P25) e o 3º Quartil (P75) e estipula o limite máximo excluindo anomalias e valores discrepantes da região.
 
 #### 👨‍💻 Como o Front-end deve consumir isso:
-Pode ocorrer de o `valor_atual` de um produtor ser *maior* do que o `grafico_max` caso ele seja um outlier agressivo (ex: Um CCS de `1500` com um gráfico com limite em `1000`).
+Pode ocorrer de o `valor_atual` de um produtor ser *maior* do que o `limite_superior` caso ele seja um outlier agressivo (ex: Um CCS de `1500` com um gráfico com limite em `1000`).
 
 Para o gráfico não "vazar" da tela (quebrando o CSS), ao popular a largura da barra, aplique uma função `Math.min()` limitando visualmente a `100%`, mas exibindo a label textual com o número real:
 
@@ -349,8 +351,8 @@ const calcWidth = (valor, min, max) => {
 };
 
 // Componente Visual
-<div className="barra-progresso" style={{ width: calcWidth(data.valor_atual, data.grafico_min, data.grafico_max) }}></div>
-<span className="texto-informativo">{data.valor_atual} {data.unidade}</span> // Exibe o valor real que estourou a margem
+<div className="barra-progresso" style={{ width: calcWidth(data.valor_atual, data.limite_inferior, data.limite_superior) }}></div>
+<span className="texto-informativo">{data.valor_atual} {data.unidade_medida}</span> // Exibe o valor real que estourou a margem
 ```
 
 ---
