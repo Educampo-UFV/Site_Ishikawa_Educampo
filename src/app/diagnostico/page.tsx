@@ -9,6 +9,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useFazendaStore } from '@/store/useFazendaStore';
 import { Navbar } from '@/components/ui/Navbar';
 import { IshikawaDiagram } from '@/components/ui/IshikawaDiagram';
@@ -21,7 +22,8 @@ import {
   TrendingDown,
   Minus,
   AlertTriangle,
-  Info
+  Info,
+  ArrowRight
 } from 'lucide-react';
 import { StatusComparacao, BenchmarkingCardData } from '../../types/diagnostico';
 
@@ -484,6 +486,26 @@ export default function DiagnosticoPage() {
               <p className="text-gray-500">Selecione um indicador para visualizar o diagnóstico.</p>
             </div>
           )}
+        </section>
+
+        {/* SEÇÃO 4: CTA SIMULAÇÃO (FULL-WIDTH) */}
+        <section aria-labelledby="cta-simulacao" className="w-full mt-4">
+          <Link 
+            href="/simulacao"
+            className="group w-full flex items-center justify-between bg-[#1973d3] hover:bg-[#003e7d] transition-colors duration-300 text-white p-6 md:p-8 rounded-xl shadow-lg border border-[#003e7d]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1973d3]"
+          >
+            <div className="flex flex-col text-left">
+              <h2 id="cta-simulacao" className="text-xl md:text-2xl font-bold mb-2">
+                Simular Cenários e Avaliar Projeções de Desempenho
+              </h2>
+              <p className="text-blue-100 text-sm md:text-base">
+                Acesse a ferramenta de projeção para alterar parâmetros da sua fazenda e visualizar os impactos estratégicos.
+              </p>
+            </div>
+            <div className="shrink-0 ml-4 bg-white/20 p-3 rounded-full group-hover:translate-x-1 transition-transform duration-300">
+              <ArrowRight size={28} className="text-white" />
+            </div>
+          </Link>
         </section>
 
       </main>
