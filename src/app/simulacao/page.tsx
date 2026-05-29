@@ -11,7 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/ui/Navbar';
 import { useFazendaStore } from '@/store/useFazendaStore';
-import { TrendingUp, TrendingDown, Minus, Loader2, RotateCcw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Loader2, RotateCcw, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
 /**
@@ -151,6 +151,13 @@ const BarChartSimulacao = ({
 export default function SimulacaoPage() {
   const { dadosFazenda, resultadoSimulacao, setResultadoSimulacao } = useFazendaStore();
   
+  /**
+   * Estados para os acordeões dos grupos de variáveis.
+   * Mercado inicia expandido, Ajustes Técnicos inicia fechado por padrão.
+   */
+  const [isMercadoOpen, setIsMercadoOpen] = useState(true);
+  const [isTecnicoOpen, setIsTecnicoOpen] = useState(false);
+
   /**
    * Estado local para a Simulação (não altera a store principal para não estragar o diagnóstico real do produtor).
    */
@@ -411,12 +418,12 @@ export default function SimulacaoPage() {
     }
 
     return (
-      <label htmlFor={chave} className="text-sm font-semibold text-gray-700 flex justify-between items-center">
-        <span className="flex items-center gap-1.5">
+      <label htmlFor={chave} className="text-sm font-semibold text-gray-700 flex justify-between items-start gap-2">
+        <span className="inline-flex flex-wrap items-center gap-1.5 flex-1 leading-tight pr-2">
           {titulo}
           {warning && (
             <div className="relative flex items-center group cursor-help">
-              <span className="text-yellow-500 text-sm leading-none" aria-label="Alerta">⚠️</span>
+              <span className="text-yellow-500 text-sm leading-none shrink-0" aria-label="Alerta">⚠️</span>
                       <div className={`absolute left-0 sm:left-1/2 sm:-translate-x-1/2 ${isFirstItem ? 'top-full mt-2' : 'bottom-full mb-2'} hidden group-hover:block w-48 p-2 bg-gray-800 text-white text-[10px] font-normal rounded shadow-lg z-50 text-center pointer-events-none`}>
                 {warning}
                         <div className={`absolute left-4 sm:left-1/2 sm:-translate-x-1/2 border-4 border-transparent ${isFirstItem ? '-top-2 border-b-gray-800' : '-bottom-2 border-t-gray-800'}`}></div>
@@ -428,7 +435,7 @@ export default function SimulacaoPage() {
           <input
             type="number"
             autoFocus
-            className="w-20 text-right border-b border-primary outline-none text-primary bg-transparent font-medium"
+            className="w-24 text-right border-b border-primary outline-none text-primary bg-transparent font-medium shrink-0"
             value={valorTemp}
             onChange={(e) => setValorTemp(e.target.value)}
             onBlur={() => handleEditBlur(chave)}
@@ -436,7 +443,7 @@ export default function SimulacaoPage() {
           />
         ) : (
           <span 
-            className="text-primary cursor-pointer hover:underline decoration-dashed underline-offset-2"
+            className="text-primary cursor-pointer hover:underline decoration-dashed underline-offset-2 shrink-0 text-right font-medium"
             onClick={(e) => { e.preventDefault(); handleEditClick(chave, val); }}
             title="Clique para realizar um ajuste fino"
           >
@@ -515,9 +522,9 @@ export default function SimulacaoPage() {
           <div className="mb-6 flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" /> Variáveis
+                <TrendingUp className="w-5 h-5 text-primary" /> Variáveis de Simulação
               </h2>
-              <p className="text-xs text-gray-500 mt-1">Ajuste os valores para simular.</p>
+              <p className="text-xs text-gray-500 mt-1">Ajustes de Mercado &amp; Eficiência</p>
             </div>
             <button
               onClick={restaurarValoresOriginais}
@@ -528,94 +535,132 @@ export default function SimulacaoPage() {
             </button>
           </div>
 
-          <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar pb-4">
             
-            {/* Controle: Total de Vacas */}
-            <div>
-              {renderLabel('total_vacas', 'Total de Vacas', (v) => v.toString(), true)}
-              <input 
-                id="total_vacas" name="total_vacas" type="range" 
-                min={pTotalVacas.min} max={pTotalVacas.max} step={pTotalVacas.step} 
-                value={simulacao.total_vacas} onChange={handleChange}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('total_vacas')}`}
-              />
+            {/* GRUPO 1: Mercado & Escala */}
+            <div className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm">
+              <button
+                onClick={() => setIsMercadoOpen(!isMercadoOpen)}
+                className="w-full flex justify-between items-center p-3.5 bg-gray-50/80 hover:bg-gray-100 transition-colors text-sm font-bold text-gray-800"
+                aria-expanded={isMercadoOpen}
+              >
+                <span>Mercado &amp; Escala</span>
+                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isMercadoOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <div className={`grid transition-all duration-300 ease-in-out ${isMercadoOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                <div className="overflow-hidden">
+                  <div className="p-4 space-y-6">
+                    
+                    {/* Controle: Quantidade de Vacas */}
+                    <div>
+                      {renderLabel('total_vacas', 'Quantidade de Vacas', (v) => `${v} vacas`, true)}
+                      <input 
+                        id="total_vacas" name="total_vacas" type="range" 
+                        min={pTotalVacas.min} max={pTotalVacas.max} step={pTotalVacas.step} 
+                        value={simulacao.total_vacas} onChange={handleChange}
+                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('total_vacas')}`}
+                      />
+                    </div>
+
+                    {/* Controle: Preço do Leite */}
+                    <div>
+                      {renderLabel('preco_recebido', 'Preço do Leite', (v) => `R$ ${v.toFixed(2)}`)}
+                      <input 
+                        id="preco_recebido" name="preco_recebido" type="range" 
+                        min={pPrecoRecebido.min} max={pPrecoRecebido.max} step={pPrecoRecebido.step} 
+                        value={simulacao.preco_recebido} onChange={handleChange}
+                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('preco_recebido')}`}
+                      />
+                    </div>
+
+                    {/* Controle: Custo do Concentrado */}
+                    <div>
+                      {renderLabel('custo_concentrado', 'Custo Concentrado', (v) => `R$ ${v.toFixed(2)}`)}
+                      <input 
+                        id="custo_concentrado" name="custo_concentrado" type="range" 
+                        min={pCustoConcentrado.min} max={pCustoConcentrado.max} step={pCustoConcentrado.step} 
+                        value={simulacao.custo_concentrado} onChange={handleChange}
+                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('custo_concentrado')}`}
+                      />
+                    </div>
+
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Controle: Percentual de Lactação */}
-            <div>
-              {renderLabel('percentual_lactacao', 'Perc. em Lactação', (v) => `${v}%`)}
-              <input 
-                id="percentual_lactacao" name="percentual_lactacao" type="range" 
-                min={pPercentualLactacao.min} max={pPercentualLactacao.max} step={pPercentualLactacao.step} 
-                value={simulacao.percentual_lactacao} onChange={handleChange}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('percentual_lactacao')}`}
-              />
-            </div>
+            {/* GRUPO 2: Ajustes Técnicos Finos */}
+            <div className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm mt-4">
+              <button
+                onClick={() => setIsTecnicoOpen(!isTecnicoOpen)}
+                className="w-full flex justify-between items-center p-3.5 bg-gray-50/80 hover:bg-gray-100 transition-colors text-sm font-bold text-gray-800"
+                aria-expanded={isTecnicoOpen}
+              >
+                <span>Ajustes Técnicos Finos</span>
+                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isTecnicoOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <div className={`grid transition-all duration-300 ease-in-out ${isTecnicoOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                <div className="overflow-hidden">
+                  <div className="p-4 space-y-6">
 
-            {/* Controle: Produção por Vaca */}
-            <div>
-              {renderLabel('producao_vaca', 'Produção por Vaca', (v) => `${v} L`)}
-              <input 
-                id="producao_vaca" name="producao_vaca" type="range" 
-                min={pProducaoVaca.min} max={pProducaoVaca.max} step={pProducaoVaca.step} 
-                value={simulacao.producao_vaca} onChange={handleChange}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('producao_vaca')}`}
-              />
-            </div>
+                    {/* Controle: Percentual de Lactação */}
+                    <div>
+                      {renderLabel('percentual_lactacao', 'Percentual em Lactação', (v) => `${v} %`, true)}
+                      <input 
+                        id="percentual_lactacao" name="percentual_lactacao" type="range" 
+                        min={pPercentualLactacao.min} max={pPercentualLactacao.max} step={pPercentualLactacao.step} 
+                        value={simulacao.percentual_lactacao} onChange={handleChange}
+                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('percentual_lactacao')}`}
+                      />
+                    </div>
 
-            {/* Controle: Preço do Leite */}
-            <div>
-              {renderLabel('preco_recebido', 'Preço do Leite', (v) => `R$ ${v.toFixed(2)}`)}
-              <input 
-                id="preco_recebido" name="preco_recebido" type="range" 
-                min={pPrecoRecebido.min} max={pPrecoRecebido.max} step={pPrecoRecebido.step} 
-                value={simulacao.preco_recebido} onChange={handleChange}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('preco_recebido')}`}
-              />
-            </div>
+                    {/* Controle: CCS */}
+                    <div>
+                      {renderLabel('ccs', 'CCS', (v) => `${v} x1000 céls/mL`, false, true)}
+                      <input 
+                        id="ccs" name="ccs" type="range" 
+                        min={pCcs.min} max={pCcs.max} step={pCcs.step} 
+                        value={simulacao.ccs} onChange={handleChange}
+                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('ccs')}`}
+                      />
+                    </div>
 
-            {/* Controle: CCS */}
-            <div>
-              {renderLabel('ccs', 'CCS (x1000)', (v) => v.toString(), false, true)}
-              <input 
-                id="ccs" name="ccs" type="range" 
-                min={pCcs.min} max={pCcs.max} step={pCcs.step} 
-                value={simulacao.ccs} onChange={handleChange}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('ccs')}`}
-              />
-            </div>
+                    {/* Controle: Produção por Vaca */}
+                    <div>
+                      {renderLabel('producao_vaca', 'Produção por vaca', (v) => `${v} L/dia`)}
+                      <input 
+                        id="producao_vaca" name="producao_vaca" type="range" 
+                        min={pProducaoVaca.min} max={pProducaoVaca.max} step={pProducaoVaca.step} 
+                        value={simulacao.producao_vaca} onChange={handleChange}
+                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('producao_vaca')}`}
+                      />
+                    </div>
 
-            {/* Controle: Área de Atividade */}
-            <div>
-              {renderLabel('area_atividade', 'Área (ha)', (v) => v.toString())}
-              <input 
-                id="area_atividade" name="area_atividade" type="range" 
-                min={pAreaAtividade.min} max={pAreaAtividade.max} step={pAreaAtividade.step} 
-                value={simulacao.area_atividade} onChange={handleChange}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('area_atividade')}`}
-              />
-            </div>
+                    {/* Controle: Área de Atividade */}
+                    <div>
+                      {renderLabel('area_atividade', 'Área de atividade', (v) => `${v} hectares`)}
+                      <input 
+                        id="area_atividade" name="area_atividade" type="range" 
+                        min={pAreaAtividade.min} max={pAreaAtividade.max} step={pAreaAtividade.step} 
+                        value={simulacao.area_atividade} onChange={handleChange}
+                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('area_atividade')}`}
+                      />
+                    </div>
 
-            {/* Controle: Custo do Concentrado */}
-            <div>
-              {renderLabel('custo_concentrado', 'Custo Concentrado', (v) => `R$ ${v.toFixed(2)}`)}
-              <input 
-                id="custo_concentrado" name="custo_concentrado" type="range" 
-                min={pCustoConcentrado.min} max={pCustoConcentrado.max} step={pCustoConcentrado.step} 
-                value={simulacao.custo_concentrado} onChange={handleChange}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('custo_concentrado')}`}
-              />
-            </div>
+                    {/* Controle: Número de Trabalhadores */}
+                    <div>
+                      {renderLabel('numero_trabalhadores', 'Total de Trabalhadores', (v) => `${v} pessoas`)}
+                      <input 
+                        id="numero_trabalhadores" name="numero_trabalhadores" type="range" 
+                        min={pNumeroTrabalhadores.min} max={pNumeroTrabalhadores.max} step={pNumeroTrabalhadores.step} 
+                        value={simulacao.numero_trabalhadores} onChange={handleChange}
+                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('numero_trabalhadores')}`}
+                      />
+                    </div>
 
-            {/* Controle: Número de Trabalhadores */}
-            <div>
-              {renderLabel('numero_trabalhadores', 'Trabalhadores', (v) => v.toString())}
-              <input 
-                id="numero_trabalhadores" name="numero_trabalhadores" type="range" 
-                min={pNumeroTrabalhadores.min} max={pNumeroTrabalhadores.max} step={pNumeroTrabalhadores.step} 
-                value={simulacao.numero_trabalhadores} onChange={handleChange}
-                className={`w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2 transition-colors ${getSliderColorClass('numero_trabalhadores')}`}
-              />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <button 

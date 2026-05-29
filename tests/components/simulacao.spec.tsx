@@ -127,8 +127,8 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
     render(<SimulacaoPage />);
     
     // Sliders utilizam valores em string no DOM
-    expect(screen.getByLabelText(/Total de Vacas/i)).toHaveValue('100');
-    expect(screen.getByLabelText(/Produção por Vaca/i)).toHaveValue('30');
+    expect(screen.getByLabelText(/Quantidade de Vacas/i)).toHaveValue('100');
+    expect(screen.getByLabelText(/Produção por vaca/i)).toHaveValue('30');
   });
 
   it('Deve enviar os dados atualizados para a API ao mover o slider e clicar em analisar', async () => {
@@ -138,7 +138,7 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
     // O toLocaleString formata como "2.550"
     expect(screen.getAllByText(/2\.550/i).length).toBeGreaterThan(0);
 
-    const inputVacasLactacao = screen.getByLabelText(/Perc. em Lactação/i);
+    const inputVacasLactacao = screen.getByLabelText(/Percentual em Lactação/i);
     
     // Simula o produtor movendo o slider de 85 para 100% de lactação
     fireEvent.change(inputVacasLactacao, { target: { value: '100' } });
