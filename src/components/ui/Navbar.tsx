@@ -113,7 +113,7 @@ export function Navbar() {
                       <Lightbulb size={20} />
                     </div>
                     <h3 className="text-base font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
-                      Simulações
+                    Simulador de Cenários
                     </h3>
                   </div>
                   <p className="text-xs text-gray-500 leading-relaxed">
@@ -134,7 +134,7 @@ export function Navbar() {
                       <Settings size={20} />
                     </div>
                     <h3 className="text-base font-bold text-gray-900 group-hover:text-slate-600 transition-colors">
-                      Dados Fazendas
+                    Atualizar Dados
                     </h3>
                   </div>
                   <p className="text-xs text-gray-500 leading-relaxed">
