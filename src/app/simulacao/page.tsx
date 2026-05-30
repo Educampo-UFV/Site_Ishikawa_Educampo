@@ -22,15 +22,17 @@ import Link from 'next/link';
  * @param valorReferencia O valor base para comparação do cenário.
  * @param unidade A unidade de medida (ex: Litros, R$).
  * @param inverterCores Se verdadeiro, barras menores ganham cores positivas (ex: CCS).
+ * @param diferencaPercentualAPI Opcional. A diferença percentual calculada com precisão pela inteligência no backend.
  */
 const BarChartSimulacao = ({ 
   titulo, 
   valorSimulado, 
   valorReferencia, 
   unidade, 
-  inverterCores = false 
+  inverterCores = false,
+  diferencaPercentualAPI
 }: { 
-  titulo: string, valorSimulado: number, valorReferencia: number, unidade: string, inverterCores?: boolean 
+  titulo: string, valorSimulado: number, valorReferencia: number, unidade: string, inverterCores?: boolean, diferencaPercentualAPI?: number
 }) => {
   /**
    * Encontra o teto para calcular a altura percentual lidando com possíveis valores negativos (ex: margem)
@@ -57,7 +59,9 @@ const BarChartSimulacao = ({
    * Cálculos do Indicador Percentual para o canto superior direito do componente.
    */
   const diff = valorSimulado - valorReferencia;
-  const pct = Math.abs(valorReferencia) > 0 ? (diff / Math.abs(valorReferencia)) * 100 : 0;
+  const pct = diferencaPercentualAPI !== undefined 
+    ? diferencaPercentualAPI 
+    : (Math.abs(valorReferencia) > 0 ? (diff / Math.abs(valorReferencia)) * 100 : 0);
   
   let indicatorColor = 'text-gray-500 bg-gray-100';
   let prefix = '';
@@ -520,10 +524,11 @@ export default function SimulacaoPage() {
    */
   const renderMetricCards = (metricas: any[]) => {
     return metricas.map((item: any) => {
-      const valorSimulado = item.valor_produtor ?? 0;
-
       const cenarioRef = item.cenarios?.[cenarioAtivo];
-      const valorReferencia = cenarioRef?.valor || 0;
+      
+      const valorSimulado = cenarioRef?.valor_produtor ?? 0;
+      const valorReferencia = cenarioRef?.valor_referencia ?? 0;
+      const diferencaPercentual = cenarioRef?.diferenca_percentual;
       const inverter = item.direcao_otimizacao === 'menor_melhor';
       
       return (
@@ -539,6 +544,7 @@ export default function SimulacaoPage() {
             valorReferencia={valorReferencia}
             unidade=""
             inverterCores={inverter}
+                diferencaPercentualAPI={diferencaPercentual}
           />
         </div>
       );

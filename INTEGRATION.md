@@ -33,7 +33,7 @@ Nesta seção, adotamos a abordagem de **Agrupamento em Linha**. Para cada endpo
     | `sistema_producao` | string | `"compost_barn"` | Sistema produtivo (ex: "compost_barn", "confinado", "semi_confinado"). |
     | `regiao_sebrae` | string | `"triangulo"` | Região geográfica para fins de benchmarking. |
     | `total_vacas` | integer | `100` | Número total de vacas (em lactação ou secas). |
-    | `vacas_lactacao` | integer | `85` | Número de vacas atualmente em lactação. |
+    | `percentual_lactacao` | float | `85.0` | Percentual do rebanho adulto que está em lactação. |
     | `total_rebanho` | integer | `120` | Número total de animais na propriedade. |
     | `area_atividade` | float | `10.0` | Área em hectares dedicada à atividade leiteira. |
     | `numero_trabalhadores`| integer | `2` | Número de funcionários diretos na atividade. |
@@ -60,7 +60,7 @@ Nesta seção, adotamos a abordagem de **Agrupamento em Linha**. Para cada endpo
       "sistema_producao": "compost_barn",
       "total_rebanho": 120,
       "total_vacas": 100,
-      "vacas_lactacao": 85
+      "percentual_lactacao": 85.0
     }'
     ```
 
@@ -139,6 +139,7 @@ Nesta seção, adotamos a abordagem de **Agrupamento em Linha**. Para cada endpo
 
 *   **🧮 Fórmulas e Cálculos Atrelados:**
     A API refaz as contas operacionais baseadas nos inputs brutos:
+    *   **Dedução de Vacas em Lactação:** `total_vacas * (percentual_lactacao / 100)` (Ex: `100 * (85.0 / 100) = 85 vacas`). *Esta variável deduzida internamente é usada nos cálculos abaixo:*
     *   **Volume Diário (L/dia):** `producao_vaca * vacas_lactacao` (Ex: `35.0 * 85 = 2975.0 L/dia`)
     *   **Produção por Área (L/ha/ano):** `(producao_vaca * vacas_lactacao * 365) / area_atividade` (Ex: `(35.0 * 85 * 365) / 10 = 108587.50 L/ha/ano`)
     *   **Produção por Funcionário (L/func/dia):** `(producao_vaca * vacas_lactacao) / numero_trabalhadores` (Ex: `2975.0 / 2 = 1487.50 L/func/dia`)

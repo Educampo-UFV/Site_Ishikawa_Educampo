@@ -57,11 +57,10 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
           metrica: "ccs",
           titulo_grafico: "Qualidade do Leite (CCS)",
           direcao_otimizacao: "menor_melhor",
-          valor_produtor: 150,
           cenarios: {
-            inferior: { valor: 250, diferenca_percentual: -40 },
-            intermediario: { valor: 150, diferenca_percentual: 0 },
-            superior: { valor: 100, diferenca_percentual: 30 }
+            inferior: { valor_produtor: 150, valor_referencia: 250, diferenca_percentual: -40 },
+            intermediario: { valor_produtor: 150, valor_referencia: 150, diferenca_percentual: 0 },
+            superior: { valor_produtor: 150, valor_referencia: 100, diferenca_percentual: 30 }
           }
         }
       ],
@@ -70,11 +69,10 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
           metrica: "producao_diaria",
           titulo_grafico: "Produção Total Diária (L/dia)",
           direcao_otimizacao: "maior_melhor",
-          valor_produtor: 2550,
           cenarios: {
-            inferior: { valor: 1500, diferenca_percentual: 80 },
-            intermediario: { valor: 2500, diferenca_percentual: 5 },
-            superior: { valor: 3500, diferenca_percentual: -20 }
+            inferior: { valor_produtor: 2550, valor_referencia: 1500, diferenca_percentual: 80 },
+            intermediario: { valor_produtor: 2550, valor_referencia: 2500, diferenca_percentual: 5 },
+            superior: { valor_produtor: 2550, valor_referencia: 3500, diferenca_percentual: -20 }
           }
         }
       ],
@@ -83,11 +81,10 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
           metrica: "custo_estimado",
           titulo_grafico: "Custo Estimado (R$/L)",
           direcao_otimizacao: "menor_melhor",
-          valor_produtor: 2.00,
           cenarios: {
-            inferior: { valor: 2.50, diferenca_percentual: -20 },
-            intermediario: { valor: 2.10, diferenca_percentual: 5 },
-            superior: { valor: 1.80, diferenca_percentual: 15 }
+            inferior: { valor_produtor: 2.00, valor_referencia: 2.50, diferenca_percentual: -20 },
+            intermediario: { valor_produtor: 2.00, valor_referencia: 2.10, diferenca_percentual: 5 },
+            superior: { valor_produtor: 2.00, valor_referencia: 1.80, diferenca_percentual: 15 }
           }
         }
       ]
