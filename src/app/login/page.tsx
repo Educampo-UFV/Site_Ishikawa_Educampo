@@ -35,9 +35,41 @@ export default function LoginPage() {
   /**
    * Dispara um "ping" para acordar a API assim que a tela de login monta (evita cold start).
    * Fire-and-forget: Não travamos a interface e apenas ignoramos falhas em caso de erro de rede.
+   * Em ambiente de desenvolvimento, realiza a leitura da resposta e exibe logs detalhados
+   * de sucesso ou falha no console do navegador.
+   * 
+   * @returns {void} Esta função de efeito do React não possui retorno.
    */
   useEffect(() => {
-    fetch('/api/ping').catch(() => console.debug('Falha no ping de aquecimento ignorada.'));
+    // POR QUE ISSO EXISTE (REGRA DE NEGÓCIO):
+    // A API externa pode entrar em modo de hibernação por inatividade. O ping assíncrono na montagem
+    // da tela de login garante que, enquanto o usuário digita suas credenciais, a API seja acordada
+    // antecipadamente. Em desenvolvimento, queremos logs ricos para depurar latência e disponibilidade.
+    fetch('/api/ping')
+      .then(async (response) => {
+        const data = await response.json();
+        // O log só deve ser exibido quando estivermos no ambiente de desenvolvimento local
+        if (process.env.NODE_ENV === 'development') {
+          console.info(
+            '%c[API Ping] Resposta da API:',
+            'color: #10b981; font-weight: bold; background-color: #f0fdf4; padding: 2px 4px; rounded: 4px;',
+            data.message || 'Sem corpo de mensagem.'
+          );
+        }
+      })
+      .catch((error) => {
+        // Em ambiente de desenvolvimento, expõe o erro detalhado no console para depuração rápida
+        if (process.env.NODE_ENV === 'development') {
+          console.error(
+            '%c[API Ping] Erro detalhado detectado:',
+            'color: #ef4444; font-weight: bold; background-color: #fef2f2; padding: 2px 4px; rounded: 4px;',
+            error
+          );
+        } else {
+          // Em produção, a falha é silenciosamente engolida em modo de depuração básica
+          console.debug('Falha no ping de aquecimento ignorada.');
+        }
+      });
   }, []);
 
   /**

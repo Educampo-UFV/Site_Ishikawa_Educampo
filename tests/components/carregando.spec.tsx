@@ -112,4 +112,53 @@ describe('Tela de Carregamento (CarregandoPage)', () => {
     });
     expect(mockPush).toHaveBeenCalledWith('/selecao');
   });
+
+  it('deve aplicar backoff e eventual circuit breaker se a API retornar status 429 repetidamente', async () => {
+    // Mocking de 5 chamadas consecutivas retornando status 429
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: false, status: 429 }) // tentativa 1
+      .mockResolvedValueOnce({ ok: false, status: 429 }) // tentativa 2
+      .mockResolvedValueOnce({ ok: false, status: 429 }) // tentativa 3
+      .mockResolvedValueOnce({ ok: false, status: 429 }) // tentativa 4
+      .mockResolvedValueOnce({ ok: false, status: 429 }); // tentativa 5
+
+    render(<CarregandoPage />);
+
+    // Tentativa 1 (exibe erro de rate limit e aguarda 3000ms)
+    await waitFor(() => {
+      expect(screen.getByText(/Muitas requisições/i)).toBeInTheDocument();
+    });
+
+    // Avança 3s para Tentativa 2 (espera 6000ms)
+    await act(async () => {
+      jest.advanceTimersByTime(3000);
+    });
+
+    // Avança 6s para Tentativa 3 (espera 12000ms)
+    await act(async () => {
+      jest.advanceTimersByTime(6000);
+    });
+
+    // Avança 12s para Tentativa 4 (espera 20000ms)
+    await act(async () => {
+      jest.advanceTimersByTime(12000);
+    });
+
+    // Avança 20s para Tentativa 5 (Circuit Breaker ativado)
+    await act(async () => {
+      jest.advanceTimersByTime(20000);
+    });
+
+    // Espera a mensagem de erro do Circuit Breaker
+    await waitFor(() => {
+      expect(screen.getByText(/Serviço temporariamente indisponível/i)).toBeInTheDocument();
+    });
+
+    // Avança os 4000ms do redirecionamento do Circuit Breaker
+    await act(async () => {
+      jest.advanceTimersByTime(4000);
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/formulario');
+  });
 });

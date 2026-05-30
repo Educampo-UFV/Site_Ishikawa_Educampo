@@ -129,6 +129,7 @@ export default function CarregandoPage() {
      * Exponential Backoff (Espera Progressiva) para proteger o backend e a experiência do usuário.
      * 
      * @param {number} tentativa - O número da tentativa atual (Inicia em 1).
+     * @returns {Promise<void>} Uma promise vazia que resolve quando o processamento de saúde encerra.
      */
     const verificarSaude = async (tentativa: number = 1) => {
       // Constantes arquiteturais de resiliência
@@ -139,11 +140,13 @@ export default function CarregandoPage() {
       try {
         const res = await fetch("/api/health");
 
-        // Rate limit: Aguardamos um tempo fixo e não penalizamos o contador de retentativas
+        // POR QUE TRATAMOS O STATUS 429 ESPECIALMENTE:
+        // A API possui limites estritos de requisições por minuto. Caso recebamos um HTTP 429 (Rate Limited),
+        // em vez de criarmos um loop infinito de 5 segundos que sobrecarrega ainda mais a nuvem, lançamos
+        // um erro dedicado. Isso permite que a chamada caia no fluxo padrão de Exponential Backoff (que estica
+        // o tempo de espera progressivamente) e acione o Circuit Breaker se a situação persistir por 5 tentativas.
         if (res.status === 429) {
-          setMensagem("Muitas requisições. Aguardando liberação");
-          setTimeout(() => verificarSaude(tentativa), 5000);
-          return;
+          throw new Error("Rate limit atingido (HTTP 429)");
         }
 
         // Erros Críticos (Falhas definitivas onde retentar é inútil)
@@ -186,7 +189,13 @@ export default function CarregandoPage() {
         // Fórmula: min(3000 * 2^(tentativa - 1), 20000)
         const tempoEspera = Math.min(TEMPO_BASE_MS * Math.pow(2, tentativa - 1), CAP_TEMPO_MS);
         
-        setMensagem("Esperando API acordar");
+        // REGRA DE NEGÓCIO: Mensagem personalizada de acordo com o tipo de falha
+        // Se for um Rate Limit (429), exibimos feedback de "Muitas requisições" em vez de "Esperando API acordar".
+        if (error instanceof Error && error.message.includes("HTTP 429")) {
+          setMensagem("Muitas requisições. Aguardando liberação");
+        } else {
+          setMensagem("Esperando API acordar");
+        }
         
         // Agenda a próxima tentativa aplicando o delay calculado
         setTimeout(() => verificarSaude(tentativa + 1), tempoEspera);
