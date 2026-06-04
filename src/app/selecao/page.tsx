@@ -4,20 +4,58 @@
  * Implementa o padrão "Dual Action Screen", permitindo ao produtor escolher
  * visualmente entre acessar o Painel de Diagnóstico ou o Simulador de Cenários.
  * 
+ * PROTEÇÃO DE ROTA (Route Guard):
+ * Consome `dadosFazenda` do Zustand. Se o usuário acessar esta tela sem ter
+ * preenchido o formulário (ex: navegação direta pela URL), é redirecionado
+ * automaticamente para `/formulario`.
+ * 
  * @returns {React.JSX.Element} Interface renderizada com dois grandes painéis interativos.
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { BarChart2, Lightbulb } from "lucide-react";
+import { useFazendaStore } from "@/store/useFazendaStore";
 
 export default function SelecaoPage() {
+  const router = useRouter();
+  const { dadosFazenda } = useFazendaStore();
+  const [isMounted, setIsMounted] = useState(false);
+
   // Estado que controla qual lado da tela está recebendo o foco do mouse.
   // Pode ser 'diagnostico', 'simulacao' ou null (estado neutro / cursor fora).
   const [foco, setFoco] = useState<"diagnostico" | "simulacao" | null>(null);
 
+  /**
+   * @description Efeito colateral disparado na montagem do componente no cliente.
+   * Marca `isMounted` como true para evitar problemas de "hydration mismatch" do Next.js.
+   */
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  /**
+   * @description Efeito de proteção da rota (Route Guard) visual.
+   * Se o componente montou e não há `dadosFazenda` populado no Zustand (ex: acesso direto pela URL),
+   * força o redirecionamento imperativo para a etapa inicial em `/formulario`.
+   */
+  useEffect(() => {
+    if (isMounted && !dadosFazenda) {
+      router.push('/formulario');
+    }
+  }, [dadosFazenda, isMounted, router]);
+
+  // Aguarda a hidratação do cliente para evitar erros do Next.js com dados persistidos
+  if (!isMounted || !dadosFazenda) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="h-12 w-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
   return (
     /* O contêiner principal ocupa toda a tela (h-screen) e bloqueia a rolagem (overflow-hidden).
        No mobile, os painéis empilham verticalmente (flex-col). No desktop, lado a lado (md:flex-row). */

@@ -20,7 +20,7 @@ export const ROUTES = {
   /** Rota pública de autenticação */
   LOGIN: '/login',
   /** Rota principal interna (Hub) para onde o usuário logado é redirecionado */
-  HOME: '/formulario',
+  HOME: '/selecao',
   /** Tela de feedback visual (Espera) e validação da API */
   CARREGANDO: '/carregando',
   /** Painel central unificado: Benchmarking, IA e Diagrama de Ishikawa */
