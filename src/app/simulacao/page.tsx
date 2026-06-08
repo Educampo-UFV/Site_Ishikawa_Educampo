@@ -595,7 +595,7 @@ export default function SimulacaoPage() {
       <main className="flex-1 max-w-[95%] w-full mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
         
         {/* PAINEL ESQUERDO: CONTROLES (Inputs & Sliders) */}
-        <aside className="w-full lg:w-80 flex-shrink-0 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex flex-col h-max sticky top-8">
+        <aside className="w-full lg:w-80 flex-shrink-0 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex flex-col max-h-[calc(100vh-4rem)] sticky top-8">
           <div className="mb-6 flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
