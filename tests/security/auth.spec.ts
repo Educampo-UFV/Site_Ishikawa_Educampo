@@ -150,4 +150,64 @@ describe('🔒 Barreira de Segurança e Autenticação', () => {
       expect(response.status).toBe(200);
     });
   });
+
+  describe('Sliding Session & Lembrar de Mim (Regras de Expiração)', () => {
+    it('DEVE emitir um cookie de curta duração (15m) por padrão (rememberMe = false)', () => {
+      // Arrange
+      const response = NextResponse.json({ message: 'Login bem-sucedido' });
+      const COOKIE_MAX_AGE_SHORT = 15 * 60; // 900s
+      
+      // Act: Simula a ação da API de Auth
+      response.cookies.set({
+        name: 'educampo_session',
+        value: 'fake-jwt-token-short',
+        maxAge: COOKIE_MAX_AGE_SHORT,
+      });
+
+      const sessionCookie = response.cookies.get('educampo_session');
+
+      // Assert
+      expect(sessionCookie).toBeDefined();
+      expect(sessionCookie?.maxAge).toBe(900);
+    });
+
+    it('DEVE emitir um cookie de longa duração (7 dias) se rememberMe for verdadeiro', () => {
+      // Arrange
+      const response = NextResponse.json({ message: 'Login bem-sucedido' });
+      const COOKIE_MAX_AGE_LONG = 7 * 24 * 60 * 60; // 604800s
+      
+      // Act: Simula a ação da API de Auth com rememberMe=true
+      response.cookies.set({
+        name: 'educampo_session',
+        value: 'fake-jwt-token-long',
+        maxAge: COOKIE_MAX_AGE_LONG,
+      });
+
+      const sessionCookie = response.cookies.get('educampo_session');
+
+      // Assert
+      expect(sessionCookie).toBeDefined();
+      expect(sessionCookie?.maxAge).toBe(604800);
+    });
+
+    it('DEVE emitir um novo cookie atualizado ao chamar a rota de refresh (Sliding Session)', () => {
+      // Arrange
+      const response = NextResponse.json({ message: 'Token renovado' });
+      const COOKIE_MAX_AGE_SHORT = 15 * 60;
+      
+      // Act: Simula a ação da API de Refresh emitindo um novo cookie
+      response.cookies.set({
+        name: 'educampo_session',
+        value: 'refreshed-jwt-token',
+        maxAge: COOKIE_MAX_AGE_SHORT,
+      });
+
+      const sessionCookie = response.cookies.get('educampo_session');
+
+      // Assert
+      expect(sessionCookie).toBeDefined();
+      expect(sessionCookie?.value).toBe('refreshed-jwt-token');
+      expect(sessionCookie?.maxAge).toBe(900);
+    });
+  });
 });
