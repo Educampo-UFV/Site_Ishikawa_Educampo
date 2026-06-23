@@ -182,6 +182,7 @@ site_ishikawa_educampo/
 │   │   │   └── README.md
 │   │   ├── api/                                     # Backend-For-Frontend (BFF) - Rotas de API internas
 │   │   │   ├── auth/                                # Gerencia o login e injeta o token via Cookie HttpOnly.
+│   │   │   │   ├── refresh/                         # Renovação silenciosa da sessão (Sliding Session).
 │   │   │   ├── diagnostico/                         # Proxy seguro: mascara as chaves e chama a API real da IA.
 │   │   │   ├── health/                              # Verificação de saúde da API externa (Health Check via BFF).
 │   │   │   ├── parametros-painel/                   # Rota para consultar os limites dinâmicos dos sliders.
@@ -214,6 +215,7 @@ site_ishikawa_educampo/
 │   │   ├── page.tsx                                 # Página raiz.
 │   │   └── README.md                                # Índice e documentação das páginas de navegação.
 │   ├── components/                                  # Componentes visuais reutilizáveis (UI)
+│   │   ├── SessionRefresher.tsx                     # Gestor silencioso de renovação de sessão (Polling/Debounce).
 │   │   └── ui/                                      # Componentes base e estruturas visuais.
 │   │       ├── Acelerometro.tsx
 │   │       ├── CausaItem.tsx
