@@ -21,6 +21,10 @@ COPY . .
 # Desativa a telemetria do Next.js durante a construção
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Recebe a variável de ambiente pública via build args para embutir no client-side JavaScript
+ARG NEXT_PUBLIC_ENABLE_TEST_FARMS
+ENV NEXT_PUBLIC_ENABLE_TEST_FARMS=$NEXT_PUBLIC_ENABLE_TEST_FARMS
+
 # Fornece variáveis de ambiente fictícias estritamente para que o Next.js 
 # consiga analisar os arquivos e concluir o processo de build das rotas.
 # As credenciais verdadeiras deverão ser passadas em tempo de execução (runner).

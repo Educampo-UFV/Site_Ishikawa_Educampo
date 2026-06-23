@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_ENABLE_TEST_FARMS=${NEXT_PUBLIC_ENABLE_TEST_FARMS:-false}
     restart: unless-stopped
     ports:
       - "3000:3000"
