@@ -35,4 +35,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Gemini
+# Configurações do VS Code
+.vscode/
+
+# Cache do SWC
+.swc/
+
