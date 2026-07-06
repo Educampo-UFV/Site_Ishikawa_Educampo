@@ -351,7 +351,7 @@ export default function FormularioPage() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Estrutura e Rebanho</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputComDica
-                id="total_vacas" name="total_vacas" type="number"
+                id="total_vacas" name="total_vacas" type="number" step="0.01"
                 label="Total de Vacas" unidade="cab." placeholder="100"
                 dica="Quantidade total de vacas (secas e em lactação)."
                 value={formData.total_vacas} onChange={handleChange} min={0} max={50000} required
@@ -363,7 +363,7 @@ export default function FormularioPage() {
                 value={formData.percentual_lactacao} onChange={handleChange} min={0} max={100} required
               />
               <InputComDica
-                id="animais_rebanho" name="animais_rebanho" type="number"
+                id="animais_rebanho" name="animais_rebanho" type="number" step="0.01"
                 label="Total no Rebanho" unidade="cab." placeholder="150"
                 dica="Todas as categorias de animais do rebanho leiteiro."
                 value={formData.animais_rebanho} onChange={handleChange} min={0} max={100000} required
@@ -382,7 +382,7 @@ export default function FormularioPage() {
               />
               <div className="md:col-span-2">
                 <InputComDica
-                  id="mao_obra_total" name="mao_obra_total" type="number"
+                  id="mao_obra_total" name="mao_obra_total" type="number" step="0.01"
                   label="Mão de Obra Total" unidade="trabalhadores" placeholder="3"
                   dica="Número total de trabalhadores envolvidos na atividade leiteira."
                   value={formData.mao_obra_total} onChange={handleChange} min={1} max={1000} required
@@ -403,7 +403,7 @@ export default function FormularioPage() {
               />
               <div>
                 <InputComDica
-                  id="ccs" name="ccs" type="number"
+                  id="ccs" name="ccs" type="number" step="0.01"
                   label="Qualidade" unidade="CCS x1000" placeholder="150"
                   dica="Importante: Digite apenas os primeiros números. Ex: Para 150.000, digite 150."
                   value={formData.ccs} onChange={handleChange} min={0} max={9999} required
