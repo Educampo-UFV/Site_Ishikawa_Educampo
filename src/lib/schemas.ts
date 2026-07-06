@@ -43,15 +43,15 @@ export const fazendaSchema = z.object({
   
   sistema_producao: SistemaProducaoEnum,
   
-  total_vacas: z.coerce.number().int().min(0).max(FAZENDA_LIMITS.VACAS_MAX),
+  total_vacas: z.coerce.number().min(0).max(FAZENDA_LIMITS.VACAS_MAX),
   
   percentual_lactacao: z.coerce.number().min(0).max(100),
   
-  animais_rebanho: z.coerce.number().int().min(0).max(FAZENDA_LIMITS.REBANHO_MAX),
+  animais_rebanho: z.coerce.number().min(0).max(FAZENDA_LIMITS.REBANHO_MAX),
   
   area_atividade: z.coerce.number().min(FAZENDA_LIMITS.AREA_MIN, `A área mínima é ${FAZENDA_LIMITS.AREA_MIN} ha`).max(FAZENDA_LIMITS.AREA_MAX),
   
-  mao_obra_total: z.coerce.number().int().min(FAZENDA_LIMITS.MAO_DE_OBRA_MIN, `Mínimo de ${FAZENDA_LIMITS.MAO_DE_OBRA_MIN} trabalhador`).max(FAZENDA_LIMITS.MAO_DE_OBRA_MAX),
+  mao_obra_total: z.coerce.number().min(FAZENDA_LIMITS.MAO_DE_OBRA_MIN, `Mínimo de ${FAZENDA_LIMITS.MAO_DE_OBRA_MIN} trabalhador`).max(FAZENDA_LIMITS.MAO_DE_OBRA_MAX),
   
   producao_vaca: z.coerce.number().min(0).max(FAZENDA_LIMITS.PRODUCAO_VACA_MAX),
   
@@ -62,7 +62,7 @@ export const fazendaSchema = z.object({
   /** Preço médio do concentrado em R$/kg, essencial para o modelo de ML na Simulação. */
   preco_concentrado: z.coerce.number().min(0, 'O preço não pode ser negativo').max(FAZENDA_LIMITS.PRECO_CONCENTRADO_MAX),
   
-  ccs: z.coerce.number().int().min(0).max(FAZENDA_LIMITS.CCS_MAX),
+  ccs: z.coerce.number().min(0).max(FAZENDA_LIMITS.CCS_MAX),
   
   regiao: RegiaoEnum,
 }).superRefine((data, ctx) => {
