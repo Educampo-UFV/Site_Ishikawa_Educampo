@@ -45,14 +45,30 @@ interface InputComDicaProps extends React.InputHTMLAttributes<HTMLInputElement> 
   dica?: string;
 }
 
+const CASAS_DECIMAIS = 3;
+const STEP_PADRAO = "0.001";
+
+/**
+ * @description Função auxiliar para arredondar valores numéricos caso ultrapassem o limite de casas decimais.
+ */
+function aplicarLimiteCasasDecimais(valor: string, maxCasas: number): string {
+  if (!valor) return valor;
+  const partes = valor.split('.');
+  if (partes.length > 1 && partes[1].length > maxCasas) {
+    return parseFloat(valor).toFixed(maxCasas);
+  }
+  return valor;
+}
+
 /**
  * @description Componente de entrada com rótulo, unidade, dica de ajuda e placeholder padronizado.
  */
-const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, placeholder, ...props }) => (
+const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, placeholder, step = STEP_PADRAO, ...props }) => (
   <div className="flex flex-col gap-1 w-full">
     <LabelComDica htmlFor={props.id as string} label={label} unidade={unidade} dica={dica} />
     <input
       {...props}
+      step={props.type === 'number' ? step : undefined}
       placeholder={placeholder ? `Ex: ${placeholder}` : ''}
       className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-gray-300 ${props.className || ''}`}
     />
@@ -204,7 +220,12 @@ export default function FormularioPage() {
    * @param {React.ChangeEvent<HTMLInputElement | HTMLSelectElement>} e - O evento de mudança disparado pelo DOM.
    */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    let { name, value, type } = e.target;
+    
+    if (type === 'number') {
+      value = aplicarLimiteCasasDecimais(value, CASAS_DECIMAIS);
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -351,38 +372,38 @@ export default function FormularioPage() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Estrutura e Rebanho</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputComDica
-                id="total_vacas" name="total_vacas" type="number" step="0.01"
+                id="total_vacas" name="total_vacas" type="number"
                 label="Total de Vacas" unidade="cab." placeholder="100"
                 dica="Quantidade total de vacas (secas e em lactação)."
                 value={formData.total_vacas} onChange={handleChange} min={0} max={50000} required
               />
               <InputComDica
-                id="percentual_lactacao" name="percentual_lactacao" type="number" step="0.01"
+                id="percentual_lactacao" name="percentual_lactacao" type="number"
                 label="Perc. em Lactação" unidade="%" placeholder="85"
                 dica="Percentual do rebanho de vacas que estão em lactação atualmente."
                 value={formData.percentual_lactacao} onChange={handleChange} min={0} max={100} required
               />
               <InputComDica
-                id="animais_rebanho" name="animais_rebanho" type="number" step="0.01"
+                id="animais_rebanho" name="animais_rebanho" type="number"
                 label="Total no Rebanho" unidade="cab." placeholder="150"
                 dica="Todas as categorias de animais do rebanho leiteiro."
                 value={formData.animais_rebanho} onChange={handleChange} min={0} max={100000} required
               />
               <InputComDica
-                id="area_atividade" name="area_atividade" type="number" step="0.01"
+                id="area_atividade" name="area_atividade" type="number"
                 label="Área da Atividade" unidade="ha" placeholder="10.0"
                 dica="Área total destinada à pecuária de leite em hectares."
                 value={formData.area_atividade} onChange={handleChange} min={0.1} max={50000} required
               />
               <InputComDica
-                id="preco_concentrado" name="preco_concentrado" type="number" step="0.01"
+                id="preco_concentrado" name="preco_concentrado" type="number"
                 label="Preço do Concentrado" unidade="R$/kg" placeholder="2.30"
                 dica="Custo médio do quilograma de concentrado utilizado na alimentação do rebanho."
                 value={formData.preco_concentrado} onChange={handleChange} min={0} max={100} required
               />
               <div className="md:col-span-2">
                 <InputComDica
-                  id="mao_obra_total" name="mao_obra_total" type="number" step="0.01"
+                  id="mao_obra_total" name="mao_obra_total" type="number"
                   label="Mão de Obra Total" unidade="trabalhadores" placeholder="3"
                   dica="Número total de trabalhadores envolvidos na atividade leiteira."
                   value={formData.mao_obra_total} onChange={handleChange} min={1} max={1000} required
@@ -396,14 +417,14 @@ export default function FormularioPage() {
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Produção e Qualidade</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <InputComDica
-                id="producao_vaca" name="producao_vaca" type="number" step="0.01"
+                id="producao_vaca" name="producao_vaca" type="number"
                 label="Prod. por Vaca" unidade="L/dia" placeholder="35.0"
                 dica="Média de litros produzidos por vaca em lactação."
                 value={formData.producao_vaca} onChange={handleChange} min={0} max={100} required
               />
               <div>
                 <InputComDica
-                  id="ccs" name="ccs" type="number" step="0.01"
+                  id="ccs" name="ccs" type="number"
                   label="Qualidade" unidade="CCS x1000" placeholder="150"
                   dica="Importante: Digite apenas os primeiros números. Ex: Para 150.000, digite 150."
                   value={formData.ccs} onChange={handleChange} min={0} max={9999} required
@@ -411,13 +432,13 @@ export default function FormularioPage() {
                 <p className="text-xs text-gray-500 mt-1.5 ml-1">Informe o valor simplificado. O sistema multiplicará por 1.000 automaticamente.</p>
               </div>
               <InputComDica
-                id="preco_leite" name="preco_leite" type="number" step="0.01"
+                id="preco_leite" name="preco_leite" type="number"
                 label="Preço Recebido" unidade="R$/L" placeholder="3.20"
                 dica="Valor bruto recebido pelo litro do leite."
                 value={formData.preco_leite} onChange={handleChange} min={0} max={15} required
               />
               <InputComDica
-                id="preco_referencia" name="preco_referencia" type="number" step="0.01"
+                id="preco_referencia" name="preco_referencia" type="number"
                 label="Preço de Referência" unidade="R$/L" placeholder="2.50"
                 dica="Preço base ou média regional para comparação."
                 value={formData.preco_referencia} onChange={handleChange} min={0} max={15} required
