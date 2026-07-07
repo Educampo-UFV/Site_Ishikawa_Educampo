@@ -389,14 +389,14 @@ export default function SimulacaoPage() {
    * Parâmetros de segurança e limites de UI para o simulador divididos por cenário.
    */
   const defaultParams = {
-    total_vacas: { min: 10, max: 500, step: 1, fronteiras_cenario: null as any },
+    total_vacas: { min: 10, max: 500, step: 0.5, fronteiras_cenario: null as any },
     percentual_lactacao: { min: 0, max: 100, step: 0.5, fronteiras_cenario: null as any },
     producao_vaca: { min: 5, max: 60, step: 0.5, fronteiras_cenario: null as any },
     preco_recebido: { min: 1.0, max: 6.0, step: 0.05, fronteiras_cenario: null as any },
     ccs: { min: 50, max: 1000, step: 10, fronteiras_cenario: null as any },
     area_atividade: { min: 1, max: 1000, step: 0.5, fronteiras_cenario: null as any },
     custo_concentrado: { min: 0.5, max: 6.0, step: 0.05, fronteiras_cenario: null as any },
-    numero_trabalhadores: { min: 1, max: 50, step: 1, fronteiras_cenario: null as any }
+    numero_trabalhadores: { min: 1, max: 50, step: 0.5, fronteiras_cenario: null as any }
   };
 
   type ParamKey = keyof typeof defaultParams;
