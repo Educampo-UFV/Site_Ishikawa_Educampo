@@ -9,7 +9,7 @@ import { fazendaSchema } from '../../src/lib/schemas';
 // Função utilitária para gerar payload base válido
 const basePayload = () => ({
   nome_fazenda: "Fazenda TDD",
-  sistema_producao: "compost_barn",
+  sistema_producao: "compost-barn",
   total_vacas: 100,
   percentual_lactacao: 85,
   animais_rebanho: 150,

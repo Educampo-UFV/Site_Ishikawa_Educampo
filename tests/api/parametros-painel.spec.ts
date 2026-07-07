@@ -59,7 +59,7 @@ describe('BFF Route: POST /api/parametros-painel', () => {
       json: async () => mockLimitsResponse,
     });
 
-    const payload = { producao_vaca: 25, sistema_producao: "compost_barn", percentual_lactacao: 60, total_vacas: 100 };
+    const payload = { producao_vaca: 25, sistema_producao: "compost-barn", percentual_lactacao: 60, total_vacas: 100 };
     const req = new NextRequest('http://localhost:3000/api/parametros-painel', { method: 'POST', body: JSON.stringify(payload) });
 
     const response = await POST(req);

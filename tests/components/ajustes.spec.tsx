@@ -36,7 +36,7 @@ describe('Tela de Ajustes (AjustesPage)', () => {
   // Mock COMPLETO para satisfazer o fazendaSchema (Zod)
   const mockDadosFazendaCompleto = {
     nome_fazenda: 'Fazenda Teste',
-    sistema_producao: 'compost_barn',
+    sistema_producao: 'compost-barn',
     total_vacas: 100,
     percentual_lactacao: 85,
     animais_rebanho: 120,    // Campo obrigatório
@@ -71,7 +71,7 @@ describe('Tela de Ajustes (AjustesPage)', () => {
   it('Deve renderizar o formulário pré-preenchido com os dados do Zustand', () => {
     render(<AjustesPage />);
     expect(screen.getByLabelText(/Nome da Fazenda/i)).toHaveValue('Fazenda Teste');
-    expect(screen.getByLabelText(/Total de Vacas/i)).toHaveValue(100);
+    expect(screen.getByLabelText(/Total de Vacas/i)).toHaveValue('100');
   });
 
   it('Deve ativar o cooldown de 30 segundos após submissão com sucesso', async () => {
