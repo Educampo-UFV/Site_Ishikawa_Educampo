@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useFazendaStore } from '@/store/useFazendaStore';
 import { fazendaSchema } from '@/lib/schemas';
 import { Info } from 'lucide-react';
+import { NumericFormat } from 'react-number-format';
 
 /**
  * @description Componente interno para renderizar o rótulo com unidade e tooltip de ajuda.
@@ -60,20 +61,33 @@ function aplicarLimiteCasasDecimais(valor: string, maxCasas: number): string {
   return valor;
 }
 
-/**
- * @description Componente de entrada com rótulo, unidade, dica de ajuda e placeholder padronizado.
- */
-const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, placeholder, step = STEP_PADRAO, ...props }) => (
-  <div className="flex flex-col gap-1 w-full">
-    <LabelComDica htmlFor={props.id as string} label={label} unidade={unidade} dica={dica} />
-    <input
-      {...props}
-      step={props.type === 'number' ? step : undefined}
-      placeholder={placeholder ? `Ex: ${placeholder}` : ''}
-      className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-gray-300 ${props.className || ''}`}
-    />
-  </div>
-);
+const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, placeholder, step = STEP_PADRAO, ...props }) => {
+  const inputClassName = `w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-gray-300 ${props.className || ''}`;
+  const commonProps: React.InputHTMLAttributes<HTMLInputElement> = {
+    ...props,
+    placeholder: placeholder ? `Ex: ${placeholder}` : '',
+    className: inputClassName,
+  };
+
+  return (
+    <div className="flex flex-col gap-1 w-full">
+      <LabelComDica htmlFor={props.id as string} label={label} unidade={unidade} dica={dica} />
+      {props.type === 'number' ? (
+        <NumericFormat
+          {...(commonProps as React.ComponentProps<typeof NumericFormat>)}
+          type="text"
+          inputMode="decimal"
+          allowNegative={false}
+          decimalScale={CASAS_DECIMAIS}
+          allowedDecimalSeparators={[',', '.']}
+          decimalSeparator="."
+        />
+      ) : (
+        <input {...commonProps} />
+      )}
+    </div>
+  );
+};
 
 /**
  * @description Contrato de dados da lista simplificada de Fazendas de Teste.
@@ -159,7 +173,7 @@ export default function FormularioPage() {
   });
 
   const [erros, setErros] = useState<string[]>([]);
-  
+
   const [testFarms, setTestFarms] = useState<TestFarmListItem[]>([]);
   const [isLoadingTestData, setIsLoadingTestData] = useState(false);
   const enableTestFarms = process.env.NEXT_PUBLIC_ENABLE_TEST_FARMS === 'true';
@@ -221,7 +235,7 @@ export default function FormularioPage() {
    */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     let { name, value, type } = e.target;
-    
+
     if (type === 'number') {
       value = aplicarLimiteCasasDecimais(value, CASAS_DECIMAIS);
     }
@@ -298,7 +312,7 @@ export default function FormularioPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8 relative">
-          
+
           {/* Bloqueador visual durante o carregamento de dados */}
           {isLoadingTestData && (
             <div className="absolute inset-0 bg-white/50 z-50 flex items-center justify-center rounded-xl">
