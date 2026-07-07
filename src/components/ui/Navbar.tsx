@@ -32,7 +32,7 @@ export function Navbar() {
       console.error('Erro ao realizar o logout', e);
     }
     limparDados();
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);

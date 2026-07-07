@@ -261,6 +261,8 @@ site_ishikawa_educampo/
 │   │   └── setup.spec.tsx
 │   ├── lib/
 │   │   └── schemas.spec.ts
+│   ├── schemas/                                     # Testes robustos de schema (Numéricos, Floats)
+│   │   └── float-inputs.spec.ts
 │   ├── security/                                    # Testes de blindagem arquitetural
 │   │   └── auth.spec.ts                             # Garante o Zero-Token-Exposure e uso estrito de Cookies.
 │   └── README.md                                    # Documentação da cultura de testes e comandos do Jest.

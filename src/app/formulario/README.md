@@ -1,37 +1,49 @@
 ---
-tags: [documentacao, arquitetura, formulario]
-status: active
+project: "Site_Ishikawa_Educampo"
+branch: "feature/float-inputs-mask"
+version: "1.0.0"
+date: "2026-07-06"
+status: "Active"
+type: "docs"
+tags:
+  - "documentacao"
 ---
-
-# 📁 Módulo de Coleta de Dados (`/app/formulario`)
-
-> **Versão da Documentação:** 1.1.0  
-> **Status:** Ativo
+# 📁 Módulo de Coleta e Ajuste de Dados (`src/app/formulario` & `src/app/ajustes`)
 
 ---
 
 ## 🎯 Visão Geral (The Blueprint)
 
-Este diretório contém a interface primária do sistema: o **Formulário de Coleta de Dados** operacionais e zootécnicos da fazenda. A responsabilidade arquitetural deste módulo é atuar como o portal seguro de entrada de dados, isolando o estado global (Zustand) de interações e inputs brutos. Ele higieniza e valida todas as interações do usuário, garantindo que apenas dados compatíveis e pré-processados avancem para o motor de Diagnóstico. Adicionalmente, possui integração assíncrona com proxies (BFF) para injeção de dados de mock voltados ao ambiente de desenvolvimento.
+Este módulo centraliza a lógica de interface com o usuário para a coleta primária (Formulário) e a reavaliação (Ajustes) de indicadores zootécnicos e econômicos da fazenda. A principal responsabilidade deste módulo é garantir a integridade dos dados na borda da aplicação (Frontend), validando limites de negócio estritos e provendo uma experiência à prova de erros de tipagem através de máscaras numéricas universais, que convertem entradas baseadas na localidade (vírgulas e pontos) em estruturas computacionais seguras (floats) antes da submissão ao Backend For Frontend (BFF).
 
 ---
 
 ## 🏗️ Arquitetura e Fluxo de Dados
 
-O componente segue um fluxo de dado unidirecional em produção, expandido por uma malha assíncrona de I/O em desenvolvimento (Mock Data).
+A arquitetura garante que a conversão dos dados pelo usuário aconteça sob demanda na UI via `react-number-format` e passe por uma camada robusta de validação formal (Zod) antes do tráfego de rede.
 
-* **Entrada:** Inputs diretos do DOM nativo via eventos React. Em ambiente de DEV, a entrada também advém de chamadas `fetch` à rota BFF (`/api/test-data`).
-* **Transformação & Adapter:** Os dados recebidos da API de Mock são adaptados estruturalmente por uma função pura (`mapFarmApiToFormData`) e temporariamente mantidos em um *Cache Local* (`useRef`) para prevenção de _round-trips_ redundantes.
-* **Saída:** Objeto purificado via *Schema Zod*, despachado para a camada de gerenciamento de estado global (`useFazendaStore`) e redirecionamento via `useRouter`.
+* **Entrada:** Interação direta do produtor nos campos de formulário (via Browser).
+* **Saída:** Payload tipado submetido à API de diagnóstico e estado global atualizado (via Zustand).
+
+**Reference Note:** [[Site_Ishikawa_Educampo_2026-07-06_float-inputs-mask]]
 
 ```mermaid
-graph TD
-    A[Usuário / UI Inputs] -->|Preenchimento| B(Estado Local: formData)
-    D[BFF API: /api/test-data] -->|Adapter & Cache| B
-    B -->|Submit| C{Validação Zod}
-    C -- Falha --> E[Alerta UI]
-    C -- Sucesso --> F[Injeção no useFazendaStore]
-    F --> G[Navegação para /carregando]
+sequenceDiagram
+    participant User
+    participant Browser
+    participant React Mask (Frontend)
+    participant Zod Schema
+    participant BFF (Next.js)
+    participant API (Python)
+    
+    User->>Browser: Digita "102,38" (Total de Vacas)
+    Browser->>React Mask (Frontend): Intercepta digitação
+    React Mask (Frontend)-->>Browser: Exibe "102,38"
+    React Mask (Frontend)->>Zod Schema: Converte para float (102.38)
+    Zod Schema-->>React Mask (Frontend): Validação com sucesso
+    React Mask (Frontend)->>BFF (Next.js): POST /api/diagnostico com `total_vacas: 102.38`
+    BFF (Next.js)->>API (Python): Encaminha JSON formatado
+    API (Python)-->>BFF (Next.js): Retorno (200 OK) processado como Float
 ```
 
 ---
@@ -40,34 +52,41 @@ graph TD
 
 ### 📄 Arquivos Chave
 
-#### `📄 page.tsx`
+#### `📄 src/app/formulario/page.tsx`
 
-* **Responsabilidade:** Componente visual principal e controlador do formulário. Centraliza o gerenciamento de eventos, chamadas de rede isoladas para DEV, validação form-level e integração com o Zustand.
-* **Principais Funções/Interfaces:**
-    * `TestFarmApiResponse` & `TestFarmListItem`: Contratos TypeScript estritos para I/O com o BFF.
-    * `mapFarmApiToFormData`: Implementação pura do padrão Adapter. Faz a "tradução" do domínio aninhado da API para o estado plano do formulário.
-    * `handleTestFarmChange`: Manipulador que gerencia cache local de fazendas e requisições HTTP para facilitar o preenchimento automático.
-    * `handleSubmit`: Orquestrador de validação `z.coerce` e *dispatch* para a store global.
-* **Dependências Críticas:** Fortemente acoplado ao `fazendaSchema` (`@/lib/schemas`) para validação e ao `useFazendaStore` para passagem do bastão funcional.
+* **Responsabilidade:** Renderização do formulário principal de diagnóstico inicial. Captura todos os dados baseados na UX de "primeiro acesso" e inicializa os cálculos no BFF.
+* **Principais Funções/Classes:**
+    * `InputComDica`: Componente extraído que injeta automaticamente máscaras customizáveis (`NumericFormat`) e exibe hints baseados na constante de `CASAS_DECIMAIS` (3).
+    * `handleSubmit`: Dispara a verificação Zod de todos os bindings com tratamento de erro `fail-fast` via toast messages e injeta dados na store Zustand caso válidos.
+* **Dependências Críticas:** Depende amplamente do `useFazendaStore` para injeção global e do `react-number-format`.
+
+#### `📄 src/app/ajustes/page.tsx`
+
+* **Responsabilidade:** Atua como ferramenta iterativa do diagnóstico já processado. Permite correções e "What-If" scenarios recarregando a API do diagnóstico sem limpar os dados.
+* **Principais Funções/Classes:**
+    * `CampoNumericoAjuste`: Componente otimizado que unifica os bindings de `NumericFormat` com os labels (`LabelComDica`), implementando o princípio DRY.
+    * `handleSubmit`: Aplica mecanismo de "cooldown" (proteção anti-spam) limitando requisições à API para uma a cada 30 segundos.
+
+#### `📄 src/lib/schemas.ts`
+
+* **Responsabilidade:** Define os contratos inquebráveis e limites tolerados para as variáveis.
+* **Principais Funções/Classes:**
+    * `fazendaSchema`: Schema `z.object` aplicando limites estritos (e.g. `FAZENDA_LIMITS`) e validações cruzadas. As validações numéricas confiam no `z.coerce.number()` permitindo floats sem quebra de pipeline.
 
 ---
 
 ## 🧠 Decisões de Design & Trade-offs
 
-* **Decisão:** Extração da lógica "De-Para" da API de Mock para a função pura `mapFarmApiToFormData`.
-* **Motivo:** O objeto recebido do BFF possui uma estrutura aninhada (em `"dados": {}`) incompatível com o estado interno do formulário. O padrão Adapter garante que o componente consuma os dados no seu próprio dialeto, respeitando o princípio de responsabilidade única (SRP).
-* **Trade-off / Débito Técnico:** Componentes UI normalmente não deveriam orquestrar lógica complexa de mapeamento; idealmente isso caberia a uma camada de serviço front-end. O acoplamento dentro do mesmo arquivo atende à simplicidade, mas exige manutenção sincronizada caso a estrutura do formulário cresça.
-
-* **Decisão:** Uso de `useRef` para caching local das fazendas.
-* **Motivo:** Evita *round-trips* redundantes na rede caso o desenvolvedor alterne repetidamente a fazenda de testes no `<select>`.
-* **Trade-off / Débito Técnico:** Aumenta ligeiramente o *footprint* de memória em troca de redução no tráfego de rede para a mesma sessão ativa de um componente local, em vez de delegar essa responsabilidade para bibliotecas especialistas como React Query.
+* **Decisão:** Extrair a formatação decimal diretamente para os inputs na UI (`NumericFormat`) ao invés de usar parsers customizados no evento nativo.
+* **Motivo:** O uso da biblioteca nativa `react-number-format` resolve implicitamente problemas de Regex complexos (ex: múltiplos pontos, localidade `pt-BR` vs `en-US`, não-numéricos) sem invenção de roda.
+* **Trade-off / Débito Técnico:** A dependência obriga o mapeamento e cast refinados para as props herdadas (`React.ComponentProps<typeof NumericFormat>`), adicionando uma ligeira complexidade na tipagem do componente genérico.
 
 ---
 
 ## 🧪 Estratégia de Testes
 
-* **Tipo de Teste dominante:** Testes Unitários/Integração UI com Jest e `@testing-library/react`.
-* **Cenários Críticos:** 
-  * Validação cruzada (Zod) garantindo que vacas em lactação nunca excedam o tamanho total do rebanho, independentemente das artimanhas do HTML5.
-  * Injeção simulada (Mocking) da função de roteamento `next/navigation` e da manipulação de estado global (Zustand).
-* **Estratégia de Mocking:** O *fetch* nativo é interceptado e sobrescrito (`global.fetch = jest.fn()`) no escopo da suite para retornar um contrato idêntico ao do servidor, permitindo validação das mecânicas do Adapter sem incorrer em acoplamento de rede nos testes unitários.
+* **Tipo de Teste dominante:** Testes Unitários de Comportamento via `Jest`.
+* **Cenários Críticos:** A suíte `tests/schemas/float-inputs.spec.ts` foca estritamente na validação dos dados após a coleta da máscara, garantindo que a "linha de defesa final" do sistema processe Floats perfeitos, aceite coercões de strings (Ponto) e previna entradas ilegais. Testes de Performance validam carga pesada.
+* **Estratégia de Mocking:** O payload (`basePayload`) atua de fixture base injetada nos parses customizados.
+
+
