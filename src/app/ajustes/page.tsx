@@ -14,6 +14,7 @@ import { fazendaSchema, FazendaFormData } from '@/lib/schemas';
 import { Navbar } from '@/components/ui/Navbar';
 import { Info, AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
+import { NumericFormat } from 'react-number-format';
 
 /**
  * Componente auxiliar genérico para renderizar um rótulo (label) com uma dica (tooltip) interativa.
@@ -43,6 +44,23 @@ const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, labe
 );
 
 /**
+ * Componente auxiliar para encapsular os atributos repetitivos do NumericFormat 
+ * e agrupar com o LabelComDica.
+ */
+const CASAS_DECIMAIS = 3;
+
+const CampoNumericoAjuste = ({ id, label, unidade, dica, value, onChange }: { id: string, label: string, unidade?: string, dica?: string, value: string | number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
+  <>
+    <LabelComDica htmlFor={id} label={label} unidade={unidade} dica={dica} />
+    <NumericFormat
+      id={id} name={id} type="text" inputMode="decimal" allowNegative={false} decimalScale={CASAS_DECIMAIS} allowedDecimalSeparators={[',', '.']} decimalSeparator="." required
+      value={value} onChange={onChange}
+      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
+    />
+  </>
+);
+
+/**
  * Página de Ajustes de Dados da Fazenda.
  * 
  * Consume o estado global (`useFazendaStore`) para inicializar o formulário de forma controlada.
@@ -54,10 +72,10 @@ const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, labe
  */
 export default function AjustesPage() {
   const { dadosFazenda, setDadosFazenda, setDiagnosticoIA } = useFazendaStore();
-  
+
   // Inicializa o estado local com os dados da store (se existirem)
   const [formData, setFormData] = useState<Partial<FazendaFormData>>(dadosFazenda || {});
-  
+
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -177,7 +195,7 @@ export default function AjustesPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-10 border border-gray-100">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Ajuste de Dados da Fazenda</h1>
@@ -200,7 +218,7 @@ export default function AjustesPage() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                   />
                 </div>
-                 <div>
+                <div>
                   <LabelComDica htmlFor="sistema_producao" label="Sistema de Produção" />
                   <select
                     id="sistema_producao" name="sistema_producao" required
@@ -213,7 +231,7 @@ export default function AjustesPage() {
                     <option value="confinado">Confinado</option>
                   </select>
                 </div>
-                 <div>
+                <div>
                   <LabelComDica htmlFor="regiao" label="Região" />
                   <select
                     id="regiao" name="regiao" required
@@ -221,56 +239,31 @@ export default function AjustesPage() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition bg-white"
                   >
                     <option value="" disabled>Selecione...</option>
-                  <option value="triangulo">Triângulo Mineiro</option>
-                  <option value="rio doce e vale do aco">Rio Doce e Vale do Aço</option>
-                  <option value="noroeste e alto paranaiba">Noroeste e Alto Paranaíba</option>
-                  <option value="centro">Centro</option>
-                  <option value="centro-oeste e sudoeste">Centro-Oeste e Sudoeste</option>
-                  <option value="sul">Sul</option>
-                  <option value="norte">Norte</option>
-                  <option value="zona da mata e vertentes">Zona da Mata e Vertentes</option>
-                  <option value="jequitinhonha e mucuri">Jequitinhonha e Mucuri</option>
+                    <option value="triangulo">Triângulo Mineiro</option>
+                    <option value="rio doce e vale do aco">Rio Doce e Vale do Aço</option>
+                    <option value="noroeste e alto paranaiba">Noroeste e Alto Paranaíba</option>
+                    <option value="centro">Centro</option>
+                    <option value="centro-oeste e sudoeste">Centro-Oeste e Sudoeste</option>
+                    <option value="sul">Sul</option>
+                    <option value="norte">Norte</option>
+                    <option value="zona da mata e vertentes">Zona da Mata e Vertentes</option>
+                    <option value="jequitinhonha e mucuri">Jequitinhonha e Mucuri</option>
                   </select>
                 </div>
                 <div>
-                  <LabelComDica htmlFor="total_vacas" label="Total de Vacas" dica="Todo o rebanho leiteiro" />
-                  <input
-                    id="total_vacas" name="total_vacas" type="number" required
-                    value={formData.total_vacas || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
-                  />
+                  <CampoNumericoAjuste id="total_vacas" label="Total de Vacas" dica="Todo o rebanho leiteiro" value={formData.total_vacas || ''} onChange={handleChange} />
                 </div>
                 <div>
-                  <LabelComDica htmlFor="percentual_lactacao" label="Perc. em Lactação" unidade="%" dica="Percentual do rebanho de vacas que estão em lactação atualmente." />
-                  <input
-                    id="percentual_lactacao" name="percentual_lactacao" type="number" step="0.01" required
-                    value={formData.percentual_lactacao || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
-                  />
+                  <CampoNumericoAjuste id="percentual_lactacao" label="Perc. em Lactação" unidade="%" dica="Percentual do rebanho de vacas que estão em lactação atualmente." value={formData.percentual_lactacao || ''} onChange={handleChange} />
                 </div>
                 <div>
-                  <LabelComDica htmlFor="animais_rebanho" label="Total no Rebanho" dica="Inclui vacas secas, novilhas, bezerras, etc." />
-                  <input
-                    id="animais_rebanho" name="animais_rebanho" type="number" required
-                    value={formData.animais_rebanho || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
-                  />
+                  <CampoNumericoAjuste id="animais_rebanho" label="Total no Rebanho" dica="Inclui vacas secas, novilhas, bezerras, etc." value={formData.animais_rebanho || ''} onChange={handleChange} />
                 </div>
                 <div>
-                  <LabelComDica htmlFor="area_atividade" label="Área da Atividade" unidade="ha" dica="Hectares dedicados à produção de leite." />
-                  <input
-                    id="area_atividade" name="area_atividade" type="number" step="0.1" required
-                    value={formData.area_atividade || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
-                  />
+                  <CampoNumericoAjuste id="area_atividade" label="Área da Atividade" unidade="ha" dica="Hectares dedicados à produção de leite." value={formData.area_atividade || ''} onChange={handleChange} />
                 </div>
                 <div className="md:col-span-2">
-                  <LabelComDica htmlFor="mao_obra_total" label="Mão de Obra Total" dica="Número de funcionários diretos na atividade leiteira." />
-                  <input
-                    id="mao_obra_total" name="mao_obra_total" type="number" required
-                    value={formData.mao_obra_total || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
-                  />
+                  <CampoNumericoAjuste id="mao_obra_total" label="Mão de Obra Total" dica="Número de funcionários diretos na atividade leiteira." value={formData.mao_obra_total || ''} onChange={handleChange} />
                 </div>
               </div>
             </section>
@@ -283,38 +276,32 @@ export default function AjustesPage() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <LabelComDica htmlFor="producao_vaca" label="Prod. por Vaca" unidade="L/dia" />
-                  <input id="producao_vaca" name="producao_vaca" type="number" step="0.1" required value={formData.producao_vaca || ''} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition" />
+                  <CampoNumericoAjuste id="producao_vaca" label="Prod. por Vaca" unidade="L/dia" value={formData.producao_vaca || ''} onChange={handleChange} />
                 </div>
                 <div>
-                  <LabelComDica htmlFor="ccs" label="Qualidade (CCS)" unidade="x1000" dica="Contagem de Células Somáticas" />
-                  <input id="ccs" name="ccs" type="number" required value={formData.ccs || ''} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition" />
+                  <CampoNumericoAjuste id="ccs" label="Qualidade (CCS)" unidade="x1000" dica="Contagem de Células Somáticas" value={formData.ccs || ''} onChange={handleChange} />
                 </div>
                 <div>
-                  <LabelComDica htmlFor="preco_leite" label="Preço Recebido" unidade="R$/L" />
-                  <input id="preco_leite" name="preco_leite" type="number" step="0.01" required value={formData.preco_leite || ''} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition" />
+                  <CampoNumericoAjuste id="preco_leite" label="Preço Recebido" unidade="R$/L" value={formData.preco_leite || ''} onChange={handleChange} />
                 </div>
                 <div>
-                  <LabelComDica htmlFor="preco_referencia" label="Preço de Referência" unidade="R$/L" dica="Preço médio de referência para sua região." />
-                  <input id="preco_referencia" name="preco_referencia" type="number" step="0.01" required value={formData.preco_referencia || ''} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition" />
+                  <CampoNumericoAjuste id="preco_referencia" label="Preço de Referência" unidade="R$/L" dica="Preço médio de referência para sua região." value={formData.preco_referencia || ''} onChange={handleChange} />
                 </div>
                 <div>
-                  <LabelComDica htmlFor="preco_concentrado" label="Preço do Concentrado" unidade="R$/kg" dica="Preço médio pago pelo produtor no kg do concentrado." />
-                  <input id="preco_concentrado" name="preco_concentrado" type="number" step="0.01" required value={formData.preco_concentrado || ''} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition" />
+                  <CampoNumericoAjuste id="preco_concentrado" label="Preço do Concentrado" unidade="R$/kg" dica="Preço médio pago pelo produtor no kg do concentrado." value={formData.preco_concentrado || ''} onChange={handleChange} />
                 </div>
               </div>
             </section>
 
             {/* Rodapé de Ações com Cooldown */}
             <div className="flex justify-center pt-2">
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isSubmitting || cooldown > 0}
-                className={`flex items-center justify-center font-bold py-3 px-10 rounded-lg shadow-md transition duration-200 ${
-                  isSubmitting || cooldown > 0 
-                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                className={`flex items-center justify-center font-bold py-3 px-10 rounded-lg shadow-md transition duration-200 ${isSubmitting || cooldown > 0
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     : 'bg-primary hover:bg-primary-light text-white'
-                }`}
+                  }`}
               >
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
@@ -335,16 +322,15 @@ export default function AjustesPage() {
 
       {/* Popup de Feedback (Toast) */}
       {feedback && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300"
           onClick={() => setFeedback(null)}
         >
-          <div 
-            className={`p-4 rounded-lg shadow-2xl flex items-start gap-3 text-sm font-medium border-l-4 w-full max-w-md ${
-              feedback.type === 'success' 
-                ? 'bg-white border-green-500 text-gray-800' 
+          <div
+            className={`p-4 rounded-lg shadow-2xl flex items-start gap-3 text-sm font-medium border-l-4 w-full max-w-md ${feedback.type === 'success'
+                ? 'bg-white border-green-500 text-gray-800'
                 : 'bg-white border-red-500 text-gray-800'
-            }`}
+              }`}
             onClick={e => e.stopPropagation()}
           >
             {feedback.type === 'success' ? (
