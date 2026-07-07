@@ -68,8 +68,8 @@ describe('BFF Proxy API - GET /api/test-data', () => {
 
   it('deve retornar a lista de fazendas quando nenhum nome for fornecido na query', async () => {
     const mockFarmsList = [
-      { nome: 'Fazenda Recanto', sistema_producao: 'compost_barn' },
-      { nome: 'Fazenda Esperança', sistema_producao: 'confinado' }
+      { nome: 'Fazenda Recanto', sistema_producao: 'compost-barn' },
+      { nome: 'Fazenda Esperança', sistema_producao: 'confinado-sem-estrutura' }
     ];
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -98,7 +98,7 @@ describe('BFF Proxy API - GET /api/test-data', () => {
   it('deve retornar os dados completos da fazenda quando o nome for fornecido na query', async () => {
     const mockFarmData = {
       nome_fazenda: 'Fazenda Recanto',
-      sistema_producao: 'compost_barn',
+      sistema_producao: 'compost-barn',
       total_vacas: 200
     };
 

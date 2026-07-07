@@ -226,9 +226,9 @@ export default function AjustesPage() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition bg-white"
                   >
                     <option value="" disabled>Selecione...</option>
-                    <option value="compost_barn">Compost Barn</option>
-                    <option value="semi_confinado">Semi-confinado</option>
-                    <option value="confinado">Confinado</option>
+                    <option value="compost-barn">Compost Barn</option>
+                    <option value="semiconfinado">Semi-confinado</option>
+                    <option value="confinado-sem-estrutura">Confinado</option>
                   </select>
                 </div>
                 <div>

@@ -373,9 +373,9 @@ export default function FormularioPage() {
                   value={formData.sistema_producao} onChange={handleChange} required
                 >
                   <option value="">Selecione o sistema</option>
-                  <option value="semi_confinado">Semi-confinado</option>
-                  <option value="compost_barn">Compost Barn</option>
-                  <option value="confinado">Confinado</option>
+                  <option value="semiconfinado">Semi-confinado</option>
+                  <option value="compost-barn">Compost Barn</option>
+                  <option value="confinado-sem-estrutura">Confinado</option>
                 </select>
               </div>
             </div>

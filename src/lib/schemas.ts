@@ -13,7 +13,7 @@ import { FAZENDA_LIMITS } from './constants';
 /**
  * Enum para os sistemas de produção suportados pela API.
  */
-export const SistemaProducaoEnum = z.enum(['compost_barn', 'confinado', 'semi_confinado']);
+export const SistemaProducaoEnum = z.enum(['compost-barn', 'confinado-sem-estrutura', 'semiconfinado']);
 
 /**
  * Enum para as regiões geográficas mapeadas pelo SEBRAE/Educampo.

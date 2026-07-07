@@ -12,7 +12,7 @@ import { fazendaSchema } from '../../src/lib/schemas';
 describe('Validações Zod: fazendaSchema', () => {
   const dadosValidos = {
     nome_fazenda: 'Fazenda Leiteira Experimental',
-    sistema_producao: 'compost_barn',
+    sistema_producao: 'compost-barn',
     total_vacas: 100,
     percentual_lactacao: 85,
     animais_rebanho: 120,
@@ -68,6 +68,11 @@ describe('Validações Zod: fazendaSchema', () => {
    */
   it('deve rejeitar sistemas de produção ou regiões fora do Enum permitido', () => {
     const dadosInvalidos = { ...dadosValidos, sistema_producao: 'pastagem', regiao: 'capital' };
+    expect(() => fazendaSchema.parse(dadosInvalidos)).toThrow();
+  });
+
+  it('deve rejeitar sistemas de produção usando snake_case legado', () => {
+    const dadosInvalidos = { ...dadosValidos, sistema_producao: 'compost_barn' };
     expect(() => fazendaSchema.parse(dadosInvalidos)).toThrow();
   });
 });
