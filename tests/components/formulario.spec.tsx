@@ -80,7 +80,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
 
     // Preenchemos com dados que passam no HTML5 (required), mas falham na malha fina do Zod (Regra Cruzada)
     await user.type(screen.getByLabelText(/Nome da Fazenda/i), 'Fazenda Errada');
-    await user.selectOptions(screen.getByLabelText(/Sistema de Produção/i), 'confinado');
+    await user.selectOptions(screen.getByLabelText(/Sistema de Produção/i), 'confinado-sem-estrutura');
     await user.type(screen.getByLabelText(/Total de Vacas/i), '150'); // Inversão para forçar o erro
     await user.type(screen.getByLabelText(/Perc. em Lactação/i), '85'); 
     await user.type(screen.getByLabelText(/Total no Rebanho/i), '100'); // Erro Zod (Vacas > Rebanho)
@@ -111,7 +111,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
     
     // O select nativo ou componente de UI sendo alterado
     const sistemaSelect = screen.getByLabelText(/Sistema de Produção/i);
-    await user.selectOptions(sistemaSelect, 'semi_confinado');
+    await user.selectOptions(sistemaSelect, 'semiconfinado');
 
     // Preenche Estrutura e Rebanho
     await user.type(screen.getByLabelText(/Total de Vacas/i), '100');
@@ -139,7 +139,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
       // Verifica se o Zustand foi chamado com os dados corretos (tipados pelo schema)
       expect(mockSetDadosFazenda).toHaveBeenCalledWith(expect.objectContaining({
         nome_fazenda: 'Fazenda Leiteira Experimental',
-        sistema_producao: 'semi_confinado',
+        sistema_producao: 'semiconfinado',
         total_vacas: 100,
         percentual_lactacao: 85,
       }));
@@ -173,12 +173,12 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
       process.env.NEXT_PUBLIC_ENABLE_TEST_FARMS = 'true';
       
       const mockFarmsList = [
-        { nome: 'Fazenda Recanto', sistema_producao: 'compost_barn' },
+        { nome: 'Fazenda Recanto', sistema_producao: 'compost-barn' },
       ];
       const mockFarmData = {
         nome: 'Fazenda Recanto',
         dados: {
-          sistema_producao: 'compost_barn',
+          sistema_producao: 'compost-barn',
           total_vacas: 200,
           percentual_lactacao: 85,
           total_rebanho: 250,
@@ -221,7 +221,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
       // Verifica se os campos do formulário foram preenchidos corretamente (usamos waitFor para garantir a atualização de estado)
       await waitFor(() => {
         expect(screen.getByLabelText(/Nome da Fazenda/i)).toHaveValue('Fazenda Recanto');
-        expect(screen.getByLabelText(/Total de Vacas/i)).toHaveValue(200);
+        expect(screen.getByLabelText(/Total de Vacas/i)).toHaveValue('200');
       });
     });
   });

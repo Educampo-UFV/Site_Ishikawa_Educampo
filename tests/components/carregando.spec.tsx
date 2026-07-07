@@ -52,7 +52,7 @@ describe('Tela de Carregamento (CarregandoPage)', () => {
     preco_leite: 3.2,
     producao_vaca: 25,
     regiao: "triangulo",
-    sistema_producao: "compost_barn",
+    sistema_producao: "compost-barn",
     total_vacas: 100,
     percentual_lactacao: 60
   };

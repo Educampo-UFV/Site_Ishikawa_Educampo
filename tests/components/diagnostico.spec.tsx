@@ -20,7 +20,7 @@ describe('Feature: Hub Central de Diagnóstico', () => {
   const mockStorePopulated = {
     dadosFazenda: {
       nome_fazenda: 'Fazenda Teste',
-      sistema_producao: 'compost_barn',
+      sistema_producao: 'compost-barn',
       total_vacas: 100,
       percentual_lactacao: 85,
       animais_rebanho: 120,

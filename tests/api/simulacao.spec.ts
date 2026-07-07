@@ -71,7 +71,7 @@ describe('BFF Route: POST /api/simulacao', () => {
         preco_recebido: 3.2,
         producao_vaca: 38.0,
         regiao_sebrae: "triangulo",
-        sistema_producao: "compost_barn",
+        sistema_producao: "compost-barn",
         total_vacas: 100,
         percentual_lactacao: 60
       },
@@ -114,7 +114,7 @@ describe('BFF Route: POST /api/simulacao', () => {
         preco_recebido: 3.2,
         producao_vaca: 38.0,
         regiao_sebrae: "triangulo",
-        sistema_producao: "compost_barn",
+        sistema_producao: "compost-barn",
         total_vacas: 100,
         percentual_lactacao: 60
       },

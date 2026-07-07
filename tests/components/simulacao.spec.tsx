@@ -28,7 +28,7 @@ jest.mock('next/navigation', () => ({
 describe('Dashboard de Simulação (SimulacaoPage)', () => {
   const mockDadosIniciais = {
     nome_fazenda: 'Fazenda Simulador',
-    sistema_producao: 'compost_barn',
+    sistema_producao: 'compost-barn',
     regiao: 'triangulo',
     total_vacas: 100,
     percentual_lactacao: 85, // Dado importante para a conta
