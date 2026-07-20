@@ -699,14 +699,14 @@ export default function SimulacaoPage() {
                     {/* Controle: Percentual de Lactação */}
                     {renderControl('percentual_lactacao', 'Percentual em Lactação', (v) => `${formatSidebarNumber(v)} %`)}
 
-                    {/* Controle: CCS */}
-                    {renderControl('ccs', 'CCS', (v) => `${formatSidebarNumber(v)} mil céls/mL`, true)}
+                    {/* Controle: CCS (Ocultado temporariamente) */}
+                    {/* {renderControl('ccs', 'CCS', (v) => `${formatSidebarNumber(v)} mil céls/mL`, true)} */}
 
                     {/* Controle: Produção por Vaca */}
                     {renderControl('producao_vaca', 'Produção por vaca', (v) => `${formatSidebarNumber(v)} L/dia`)}
 
-                    {/* Controle: Área de Atividade */}
-                    {renderControl('area_atividade', 'Área de atividade', (v) => `${formatSidebarNumber(v)} hectares`)}
+                    {/* Controle: Área de Atividade (Ocultado temporariamente) */}
+                    {/* {renderControl('area_atividade', 'Área de atividade', (v) => `${formatSidebarNumber(v)} hectares`)} */}
 
                     {/* Controle: Número de Trabalhadores */}
                     {renderControl('numero_trabalhadores', 'Total de Trabalhadores', (v) => `${formatSidebarNumber(v)} pessoas`)}
