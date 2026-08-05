@@ -269,22 +269,22 @@ export default function SimulacaoPage() {
         area_atividade: sanitizar(dadosFazenda.area_atividade, 0.1),
         ccs: sanitizar(dadosFazenda.ccs, 0.1),
         custo_concentrado: sanitizar(dadosFazenda.preco_concentrado, 0.01),
-        numero_trabalhadores: sanitizar(dadosFazenda.mao_obra_total, 1, true), // Força Inteiro
+        numero_trabalhadores: sanitizar(dadosFazenda.mao_obra_total, 0.01),
         preco_recebido: sanitizar(dadosFazenda.preco_leite, 0.01),
         producao_vaca: sanitizar(dadosFazenda.producao_vaca, 0.1),
         regiao_sebrae: dadosFazenda.regiao || 'desconhecida',
         sistema_producao: dadosFazenda.sistema_producao || 'desconhecido',
-        total_vacas: sanitizar(dadosFazenda.total_vacas, 1, true), // Força Inteiro
+        total_vacas: sanitizar(dadosFazenda.total_vacas, 0.01),
         percentual_lactacao: sanitizar(dadosFazenda.percentual_lactacao, 0)
       },
       dados_simulados: {
         area_atividade: sanitizar(estadoSimulacao.area_atividade, 0.1),
         ccs: sanitizar(estadoSimulacao.ccs, 0.1),
         custo_concentrado: sanitizar(estadoSimulacao.custo_concentrado, 0.01),
-        numero_trabalhadores: sanitizar(estadoSimulacao.numero_trabalhadores, 1, true), // Força Inteiro
+        numero_trabalhadores: sanitizar(estadoSimulacao.numero_trabalhadores, 0.01),
         preco_recebido: sanitizar(estadoSimulacao.preco_recebido, 0.01),
         producao_vaca: sanitizar(estadoSimulacao.producao_vaca, 0.1),
-        total_vacas: sanitizar(estadoSimulacao.total_vacas, 1, true), // Força Inteiro
+        total_vacas: sanitizar(estadoSimulacao.total_vacas, 0.01),
         percentual_lactacao: sanitizar(estadoSimulacao.percentual_lactacao, 0)
       }
     };

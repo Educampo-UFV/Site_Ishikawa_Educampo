@@ -28,6 +28,27 @@ Para desenvolvedores, este diretório encapsula a interface interativa isolada d
 * **Orquestração de Machine Learning e Rate Limiting:** Mecanismo de *cooldown* quando o servidor retorna 429 Too Many Requests.
 * **Renderização Visual Nativa:** Gerencia e renderiza gráficos nativos embutidos.
 
+### Sanitização e Tipos de Dados Enviados à API
+
+Antes de enviar o payload (`dados_originais` e `dados_simulados`) para a API externa via `/api/simulacao`, a função helper local `sanitizar(valor, min, isInt)` faz o tratamento defensivo dos dados do painel lateral:
+* Previne envio de `NaN` ou valores abaixo do piso mínimo estipulado (`min`).
+* Permite arredondar inteiros quando `isInt: true` (se ativado).
+
+#### Tabela de Tipos e Limites Mínimos dos Dados Enviados
+
+Atualmente **todas as variáveis numéricas são enviadas como Float (number)** para suportar médias demográficas e alta precisão:
+
+| Variável (`payload`) | Tipo | Valor Mínimo (`min`) | Descrição |
+| :--- | :---: | :---: | :--- |
+| `total_vacas` | **Float** | `0.01` | Média/total de vacas |
+| `numero_trabalhadores` | **Float** | `0.01` | Média/total de trabalhadores |
+| `area_atividade` | **Float** | `0.1` | Área total em hectares |
+| `ccs` | **Float** | `0.1` | Contagem de Células Somáticas |
+| `custo_concentrado` | **Float** | `0.01` | Preço/Custo do concentrado (R$) |
+| `preco_recebido` | **Float** | `0.01` | Preço recebido por litro de leite (R$) |
+| `producao_vaca` | **Float** | `0.1` | Produção média diária por vaca (L/dia) |
+| `percentual_lactacao` | **Float** | `0` | Porcentagem do rebanho em lactação (%) |
+
 ## 🧩 Arquivos deste Módulo
 
 * `page.tsx`: Ponto de entrada da rota. Renderiza o layout da tela, incluindo o painel de controles interativos esquerdo (`defaultParams` definidos com suporte a `step=0.5`) e a exibição de resultados em cartões métricos.
