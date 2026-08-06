@@ -2,7 +2,7 @@
  * @file src/app/api/formularios/route.ts
  * @description Proxy BFF para a rota promovida de opções de formulários e dados detalhados de fazendas.
  * Injeta a chave de autenticação (X-API-KEY) no lado do servidor e repassa requisições para o backend FastAPI.
- * Linked to Obsidian Vault: [[sdd-promover-rota-formularios-frontend]]
+ * Ref: Obsidian note [[sdd-promover-rota-formularios-frontend]]
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,7 +13,7 @@ const CACHE_CONTROL_HEADER = 'private, max-age=60, stale-while-revalidate=120';
 
 function buildBackendUrl(baseUrl: string, nome: string | null): string {
   const endpoint = nome 
-    ? `/api/formularios?nome=${encodeURIComponent(nome)}`
+    ? `/api/formularios/farms/${encodeURIComponent(nome)}`
     : `/api/formularios`;
   return `${baseUrl}${endpoint}`;
 }

@@ -2,6 +2,7 @@
  * @file tests/app/formulario.spec.tsx
  * @description Suíte de testes para o componente FormularioPage.
  * Garante o tratamento de opções dinâmicas, auto-preenchimento e UX de resiliência/retry em falhas de API.
+ * Ref: Obsidian note [[sdd-promover-rota-formularios-frontend]]
  */
 
 import React from 'react';
@@ -126,7 +127,55 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
 
     await waitFor(() => {
       const inputNome = screen.getByLabelText(/Nome da Fazenda/i) as HTMLInputElement;
+      const selectRegiao = screen.getByLabelText(/Região/i) as HTMLSelectElement;
       expect(inputNome.value).toBe('Fazenda Leiteira Experimental 1');
+      expect(selectRegiao.value).toBe('Zona da Mata');
+    }, { timeout: 4000 });
+  });
+
+  it('deve normalizar e autopreencher o campo Região flexivelmente quando a API retornar com maiúsculas, acentos ou a chave regiao', async () => {
+    // Arrange
+    const mockOpcoes = {
+      sistemas_producao: ['compost-barn'],
+      regioes_sebrae: ['triangulo', 'zona da mata e vertentes'],
+      fazendas_cadastradas: ['Fazenda Teste Regiao']
+    };
+
+    const mockFazendaComRegiaoCustom = {
+      nome: 'Fazenda Teste Regiao',
+      dados: {
+        sistema_producao: 'compost-barn',
+        regiao: 'Triângulo', // Retorna 'regiao' com maiúscula e acento
+        total_vacas: 100
+      }
+    };
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockOpcoes,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockFazendaComRegiaoCustom,
+      });
+
+    render(<FormularioPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Fazenda Teste Regiao')).toBeInTheDocument();
+    }, { timeout: 4000 });
+
+    // Act
+    const farmSelect = screen.getByLabelText(/Selecionar Fazenda Cadastrada/i);
+    fireEvent.change(farmSelect, { target: { value: 'Fazenda Teste Regiao' } });
+
+    // Assert
+    await waitFor(() => {
+      const selectRegiao = screen.getByLabelText(/Região/i) as HTMLSelectElement;
+      expect(selectRegiao.value).toBe('triangulo');
     }, { timeout: 4000 });
   });
 

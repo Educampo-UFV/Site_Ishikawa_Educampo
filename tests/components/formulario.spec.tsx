@@ -2,6 +2,7 @@
  * @file tests/components/formulario.spec.tsx
  * @description Suíte de testes para a Tela de Coleta de Dados.
  * Atualizado para refletir o carregamento de opções da rota promovida /api/formularios.
+ * Ref: Obsidian note [[sdd-promover-rota-formularios-frontend]]
  */
 
 import React from 'react';
@@ -187,6 +188,25 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
         expect(screen.getByLabelText(/Nome da Fazenda/i)).toHaveValue('Fazenda Recanto');
         expect(screen.getByLabelText(/Total de Vacas/i)).toHaveValue('200');
       });
+    });
+
+    it('deve renderizar corretamente quando a API retorna objetos { value, label } e { id, nome }', async () => {
+      const mockOpcoesObjetos = {
+        sistemas_producao: [{ value: 'compost-barn', label: 'Compost Barn' }],
+        regioes_sebrae: [{ value: 'sul', label: 'Sul de Minas' }],
+        fazendas_cadastradas: [{ id: '123', nome: '#1 Fazenda Teste' }]
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockOpcoesObjetos,
+      });
+
+      render(<FormularioPage />);
+
+      expect(await screen.findByText('#1 Fazenda Teste')).toBeInTheDocument();
+      expect(screen.getByText('Compost Barn')).toBeInTheDocument();
+      expect(screen.getByText('Sul de Minas')).toBeInTheDocument();
     });
   });
 });

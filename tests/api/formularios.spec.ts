@@ -2,6 +2,7 @@
  * @file tests/api/formularios.spec.ts
  * @description Suíte de testes para a rota Proxy BFF de Formulários (/api/formularios).
  * Testa a injeção do cabeçalho X-API-KEY, repasse de requisição para o backend FastAPI e tratamento de erros.
+ * Ref: Obsidian note [[sdd-promover-rota-formularios-frontend]]
  */
 
 import { GET } from '@/app/api/formularios/route';
@@ -125,7 +126,7 @@ describe('BFF Proxy API - GET /api/formularios', () => {
     // Assert
     expect(response.status).toBe(200);
     expect(global.fetch).toHaveBeenCalledWith(
-      `${process.env.API_BASE_URL}/api/formularios?nome=Fazenda%20Leiteira%20Experimental%201`,
+      `${process.env.API_BASE_URL}/api/formularios/farms/Fazenda%20Leiteira%20Experimental%201`,
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({

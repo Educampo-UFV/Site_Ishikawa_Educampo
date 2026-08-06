@@ -1,6 +1,7 @@
 /**
  * @file src/app/formulario/page.tsx
  * @description Interface visual de coleta de dados da fazenda com consumo dinâmico de opções e fazendas cadastradas.
+ * Ref: Obsidian note [[sdd-promover-rota-formularios-frontend]]
  */
 
 'use client';
@@ -12,7 +13,34 @@ import { useFazendaStore } from '@/store/useFazendaStore';
 import { fazendaSchema } from '@/lib/schemas';
 import { Info, AlertCircle, RefreshCw } from 'lucide-react';
 import { NumericFormat } from 'react-number-format';
-import { FormularioOpcoesResponse, FazendaDetalhadaResponse } from '@/types/formulario';
+import { 
+  FormularioOpcoesResponse, 
+  FazendaDetalhadaResponse,
+  SistemaProducaoItem,
+  RegiaoSebraeItem,
+  FazendaCadastradaItem
+} from '@/types/formulario';
+
+function getOptionValue(item: SistemaProducaoItem | RegiaoSebraeItem): string {
+  if (typeof item === 'object' && item !== null && 'value' in item) {
+    return item.value;
+  }
+  return String(item);
+}
+
+function getOptionLabel(item: SistemaProducaoItem | RegiaoSebraeItem): string {
+  if (typeof item === 'object' && item !== null && 'label' in item) {
+    return item.label;
+  }
+  return String(item);
+}
+
+function getFazendaNome(item: FazendaCadastradaItem): string {
+  if (typeof item === 'object' && item !== null && 'nome' in item) {
+    return item.nome;
+  }
+  return String(item);
+}
 
 const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, label: string, unidade?: string, dica?: string }) => (
   <div className="flex items-center gap-2 mb-1">
@@ -77,21 +105,46 @@ const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, place
   );
 };
 
-function mapFarmApiToFormData(data: FazendaDetalhadaResponse) {
+function matchRegiaoOption(rawRegiao: string, optionsList: RegiaoSebraeItem[]): string {
+  if (!rawRegiao) return '';
+  const rawClean = String(rawRegiao).trim();
+  const rawLower = rawClean.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  for (const item of optionsList) {
+    const val = getOptionValue(item);
+    const lbl = getOptionLabel(item);
+    if (val === rawClean || lbl === rawClean) return val;
+
+    const valLower = val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const lblLower = lbl.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    if (valLower === rawLower || lblLower === rawLower) return val;
+    if (valLower.includes(rawLower) || rawLower.includes(valLower)) return val;
+    if (lblLower.includes(rawLower) || rawLower.includes(lblLower)) return val;
+  }
+  return rawClean;
+}
+
+function mapFarmApiToFormData(data: FazendaDetalhadaResponse | any, opcoesRegioes: RegiaoSebraeItem[] = DEFAULT_REGIOES) {
+  const dadosObj = data?.dados ?? data;
+  const rawRegiao = dadosObj?.regiao_sebrae ?? dadosObj?.regiao ?? data?.regiao_sebrae ?? data?.regiao ?? '';
+  const listToSearch = opcoesRegioes.length > 0 ? opcoesRegioes : DEFAULT_REGIOES;
+  const matchedRegiao = matchRegiaoOption(rawRegiao, listToSearch);
+
   return {
-    nome_fazenda: data.nome ?? '',
-    sistema_producao: data.dados?.sistema_producao ?? '',
-    total_vacas: data.dados?.total_vacas?.toString() ?? '',
-    percentual_lactacao: data.dados?.percentual_lactacao?.toString() ?? '',
-    animais_rebanho: data.dados?.total_rebanho?.toString() ?? '',
-    area_atividade: data.dados?.area_atividade?.toString() ?? '',
-    mao_obra_total: data.dados?.numero_trabalhadores?.toString() ?? '',
-    producao_vaca: data.dados?.producao_vaca?.toString() ?? '',
-    preco_leite: data.dados?.preco_recebido?.toString() ?? '',
-    preco_referencia: data.dados?.preco_referencia?.toString() ?? '',
-    preco_concentrado: data.dados?.custo_concentrado?.toString() ?? '',
-    ccs: data.dados?.ccs?.toString() ?? '',
-    regiao: data.dados?.regiao_sebrae ?? '',
+    nome_fazenda: data?.nome ?? data?.nome_fazenda ?? '',
+    sistema_producao: dadosObj?.sistema_producao ?? '',
+    total_vacas: dadosObj?.total_vacas?.toString() ?? '',
+    percentual_lactacao: dadosObj?.percentual_lactacao?.toString() ?? '',
+    animais_rebanho: (dadosObj?.total_rebanho ?? dadosObj?.animais_rebanho)?.toString() ?? '',
+    area_atividade: dadosObj?.area_atividade?.toString() ?? '',
+    mao_obra_total: (dadosObj?.numero_trabalhadores ?? dadosObj?.mao_obra_total)?.toString() ?? '',
+    producao_vaca: dadosObj?.producao_vaca?.toString() ?? '',
+    preco_leite: (dadosObj?.preco_recebido ?? dadosObj?.preco_leite)?.toString() ?? '',
+    preco_referencia: dadosObj?.preco_referencia?.toString() ?? '',
+    preco_concentrado: (dadosObj?.custo_concentrado ?? dadosObj?.preco_concentrado)?.toString() ?? '',
+    ccs: dadosObj?.ccs?.toString() ?? '',
+    regiao: matchedRegiao,
   };
 }
 
@@ -176,7 +229,7 @@ export default function FormularioPage() {
       const res = await fetch(`/api/formularios?nome=${encodeURIComponent(nome)}`);
       if (res.ok) {
         const data: FazendaDetalhadaResponse = await res.json();
-        const mappedData = mapFarmApiToFormData(data);
+        const mappedData = mapFarmApiToFormData(data, regioesDisponiveis);
 
         cacheFazendas.current[nome] = mappedData;
         setFormData((prev) => ({ ...prev, ...mappedData }));
@@ -305,11 +358,14 @@ export default function FormularioPage() {
                   defaultValue=""
                 >
                   <option value="" disabled>Selecione uma fazenda...</option>
-                  {fazendasCadastradas.map((nome, idx) => (
-                    <option key={idx} value={nome}>
-                      {nome}
-                    </option>
-                  ))}
+                  {fazendasCadastradas.map((item, idx) => {
+                    const nome = getFazendaNome(item);
+                    return (
+                      <option key={idx} value={nome}>
+                        {nome}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </section>
@@ -339,9 +395,11 @@ export default function FormularioPage() {
                   disabled={isErrorApi}
                 >
                   <option value="">Selecione o sistema</option>
-                  {sistemasDisponiveis.map((sis, idx) => (
-                    <option key={idx} value={sis}>{sis}</option>
-                  ))}
+                  {sistemasDisponiveis.map((sis, idx) => {
+                    const val = getOptionValue(sis);
+                    const lbl = getOptionLabel(sis);
+                    return <option key={idx} value={val}>{lbl}</option>;
+                  })}
                 </select>
               </div>
             </div>
@@ -437,9 +495,11 @@ export default function FormularioPage() {
                     disabled={isErrorApi}
                   >
                     <option value="">Selecione a região</option>
-                    {regioesDisponiveis.map((reg, idx) => (
-                      <option key={idx} value={reg}>{reg}</option>
-                    ))}
+                    {regioesDisponiveis.map((reg, idx) => {
+                    const val = getOptionValue(reg);
+                    const lbl = getOptionLabel(reg);
+                    return <option key={idx} value={val}>{lbl}</option>;
+                  })}
                   </select>
                 </div>
               </div>

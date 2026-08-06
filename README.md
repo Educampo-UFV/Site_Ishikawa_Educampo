@@ -184,6 +184,9 @@ site_ishikawa_educampo/
 │   │   │   ├── auth/                                # Gerencia o login e injeta o token via Cookie HttpOnly.
 │   │   │   │   ├── refresh/                         # Renovação silenciosa da sessão (Sliding Session).
 │   │   │   ├── diagnostico/                         # Proxy seguro: mascara as chaves e chama a API real da IA.
+│   │   │   ├── formularios/                         # Proxy seguro para leitura de opções do formulário e dados de fazendas.
+│   │   │   │   ├── route.ts
+│   │   │   │   └── README.md
 │   │   │   ├── health/                              # Verificação de saúde da API externa (Health Check via BFF).
 │   │   │   ├── parametros-painel/                   # Rota para consultar os limites dinâmicos dos sliders.
 │   │   │   ├── ping/                                # Rota gatilho para despertar a API externa do Cold Start.

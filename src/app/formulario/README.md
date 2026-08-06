@@ -25,25 +25,24 @@ A arquitetura garante que a conversão dos dados pelo usuário aconteça sob dem
 * **Entrada:** Interação direta do produtor nos campos de formulário (via Browser).
 * **Saída:** Payload tipado submetido à API de diagnóstico e estado global atualizado (via Zustand).
 
-**Reference Note:** [[Site_Ishikawa_Educampo_2026-07-06_float-inputs-mask]]
+**Reference Note:** [[sdd-promover-rota-formularios-frontend]], [[Site_Ishikawa_Educampo_2026-07-06_float-inputs-mask]]
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Browser
-    participant React Mask (Frontend)
-    participant Zod Schema
-    participant BFF (Next.js)
-    participant API (Python)
+    participant User as "Produtor / Usuário"
+    participant Browser as "FormularioPage (Frontend)"
+    participant BFF as "BFF Handler (/api/formularios)"
+    participant Backend as "FastAPI (External API)"
     
-    User->>Browser: Digita "102,38" (Total de Vacas)
-    Browser->>React Mask (Frontend): Intercepta digitação
-    React Mask (Frontend)-->>Browser: Exibe "102,38"
-    React Mask (Frontend)->>Zod Schema: Converte para float (102.38)
-    Zod Schema-->>React Mask (Frontend): Validação com sucesso
-    React Mask (Frontend)->>BFF (Next.js): POST /api/diagnostico com `total_vacas: 102.38`
-    BFF (Next.js)->>API (Python): Encaminha JSON formatado
-    API (Python)-->>BFF (Next.js): Retorno (200 OK) processado como Float
+    Browser->>BFF: GET /api/formularios
+    BFF->>Backend: GET /api/formularios (Header: X-API-KEY)
+    Backend-->>BFF: Retorna opções dinâmicas & fazendas cadastradas
+    BFF-->>Browser: Retorna JSON
+    Browser->>Browser: Popula selects de Sistemas, Regiões e Fazendas
+    User->>Browser: Seleciona Fazenda Cadastrada
+    Browser->>BFF: GET /api/formularios?nome=Fazenda
+    BFF-->>Browser: Retorna métricas detalhadas da fazenda
+    Browser->>Browser: Autopopula formulário via mapFarmApiToFormData
 ```
 
 ---
@@ -54,10 +53,12 @@ sequenceDiagram
 
 #### `📄 src/app/formulario/page.tsx`
 
-* **Responsabilidade:** Renderização do formulário principal de diagnóstico inicial. Captura todos os dados baseados na UX de "primeiro acesso" e inicializa os cálculos no BFF.
+* **Responsabilidade:** Renderização do formulário principal de diagnóstico inicial. Captura todos os dados baseados na UX de "primeiro acesso", busca opções dinâmicas da API `/api/formularios` (sistemas de produção, regiões SEBRAE e fazendas cadastradas), realiza autopreenchimento de fazenda selecionada e provê UX de resiliência com botão "Tentar Novamente".
 * **Principais Funções/Classes:**
     * `InputComDica`: Componente extraído que injeta automaticamente máscaras customizáveis (`NumericFormat`) e exibe hints baseados na constante de `CASAS_DECIMAIS` (3).
-    * `handleSubmit`: Dispara a verificação Zod de todos os bindings com tratamento de erro `fail-fast` via toast messages e injeta dados na store Zustand caso válidos.
+    * `fetchOpcoes`: Carrega assincronamente as opções dinâmicas e lista de fazendas cadastradas do Proxy BFF.
+    * `handleFazendaChange`: Consulta os dados detalhados da fazenda cadastrada e autopopula o estado local do formulário.
+    * `handleSubmit`: Dispara a verificação Zod de todos os bindings com tratamento de erro `fail-fast` via toast/box messages e injeta dados na store Zustand caso válidos.
 * **Dependências Críticas:** Depende amplamente do `useFazendaStore` para injeção global e do `react-number-format`.
 
 #### `📄 src/app/ajustes/page.tsx`

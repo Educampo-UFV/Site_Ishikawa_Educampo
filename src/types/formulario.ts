@@ -1,13 +1,32 @@
 /**
  * @file src/types/formulario.ts
  * @description Definições de interfaces e tipos TypeScript para a rota de formulários e opções dinâmicas.
- * Linked to Obsidian Vault: [[sdd-promover-rota-formularios-frontend]]
+ * Ref: Obsidian note [[sdd-promover-rota-formularios-frontend]]
  */
 
+export interface SistemaProducaoObjeto {
+  value: string;
+  label: string;
+}
+
+export interface RegiaoSebraeObjeto {
+  value: string;
+  label: string;
+}
+
+export interface FazendaCadastradaObjeto {
+  id?: string;
+  nome: string;
+}
+
+export type SistemaProducaoItem = SistemaProducaoObjeto | string;
+export type RegiaoSebraeItem = RegiaoSebraeObjeto | string;
+export type FazendaCadastradaItem = FazendaCadastradaObjeto | string;
+
 export interface FormularioOpcoesResponse {
-  sistemas_producao: string[];
-  regioes_sebrae: string[];
-  fazendas_cadastradas: string[];
+  sistemas_producao: SistemaProducaoItem[];
+  regioes_sebrae: RegiaoSebraeItem[];
+  fazendas_cadastradas: FazendaCadastradaItem[];
 }
 
 export interface MetricasFazenda {
