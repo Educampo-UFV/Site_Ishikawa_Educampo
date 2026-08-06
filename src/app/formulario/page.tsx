@@ -102,25 +102,27 @@ const DEFAULT_REGIOES = [
   'zona da mata e vertentes', 'jequitinhonha e mucuri'
 ];
 
+const INITIAL_FORM_DATA = {
+  nome_fazenda: '',
+  sistema_producao: '',
+  total_vacas: '',
+  percentual_lactacao: '',
+  animais_rebanho: '',
+  area_atividade: '',
+  mao_obra_total: '',
+  producao_vaca: '',
+  preco_leite: '',
+  preco_referencia: '',
+  preco_concentrado: '',
+  ccs: '',
+  regiao: '',
+};
+
 export default function FormularioPage() {
   const router = useRouter();
-  const setDadosFazenda = useFazendaStore((state: any) => state.setDadosFazenda);
+  const setDadosFazenda = useFazendaStore((state: { setDadosFazenda: (dados: any) => void }) => state.setDadosFazenda);
 
-  const [formData, setFormData] = useState({
-    nome_fazenda: '',
-    sistema_producao: '',
-    total_vacas: '',
-    percentual_lactacao: '',
-    animais_rebanho: '',
-    area_atividade: '',
-    mao_obra_total: '',
-    producao_vaca: '',
-    preco_leite: '',
-    preco_referencia: '',
-    preco_concentrado: '',
-    ccs: '',
-    regiao: '',
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
   const [erros, setErros] = useState<string[]>([]);
   const [opcoes, setOpcoes] = useState<FormularioOpcoesResponse>({
@@ -203,11 +205,8 @@ export default function FormularioPage() {
     const validacao = fazendaSchema.safeParse(formData);
 
     if (!validacao.success) {
-      const errorData = validacao.error as any;
-      const errorList = Array.isArray(errorData) ? errorData : (errorData?.issues || errorData?.errors || [{ message: 'Dados inválidos', path: ['Formulário'] }]);
-
-      const mensagensErro = errorList.map((err: any) => {
-        const path = err.path && Array.isArray(err.path) ? err.path.join(' ') : 'Campo';
+      const mensagensErro = validacao.error.issues.map((err) => {
+        const path = err.path && err.path.length > 0 ? err.path.join(' ') : 'Campo';
         return `${path}: ${err.message}`;
       });
 
@@ -218,6 +217,7 @@ export default function FormularioPage() {
     setDadosFazenda(validacao.data);
     router.push('/carregando');
   };
+
 
   const sistemasDisponiveis = (opcoes?.sistemas_producao?.length ?? 0) > 0 ? opcoes.sistemas_producao : DEFAULT_SISTEMAS;
   const regioesDisponiveis = (opcoes?.regioes_sebrae?.length ?? 0) > 0 ? opcoes.regioes_sebrae : DEFAULT_REGIOES;

@@ -7,6 +7,17 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+const API_TIMEOUT_MS = 5000;
+const DEFAULT_CLIENT_IP = '127.0.0.1';
+const CACHE_CONTROL_HEADER = 'private, max-age=60, stale-while-revalidate=120';
+
+function buildBackendUrl(baseUrl: string, nome: string | null): string {
+  const endpoint = nome 
+    ? `/api/formularios?nome=${encodeURIComponent(nome)}`
+    : `/api/formularios`;
+  return `${baseUrl}${endpoint}`;
+}
+
 /**
  * @description Intercepta requisições GET para opções de formulário / dados de fazenda e realiza o proxy seguro.
  * 
@@ -27,13 +38,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const clientIp = request.headers.get('x-forwarded-for') || '127.0.0.1';
-
-    const endpoint = nome 
-      ? `/api/formularios?nome=${encodeURIComponent(nome)}`
-      : `/api/formularios`;
-
-    const url = `${baseUrl}${endpoint}`;
+    const clientIp = request.headers.get('x-forwarded-for') || DEFAULT_CLIENT_IP;
+    const url = buildBackendUrl(baseUrl, nome);
 
     const response = await fetch(url, {
       method: 'GET',
@@ -42,7 +48,7 @@ export async function GET(request: NextRequest) {
         'Content-Type': 'application/json',
         'X-Forwarded-For': clientIp
       },
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(API_TIMEOUT_MS)
     });
 
     if (!response.ok) {
@@ -56,14 +62,16 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'private, max-age=60, stale-while-revalidate=120'
+        'Cache-Control': CACHE_CONTROL_HEADER
       }
     });
-  } catch (error: any) {
-    console.error('[API Proxy /api/formularios] Falha interna na rota:', error);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('[API Proxy /api/formularios] Falha interna na rota:', message);
     return NextResponse.json(
       { error: 'Falha ao buscar opções de formulários' },
       { status: 500 }
     );
   }
 }
+

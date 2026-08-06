@@ -56,6 +56,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
 
   it('deve renderizar os grupos de campos e inputs essenciais da interface', async () => {
     render(<FormularioPage />);
+    await screen.findByText('Fazenda Recanto');
 
     expect(screen.getByText(/Informações Gerais/i)).toBeInTheDocument();
     expect(screen.getByText(/Estrutura e Rebanho/i)).toBeInTheDocument();
@@ -69,6 +70,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
   it('deve bloquear a submissão e exibir erros do Zod quando os dados violarem regras zootécnicas', async () => {
     const user = userEvent.setup();
     render(<FormularioPage />);
+    await screen.findByText('Fazenda Recanto');
 
     await user.type(screen.getByLabelText(/Nome da Fazenda/i), 'Fazenda Errada');
     await user.selectOptions(screen.getByLabelText(/Sistema de Produção/i), 'confinado-sem-estrutura');
@@ -87,6 +89,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
     const botaoAvancar = screen.getByRole('button', { name: /Avançar/i });
     await user.click(botaoAvancar);
 
+
     await waitFor(() => {
       expect(mockSetDadosFazenda).not.toHaveBeenCalled();
       expect(screen.getByText(/O total de vacas não pode exceder o total do rebanho/i)).toBeInTheDocument();
@@ -96,6 +99,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
   it('deve injetar os dados no estado global e redirecionar ao submeter corretamente', async () => {
     const user = userEvent.setup();
     render(<FormularioPage />);
+    await screen.findByText('Fazenda Recanto');
 
     await user.type(screen.getByLabelText(/Nome da Fazenda/i), 'Fazenda Leiteira Experimental');
     
