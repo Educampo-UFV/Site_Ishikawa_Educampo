@@ -43,9 +43,19 @@ const BarChartSimulacao = ({
   const safeSimulado = Math.max(0, valorSimulado);
   const safeReferencia = Math.max(0, valorReferencia);
   const maxVal = Math.max(safeSimulado, safeReferencia, 0.01);
-  const tetoGrafico = maxVal * 1.15; // Adiciona 15% de folga no topo para respiro
-  const alturaSimulado = `${(safeSimulado / tetoGrafico) * 100}%`;
-  const alturaReferencia = `${(safeReferencia / tetoGrafico) * 100}%`;
+  const minVal = Math.min(safeSimulado, safeReferencia);
+
+  // Escala dinâmica com deslocamento de piso para destacar diferenças relativas (ex: 30%)
+  const ratio = maxVal > 0 ? minVal / maxVal : 1;
+  const floorRatio = ratio > 0.4 ? 0.35 : 0;
+  const range = 1 - floorRatio;
+
+  const pctSimulado = maxVal > 0 ? floorRatio + ((safeSimulado / maxVal) * range) : 0;
+  const pctReferencia = maxVal > 0 ? floorRatio + ((safeReferencia / maxVal) * range) : 0;
+
+  const tetoGrafico = 1.12; // 12% de respiro no topo do container
+  const alturaSimulado = `${(pctSimulado / tetoGrafico) * 100}%`;
+  const alturaReferencia = `${(pctReferencia / tetoGrafico) * 100}%`;
 
   /**
    * Lógica de cores: Verde (Melhor), Vermelho (Pior), Cinza (Igual)
@@ -95,7 +105,7 @@ const BarChartSimulacao = ({
   };
 
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between h-56">
+    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between h-[280px]">
       {/* Cabeçalho Flexbox Inteligente */}
       <div className="flex justify-between items-start gap-4 mb-4">
         <h3 className="text-sm font-bold text-gray-700 leading-tight">{titulo}</h3>
@@ -396,7 +406,7 @@ export default function SimulacaoPage() {
     ccs: { min: 50, max: 1000, step: 10, fronteiras_cenario: null as any },
     area_atividade: { min: 1, max: 1000, step: 0.5, fronteiras_cenario: null as any },
     custo_concentrado: { min: 0.5, max: 6.0, step: 0.05, fronteiras_cenario: null as any },
-    numero_trabalhadores: { min: 1, max: 50, step: 0.5, fronteiras_cenario: null as any }
+    numero_trabalhadores: { min: 1, max: 50, step: 0.1, fronteiras_cenario: null as any }
   };
 
   type ParamKey = keyof typeof defaultParams;

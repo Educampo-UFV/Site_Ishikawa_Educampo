@@ -23,7 +23,7 @@ Para desenvolvedores, este diretório encapsula a interface interativa isolada d
 ### Funcionalidades e Regras de Negócio
 
 * **Isolamento de Estado (Sandbox):** A tela importa os dados originais resgatados pelo Zustand, mas transcreve-os para um estado reativo descartável local. 
-* **Precisão Decimal em Controles Demográficos:** Diferente das versões legadas que limitavam a `step: 1` para trabalhadores e vacas, o painel da simulação (em seus `defaultParams`) agora utiliza `step: 0.5`. Isso suporta preenchimento de médias demográficas consolidadas durante o ano pelo consultor (ex: 2.5 trabalhadores ativos em média no semestre).
+* **Precisão Decimal em Controles Demográficos:** Suporta precisão fina com `step: 0.1` para trabalhadores e `step: 0.5` para vacas no painel da simulação (`defaultParams`). Isso suporta preenchimento de médias demográficas consolidadas durante o ano pelo consultor (ex: 1.5 trabalhadores ativos em média no semestre).
 * **Motor de Simulação Rápido:** Componentes em tela garantem resposta fluida (UX responsivo) sem precisar fazer uma requisição exaustiva a cada alteração, mantendo as chamadas intensivas reservadas somente para quando o botão de simulação é clicado.
 * **Orquestração de Machine Learning e Rate Limiting:** Mecanismo de *cooldown* quando o servidor retorna 429 Too Many Requests.
 * **Renderização Visual Nativa:** Gerencia e renderiza gráficos nativos embutidos.
