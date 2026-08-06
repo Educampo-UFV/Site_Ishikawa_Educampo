@@ -63,21 +63,30 @@ interface InputComDicaProps extends React.InputHTMLAttributes<HTMLInputElement> 
   label: string;
   unidade?: string;
   dica?: string;
+  decimalScale?: number;
 }
 
-const CASAS_DECIMAIS = 3;
-const STEP_PADRAO = "0.001";
+const CASAS_DECIMAIS = 2;
+const STEP_PADRAO = "0.01";
 
-function aplicarLimiteCasasDecimais(valor: string, maxCasas: number): string {
-  if (!valor) return valor;
-  const partes = valor.split('.');
-  if (partes.length > 1 && partes[1].length > maxCasas) {
-    return parseFloat(valor).toFixed(maxCasas);
+function aplicarLimiteCasasDecimais(valor: string | number | undefined | null, maxCasas: number): string {
+  if (valor === undefined || valor === null || valor === '') return '';
+  const strVal = String(valor);
+  const num = parseFloat(strVal);
+  if (isNaN(num)) return strVal;
+  
+  if (maxCasas === 0) {
+    return Math.round(num).toString();
   }
-  return valor;
+
+  const partes = strVal.split('.');
+  if (partes.length > 1 && partes[1].length > maxCasas) {
+    return num.toFixed(maxCasas);
+  }
+  return strVal;
 }
 
-const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, placeholder, step = STEP_PADRAO, ...props }) => {
+const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, placeholder, step = STEP_PADRAO, decimalScale = CASAS_DECIMAIS, ...props }) => {
   const inputClassName = `w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent placeholder:text-gray-300 ${props.className || ''}`;
   const commonProps: React.InputHTMLAttributes<HTMLInputElement> = {
     ...props,
@@ -94,7 +103,7 @@ const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, place
           type="text"
           inputMode="decimal"
           allowNegative={false}
-          decimalScale={CASAS_DECIMAIS}
+          decimalScale={decimalScale}
           allowedDecimalSeparators={[',', '.']}
           decimalSeparator="."
         />
@@ -105,55 +114,138 @@ const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, place
   );
 };
 
-function matchRegiaoOption(rawRegiao: string, optionsList: RegiaoSebraeItem[]): string {
-  if (!rawRegiao) return '';
-  const rawClean = String(rawRegiao).trim();
-  const rawLower = rawClean.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+/**
+ * Mapeamento direto entre as 9 regiões da API Ishikawa (value/label) e a API ML (Zod Enum).
+ */
+export const MAP_TO_ML_REGIAO: Record<string, string> = {
+  'centro': 'centro',
+  'centro oeste e sudoeste': 'centro-oeste e sudoeste',
+  'jequitinhonha e mucuri': 'jequitinhonha e mucuri',
+  'noroeste e alto paranaiba': 'noroeste e alto paranaiba',
+  'norte': 'norte',
+  'norte de minas': 'norte',
+  'rio doce e vale do aco': 'rio doce e vale do aco',
+  'sul': 'sul',
+  'sul de minas': 'sul',
+  'triangulo': 'triangulo',
+  'triangulo mineiro': 'triangulo',
+  'zona da mata e vertentes': 'zona da mata e vertentes',
+  'zona da mata': 'zona da mata e vertentes',
+};
+
+export const MAP_TO_ML_SISTEMA: Record<string, string> = {
+  'compost-barn': 'compost-barn',
+  'confinado-sem-estrutura': 'confinado-sem-estrutura',
+  'semiconfinado': 'semiconfinado',
+  'compost barn - free stall': 'compost-barn',
+};
+
+function normalizeText(str: string): string {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/_/g, ' ')
+    .trim();
+}
+
+export function mapToMlRegion(raw: string): string {
+  if (!raw) return '';
+  const norm = normalizeText(raw);
+  if (MAP_TO_ML_REGIAO[norm]) return MAP_TO_ML_REGIAO[norm];
+
+  for (const [key, target] of Object.entries(MAP_TO_ML_REGIAO)) {
+    if (norm.includes(key) || key.includes(norm)) return target;
+  }
+  return norm;
+}
+
+export function mapToMlSystem(raw: string): string {
+  if (!raw) return '';
+  const norm = normalizeText(raw);
+  if (MAP_TO_ML_SISTEMA[norm]) return MAP_TO_ML_SISTEMA[norm];
+
+  for (const [key, target] of Object.entries(MAP_TO_ML_SISTEMA)) {
+    if (norm.includes(key) || key.includes(norm)) return target;
+  }
+  return norm;
+}
+
+function findIshikawaOptionValue(raw: string, optionsList: (SistemaProducaoItem | RegiaoSebraeItem)[]): string {
+  if (!raw) return '';
+  const clean = String(raw).trim();
+  const norm = normalizeText(clean);
 
   for (const item of optionsList) {
     const val = getOptionValue(item);
     const lbl = getOptionLabel(item);
-    if (val === rawClean || lbl === rawClean) return val;
+    const valNorm = normalizeText(val);
+    const lblNorm = normalizeText(lbl);
 
-    const valLower = val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const lblLower = lbl.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-    if (valLower === rawLower || lblLower === rawLower) return val;
-    if (valLower.includes(rawLower) || rawLower.includes(valLower)) return val;
-    if (lblLower.includes(rawLower) || rawLower.includes(lblLower)) return val;
+    if (val === clean || lbl === clean || valNorm === norm || lblNorm === norm) {
+      return val;
+    }
   }
-  return rawClean;
-}
 
-function mapFarmApiToFormData(data: FazendaDetalhadaResponse | any, opcoesRegioes: RegiaoSebraeItem[] = DEFAULT_REGIOES) {
-  const dadosObj = data?.dados ?? data;
-  const rawRegiao = dadosObj?.regiao_sebrae ?? dadosObj?.regiao ?? data?.regiao_sebrae ?? data?.regiao ?? '';
-  const listToSearch = opcoesRegioes.length > 0 ? opcoesRegioes : DEFAULT_REGIOES;
-  const matchedRegiao = matchRegiaoOption(rawRegiao, listToSearch);
+  for (const item of optionsList) {
+    const val = getOptionValue(item);
+    const lbl = getOptionLabel(item);
+    const valNorm = normalizeText(val);
+    const lblNorm = normalizeText(lbl);
 
-  return {
-    nome_fazenda: data?.nome ?? data?.nome_fazenda ?? '',
-    sistema_producao: dadosObj?.sistema_producao ?? '',
-    total_vacas: dadosObj?.total_vacas?.toString() ?? '',
-    percentual_lactacao: dadosObj?.percentual_lactacao?.toString() ?? '',
-    animais_rebanho: (dadosObj?.total_rebanho ?? dadosObj?.animais_rebanho)?.toString() ?? '',
-    area_atividade: dadosObj?.area_atividade?.toString() ?? '',
-    mao_obra_total: (dadosObj?.numero_trabalhadores ?? dadosObj?.mao_obra_total)?.toString() ?? '',
-    producao_vaca: dadosObj?.producao_vaca?.toString() ?? '',
-    preco_leite: (dadosObj?.preco_recebido ?? dadosObj?.preco_leite)?.toString() ?? '',
-    preco_referencia: dadosObj?.preco_referencia?.toString() ?? '',
-    preco_concentrado: (dadosObj?.custo_concentrado ?? dadosObj?.preco_concentrado)?.toString() ?? '',
-    ccs: dadosObj?.ccs?.toString() ?? '',
-    regiao: matchedRegiao,
-  };
+    if (valNorm.includes(norm) || norm.includes(valNorm) || lblNorm.includes(norm) || norm.includes(lblNorm)) {
+      return val;
+    }
+  }
+
+  return clean;
 }
 
 const DEFAULT_SISTEMAS = ['semiconfinado', 'compost-barn', 'confinado-sem-estrutura'];
-const DEFAULT_REGIOES = [
-  'triangulo', 'rio doce e vale do aco', 'noroeste e alto paranaiba', 
-  'centro', 'centro-oeste e sudoeste', 'sul', 'norte', 
-  'zona da mata e vertentes', 'jequitinhonha e mucuri'
+const DEFAULT_REGIOES: RegiaoSebraeItem[] = [
+  { value: 'centro', label: 'Centro' },
+  { value: 'centro_oeste_e_sudoeste', label: 'Centro Oeste E Sudoeste' },
+  { value: 'jequitinhonha_e_mucuri', label: 'Jequitinhonha E Mucuri' },
+  { value: 'noroeste_e_alto_paranaiba', label: 'Noroeste E Alto Paranaiba' },
+  { value: 'norte', label: 'Norte de Minas' },
+  { value: 'rio_doce_e_vale_do_aco', label: 'Rio Doce E Vale Do Aco' },
+  { value: 'sul', label: 'Sul de Minas' },
+  { value: 'triangulo', label: 'Triângulo Mineiro' },
+  { value: 'zona_da_mata_e_vertentes', label: 'Zona Da Mata E Vertentes' },
 ];
+
+function mapFarmApiToFormData(
+  data: FazendaDetalhadaResponse | any, 
+  opcoesRegioes: RegiaoSebraeItem[] = DEFAULT_REGIOES,
+  opcoesSistemas: SistemaProducaoItem[] = DEFAULT_SISTEMAS
+) {
+  const dadosObj = data?.dados ?? data;
+  const rawRegiao = dadosObj?.regiao_sebrae ?? dadosObj?.regiao ?? data?.regiao_sebrae ?? data?.regiao ?? '';
+  const rawSistema = dadosObj?.sistema_producao ?? data?.sistema_producao ?? '';
+
+  const listRegioes = opcoesRegioes.length > 0 ? opcoesRegioes : DEFAULT_REGIOES;
+  const listSistemas = opcoesSistemas.length > 0 ? opcoesSistemas : DEFAULT_SISTEMAS;
+
+  const matchedRegiao = findIshikawaOptionValue(rawRegiao, listRegioes);
+  const matchedSistema = findIshikawaOptionValue(rawSistema, listSistemas);
+
+  return {
+    nome_fazenda: data?.nome ?? data?.nome_fazenda ?? '',
+    sistema_producao: matchedSistema,
+    total_vacas: aplicarLimiteCasasDecimais(dadosObj?.total_vacas, 2),
+    percentual_lactacao: aplicarLimiteCasasDecimais(dadosObj?.percentual_lactacao, 1),
+    animais_rebanho: aplicarLimiteCasasDecimais(dadosObj?.total_rebanho ?? dadosObj?.animais_rebanho, 2),
+    area_atividade: aplicarLimiteCasasDecimais(dadosObj?.area_atividade, 2),
+    mao_obra_total: aplicarLimiteCasasDecimais(dadosObj?.numero_trabalhadores ?? dadosObj?.mao_obra_total, 1),
+    producao_vaca: aplicarLimiteCasasDecimais(dadosObj?.producao_vaca, 2),
+    preco_leite: aplicarLimiteCasasDecimais(dadosObj?.preco_recebido ?? dadosObj?.preco_leite, 2),
+    preco_referencia: aplicarLimiteCasasDecimais(dadosObj?.preco_referencia, 2),
+    preco_concentrado: aplicarLimiteCasasDecimais(dadosObj?.custo_concentrado ?? dadosObj?.preco_concentrado, 2),
+    ccs: aplicarLimiteCasasDecimais(dadosObj?.ccs, 2),
+    regiao: matchedRegiao,
+  };
+}
 
 const INITIAL_FORM_DATA = {
   nome_fazenda: '',
@@ -229,7 +321,7 @@ export default function FormularioPage() {
       const res = await fetch(`/api/formularios?nome=${encodeURIComponent(nome)}`);
       if (res.ok) {
         const data: FazendaDetalhadaResponse = await res.json();
-        const mappedData = mapFarmApiToFormData(data, regioesDisponiveis);
+        const mappedData = mapFarmApiToFormData(data, regioesDisponiveis, sistemasDisponiveis);
 
         cacheFazendas.current[nome] = mappedData;
         setFormData((prev) => ({ ...prev, ...mappedData }));
@@ -255,7 +347,14 @@ export default function FormularioPage() {
     e.preventDefault();
     setErros([]);
 
-    const validacao = fazendaSchema.safeParse(formData);
+    // Mapeia os campos regiao e sistema_producao para os Enums exigidos pelo modelo de ML
+    const payloadParaMl = {
+      ...formData,
+      regiao: mapToMlRegion(formData.regiao),
+      sistema_producao: mapToMlSystem(formData.sistema_producao),
+    };
+
+    const validacao = fazendaSchema.safeParse(payloadParaMl);
 
     if (!validacao.success) {
       const mensagensErro = validacao.error.issues.map((err) => {
@@ -419,6 +518,7 @@ export default function FormularioPage() {
                 id="percentual_lactacao" name="percentual_lactacao" type="number"
                 label="Perc. em Lactação" unidade="%" placeholder="85"
                 dica="Percentual do rebanho de vacas que estão em lactação atualmente."
+                decimalScale={1}
                 value={formData.percentual_lactacao} onChange={handleChange} min={0} max={100} required
               />
               <InputComDica
@@ -444,6 +544,7 @@ export default function FormularioPage() {
                   id="mao_obra_total" name="mao_obra_total" type="number"
                   label="Mão de Obra Total" unidade="trabalhadores" placeholder="3"
                   dica="Número total de trabalhadores envolvidos na atividade leiteira."
+                  decimalScale={1}
                   value={formData.mao_obra_total} onChange={handleChange} min={1} max={1000} required
                 />
               </div>
@@ -496,10 +597,10 @@ export default function FormularioPage() {
                   >
                     <option value="">Selecione a região</option>
                     {regioesDisponiveis.map((reg, idx) => {
-                    const val = getOptionValue(reg);
-                    const lbl = getOptionLabel(reg);
-                    return <option key={idx} value={val}>{lbl}</option>;
-                  })}
+                      const val = getOptionValue(reg);
+                      const lbl = getOptionLabel(reg);
+                      return <option key={idx} value={val}>{lbl}</option>;
+                    })}
                   </select>
                 </div>
               </div>
