@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Flag, X, ChevronDown } from 'lucide-react';
+import { AlertCircle, Flag, X, ChevronDown, Info } from 'lucide-react';
 
 /**
  * @description Propriedades para configurar a exibição de uma causa e suas práticas associadas.
@@ -16,6 +16,7 @@ import { AlertCircle, Flag, X, ChevronDown } from 'lucide-react';
  * @property {string} [analise] - Detalhamento textual vindo da análise técnica avançada.
  * @property {boolean} [isAccordion] - Se renderiza em formato accordion (dentro do Modal) em vez de popover card (dentro do Grid).
  * @property {boolean} [defaultExpanded] - Se a lógica da interface dita que o accordion inicia expandido.
+ * @property {boolean} [mostrar_texto] - Flag condicional para exibir o texto textual da severidade ao lado da bandeira. Padrão: false.
  * @property {(e: React.MouseEvent) => void} [onClickCausa] - Callback acionado ao clicar na causa principal.
  */
 interface CausaItemProps {
@@ -25,6 +26,7 @@ interface CausaItemProps {
   analise?: string;
   isAccordion?: boolean;
   defaultExpanded?: boolean;
+  mostrar_texto?: boolean;
   onClickCausa?: (e: React.MouseEvent) => void;
 }
 
@@ -35,7 +37,16 @@ interface CausaItemProps {
  * @param {CausaItemProps} props - Propriedades mapeadas da causa individual.
  * @returns {React.JSX.Element} O fragmento iterável da linha (popover ou accordion).
  */
-export const CausaItem: React.FC<CausaItemProps> = ({ resumo_pratica, pratica, severidade, analise, isAccordion, defaultExpanded, onClickCausa }) => {
+export const CausaItem: React.FC<CausaItemProps> = ({ 
+  resumo_pratica, 
+  pratica, 
+  severidade, 
+  analise, 
+  isAccordion, 
+  defaultExpanded, 
+  mostrar_texto = false, 
+  onClickCausa 
+}) => {
   const [mostrarAnalise, setMostrarAnalise] = useState(false);
   const [isExpanded, setIsExpanded] = useState(defaultExpanded || false);
 
@@ -74,7 +85,7 @@ export const CausaItem: React.FC<CausaItemProps> = ({ resumo_pratica, pratica, s
             {severidade && (
               <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-xs font-bold shrink-0 ${colorClass}`}>
                 <Flag size={12} strokeWidth={3} />
-                <span className="hidden sm:inline capitalize">{severidade}</span>
+                {mostrar_texto && <span className="hidden sm:inline capitalize">{severidade}</span>}
               </div>
             )}
           </div>
@@ -115,22 +126,25 @@ export const CausaItem: React.FC<CausaItemProps> = ({ resumo_pratica, pratica, s
   return (
     <div className="relative flex flex-col gap-1 my-2">
       <div 
-        className="flex items-start justify-between gap-2 p-2 bg-white border border-gray-100 rounded-lg shadow-sm cursor-pointer hover:border-blue-300 transition-colors"
+        className="flex items-start justify-between gap-2 p-2 bg-white border border-gray-100 rounded-lg shadow-sm cursor-pointer hover:border-blue-300 transition-colors group"
         onClick={onClickCausa}
       >
-        <span className="text-sm text-gray-700 font-medium leading-tight">{resumo_pratica}</span>
+        <span className="text-sm text-gray-700 font-medium leading-tight flex-1">{resumo_pratica}</span>
         
-        {/* Flag de Severidade (Botão) */}
-        {severidade && analise && (
-          <button
-            onClick={(e) => { e.stopPropagation(); setMostrarAnalise(true); }}
-            className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-xs font-bold transition-colors shrink-0 ${colorClass}`}
-            title={`Severidade: ${severidade} - Clique para ver análise`}
-          >
-            <Flag size={12} strokeWidth={3} />
-            <span className="hidden sm:inline capitalize">{severidade}</span>
-          </button>
-        )}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Flag de Severidade (Botão) */}
+          {severidade && analise && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setMostrarAnalise(true); }}
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-xs font-bold transition-colors ${colorClass}`}
+              title={`Severidade: ${severidade} - Clique para ver análise`}
+            >
+              <Flag size={12} strokeWidth={3} />
+              {mostrar_texto && <span className="hidden sm:inline capitalize">{severidade}</span>}
+            </button>
+          )}
+          <Info size={14} className="text-gray-400 group-hover:text-[#1973d3] transition-colors" />
+        </div>
       </div>
 
       {/* Modal / Popover da Análise */}

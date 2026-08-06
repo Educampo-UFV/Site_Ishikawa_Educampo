@@ -124,7 +124,10 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
         >
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">{card.titulo}</p>
-            {isComparativo && ui.icon}
+            <div className="flex items-center gap-2">
+              {isComparativo && ui.icon}
+              <Info size={18} className="text-gray-400 group-hover:text-[#1973d3] transition-colors" />
+            </div>
           </div>
           <div className="mt-auto">
             <span className="sr-only">{card.valor_produtor} {card.unidade_medida || ''}</span>
