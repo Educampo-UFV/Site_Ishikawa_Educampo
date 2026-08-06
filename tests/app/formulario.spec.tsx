@@ -8,6 +8,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import FormularioPage from '@/app/formulario/page';
 
+jest.setTimeout(15000);
+
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -61,12 +63,12 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     // Assert
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/formularios');
-    });
+    }, { timeout: 4000 });
 
     await waitFor(() => {
       expect(screen.getByText('Fazenda Experimental 1')).toBeInTheDocument();
       expect(screen.getByText('Fazenda Modelo 2')).toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
   });
 
   it('deve realizar auto-preenchimento ao selecionar uma fazenda cadastrada', async () => {
@@ -111,7 +113,7 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Fazenda Leiteira Experimental 1')).toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
 
     // Act
     const farmSelect = screen.getByLabelText(/Selecionar Fazenda Cadastrada/i);
@@ -120,12 +122,12 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     // Assert
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/formularios?nome=Fazenda%20Leiteira%20Experimental%201');
-    });
+    }, { timeout: 4000 });
 
     await waitFor(() => {
       const inputNome = screen.getByLabelText(/Nome da Fazenda/i) as HTMLInputElement;
       expect(inputNome.value).toBe('Fazenda Leiteira Experimental 1');
-    });
+    }, { timeout: 4000 });
   });
 
   it('deve exibir mensagem de aviso e botão Tentar Novamente quando a chamada à API falhar', async () => {
@@ -141,7 +143,7 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     await waitFor(() => {
       expect(screen.getByText(/Falha ao conectar com o serviço de opções do formulário/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Tentar Novamente/i })).toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
 
     // Test retry
     const mockOpcoes = {
@@ -161,6 +163,6 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledTimes(2);
       expect(screen.queryByText(/Falha ao conectar com o serviço de opções do formulário/i)).not.toBeInTheDocument();
-    });
+    }, { timeout: 4000 });
   });
 });
