@@ -1,13 +1,6 @@
 /**
  * @file src/app/formulario/page.tsx
- * @description Interface visual de coleta de dados da fazenda.
- * * COMO FUNCIONA:
- * 1. O componente renderiza um layout de formulário dividido em três categorias
- * lógicas (Informações Gerais, Estrutura e Rebanho, Produção e Qualidade).
- * 2. Utiliza estado local para capturar as entradas do usuário.
- * 3. Ao submeter, valida os dados (aqui interceptaremos os erros se houver). Se válidos,
- * injeta os dados na `useFazendaStore` (Zustand) e redireciona o usuário
- * para a tela de carregamento via `useRouter`.
+ * @description Interface visual de coleta de dados da fazenda com consumo dinâmico de opções e fazendas cadastradas.
  */
 
 'use client';
@@ -17,12 +10,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useFazendaStore } from '@/store/useFazendaStore';
 import { fazendaSchema } from '@/lib/schemas';
-import { Info } from 'lucide-react';
+import { Info, AlertCircle, RefreshCw } from 'lucide-react';
 import { NumericFormat } from 'react-number-format';
+import { FormularioOpcoesResponse, FazendaDetalhadaResponse } from '@/types/formulario';
 
-/**
- * @description Componente interno para renderizar o rótulo com unidade e tooltip de ajuda.
- */
 const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, label: string, unidade?: string, dica?: string }) => (
   <div className="flex items-center gap-2 mb-1">
     <label htmlFor={htmlFor} className="text-sm font-semibold text-gray-700">
@@ -49,9 +40,6 @@ interface InputComDicaProps extends React.InputHTMLAttributes<HTMLInputElement> 
 const CASAS_DECIMAIS = 3;
 const STEP_PADRAO = "0.001";
 
-/**
- * @description Função auxiliar para arredondar valores numéricos caso ultrapassem o limite de casas decimais.
- */
 function aplicarLimiteCasasDecimais(valor: string, maxCasas: number): string {
   if (!valor) return valor;
   const partes = valor.split('.');
@@ -89,43 +77,7 @@ const InputComDica: React.FC<InputComDicaProps> = ({ label, unidade, dica, place
   );
 };
 
-/**
- * @description Contrato de dados da lista simplificada de Fazendas de Teste.
- */
-interface TestFarmListItem {
-  nome: string;
-  sistema_producao: string;
-}
-
-/**
- * @description Contrato de dados detalhado da API de Fazendas de Teste.
- */
-interface TestFarmApiResponse {
-  nome: string;
-  dados: {
-    sistema_producao: string;
-    regiao_sebrae: string;
-    total_vacas: number;
-    percentual_lactacao: number;
-    total_rebanho: number;
-    area_atividade: number;
-    numero_trabalhadores: number;
-    producao_vaca: number;
-    preco_recebido: number;
-    preco_referencia: number;
-    custo_concentrado: number;
-    ccs: number;
-  };
-}
-
-/**
- * @description Adapter pattern: mapeia explicitamente os dados aninhados ("dados") 
- * e com nomes de propriedades divergentes da API para o estado "formData" esperado pela UI.
- * Contexto de Domínio: Resolve falha de preenchimento de campos de formulário (mock data).
- * @param {TestFarmApiResponse} data - Payload bruto da API.
- * @returns Objeto com as chaves exatas esperadas pelo formData.
- */
-function mapFarmApiToFormData(data: TestFarmApiResponse) {
+function mapFarmApiToFormData(data: FazendaDetalhadaResponse) {
   return {
     nome_fazenda: data.nome ?? '',
     sistema_producao: data.dados?.sistema_producao ?? '',
@@ -143,19 +95,17 @@ function mapFarmApiToFormData(data: TestFarmApiResponse) {
   };
 }
 
-/**
- * @description Componente principal da página de formulário.
- * Renderiza os quadrantes de entrada e gerencia os estados locais da coleta de dados.
- * @returns {JSX.Element} A interface completa da etapa de Coleta de Dados.
- */
+const DEFAULT_SISTEMAS = ['semiconfinado', 'compost-barn', 'confinado-sem-estrutura'];
+const DEFAULT_REGIOES = [
+  'triangulo', 'rio doce e vale do aco', 'noroeste e alto paranaiba', 
+  'centro', 'centro-oeste e sudoeste', 'sul', 'norte', 
+  'zona da mata e vertentes', 'jequitinhonha e mucuri'
+];
+
 export default function FormularioPage() {
   const router = useRouter();
   const setDadosFazenda = useFazendaStore((state: any) => state.setDadosFazenda);
 
-  /**
-   * @description Estado local dos campos do formulário para vinculação (two-way binding)
-   * com os elementos HTML tipados e devidamente inicializados.
-   */
   const [formData, setFormData] = useState({
     nome_fazenda: '',
     sistema_producao: '',
@@ -173,37 +123,44 @@ export default function FormularioPage() {
   });
 
   const [erros, setErros] = useState<string[]>([]);
-
-  const [testFarms, setTestFarms] = useState<TestFarmListItem[]>([]);
-  const [isLoadingTestData, setIsLoadingTestData] = useState(false);
-  const enableTestFarms = process.env.NEXT_PUBLIC_ENABLE_TEST_FARMS === 'true';
+  const [opcoes, setOpcoes] = useState<FormularioOpcoesResponse>({
+    sistemas_producao: [],
+    regioes_sebrae: [],
+    fazendas_cadastradas: []
+  });
+  const [isLoadingOpcoes, setIsLoadingOpcoes] = useState(false);
+  const [isErrorApi, setIsErrorApi] = useState(false);
+  const [isLoadingFarmData, setIsLoadingFarmData] = useState(false);
   const cacheFazendas = useRef<Record<string, ReturnType<typeof mapFarmApiToFormData>>>({});
 
-  /**
-   * @description Busca a lista de fazendas de teste ao montar o componente (se habilitado).
-   * Contexto de Domínio: Facilita testes de UX/UI sem preenchimento manual massivo.
-   */
-  useEffect(() => {
-    if (enableTestFarms) {
-      const fetchTestFarms = async () => {
-        try {
-          const res = await fetch('/api/test-data');
-          if (res.ok) {
-            const data = await res.json();
-            setTestFarms(data);
-          }
-        } catch (error) {
-          console.error('Erro ao buscar fazendas de teste:', error);
-        }
-      };
-      fetchTestFarms();
+  const fetchOpcoes = async () => {
+    setIsLoadingOpcoes(true);
+    setIsErrorApi(false);
+    try {
+      const res = await fetch('/api/formularios');
+      if (res.ok) {
+        const data: FormularioOpcoesResponse = await res.json();
+        setOpcoes({
+          sistemas_producao: data?.sistemas_producao || [],
+          regioes_sebrae: data?.regioes_sebrae || [],
+          fazendas_cadastradas: data?.fazendas_cadastradas || []
+        });
+      } else {
+        setIsErrorApi(true);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar opções do formulário:', error);
+      setIsErrorApi(true);
+    } finally {
+      setIsLoadingOpcoes(false);
     }
-  }, [enableTestFarms]);
+  };
 
-  /**
-   * @description Lida com a seleção de uma fazenda de teste, buscando dados e populando o formulário.
-   */
-  const handleTestFarmChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  useEffect(() => {
+    fetchOpcoes();
+  }, []);
+
+  const handleFazendaChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nome = e.target.value;
     if (!nome) return;
 
@@ -212,11 +169,11 @@ export default function FormularioPage() {
       return;
     }
 
-    setIsLoadingTestData(true);
+    setIsLoadingFarmData(true);
     try {
-      const res = await fetch(`/api/test-data?nome=${encodeURIComponent(nome)}`);
+      const res = await fetch(`/api/formularios?nome=${encodeURIComponent(nome)}`);
       if (res.ok) {
-        const data: TestFarmApiResponse = await res.json();
+        const data: FazendaDetalhadaResponse = await res.json();
         const mappedData = mapFarmApiToFormData(data);
 
         cacheFazendas.current[nome] = mappedData;
@@ -225,14 +182,10 @@ export default function FormularioPage() {
     } catch (error) {
       console.error('Erro ao carregar dados da fazenda:', error);
     } finally {
-      setIsLoadingTestData(false);
+      setIsLoadingFarmData(false);
     }
   };
 
-  /**
-   * @description Captura e atualiza o estado local conforme a interação com os campos de entrada (inputs e selects).
-   * @param {React.ChangeEvent<HTMLInputElement | HTMLSelectElement>} e - O evento de mudança disparado pelo DOM.
-   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     let { name, value, type } = e.target;
 
@@ -243,27 +196,16 @@ export default function FormularioPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /**
-   * @description Lida com o processo de submissão do formulário. Realiza a validação usando Zod,
-   * mapeia erros potenciais para a interface e, se válido, persiste temporariamente os dados na store (Zustand).
-   * @param {React.FormEvent} e - O evento de submissão do formulário nativo.
-   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErros([]);
 
-    /**
-     * @description Executa a validação real através do schema do projeto.
-     * z.coerce cuidará automaticamente de transpor strings em numéricos.
-     */
     const validacao = fazendaSchema.safeParse(formData);
 
     if (!validacao.success) {
-      /** @description Evita falhas de prototipagem no JSDOM criando um suporte robusto para listas de erros. */
       const errorData = validacao.error as any;
       const errorList = Array.isArray(errorData) ? errorData : (errorData?.issues || errorData?.errors || [{ message: 'Dados inválidos', path: ['Formulário'] }]);
 
-      /** @description Converte e formata o resultado dos erros do Zod em mensagens de texto humanamente legíveis. */
       const mensagensErro = errorList.map((err: any) => {
         const path = err.path && Array.isArray(err.path) ? err.path.join(' ') : 'Campo';
         return `${path}: ${err.message}`;
@@ -273,10 +215,13 @@ export default function FormularioPage() {
       return;
     }
 
-    /** @description Cenário de Sucesso: injeta os dados já tipados, higienizados e convertidos na store. */
     setDadosFazenda(validacao.data);
     router.push('/carregando');
   };
+
+  const sistemasDisponiveis = (opcoes?.sistemas_producao?.length ?? 0) > 0 ? opcoes.sistemas_producao : DEFAULT_SISTEMAS;
+  const regioesDisponiveis = (opcoes?.regioes_sebrae?.length ?? 0) > 0 ? opcoes.regioes_sebrae : DEFAULT_REGIOES;
+  const fazendasCadastradas = opcoes?.fazendas_cadastradas ?? [];
 
   return (
     <div className="min-h-screen bg-fundo-alt pb-12">
@@ -299,7 +244,27 @@ export default function FormularioPage() {
       {/* Container Principal */}
       <main className="max-w-4xl mx-auto px-4 mt-8">
 
-        {/* Box de Erros de Validação */}
+        {/* Banner de Erro de Conexão com a API */}
+        {isErrorApi && (
+          <div className="mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 text-amber-800 rounded-md shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
+              <p className="text-sm font-medium">
+                Falha ao conectar com o serviço de opções do formulário. Algumas listas podem exibir dados padrão.
+              </p>
+            </div>
+            <button
+              onClick={fetchOpcoes}
+              disabled={isLoadingOpcoes}
+              className="flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition"
+            >
+              <RefreshCw size={14} className={isLoadingOpcoes ? 'animate-spin' : ''} />
+              Tentar Novamente
+            </button>
+          </div>
+        )}
+
+        {/* Box de Erros de Validação de Formulário */}
         {erros.length > 0 && (
           <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md shadow-sm">
             <h3 className="font-bold">Atenção (Inválido):</h3>
@@ -313,36 +278,36 @@ export default function FormularioPage() {
 
         <form onSubmit={handleSubmit} className="space-y-8 relative">
 
-          {/* Bloqueador visual durante o carregamento de dados */}
-          {isLoadingTestData && (
+          {/* Bloqueador visual durante o carregamento de dados detalhados */}
+          {isLoadingFarmData && (
             <div className="absolute inset-0 bg-white/50 z-50 flex items-center justify-center rounded-xl">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
             </div>
           )}
 
-          {/* Seção Dinâmica de Fazendas de Teste (Somente DEV) */}
-          {enableTestFarms && (
+          {/* Seção Dinâmica de Fazendas Cadastradas */}
+          {fazendasCadastradas.length > 0 && (
             <section className="bg-blue-50 p-8 rounded-xl shadow-sm border border-blue-100">
               <h2 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
-                <span className="text-2xl">🧪</span> Fazendas de Teste (Ambiente de Desenvolvimento)
+                <span className="text-2xl font-normal">🏡</span> Fazendas Cadastradas
               </h2>
               <div className="flex flex-col gap-1 w-full md:w-1/2">
                 <LabelComDica
-                  htmlFor="test_farm_select"
-                  label="Selecionar Fazenda de Teste"
-                  dica="Escolha um perfil predefinido para preencher automaticamente os campos do formulário."
+                  htmlFor="fazendas_cadastradas_select"
+                  label="Selecionar Fazenda Cadastrada"
+                  dica="Escolha uma fazenda cadastrada para autopopular os campos do formulário."
                 />
                 <select
-                  id="test_farm_select"
+                  id="fazendas_cadastradas_select"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
-                  onChange={handleTestFarmChange}
-                  disabled={isLoadingTestData}
+                  onChange={handleFazendaChange}
+                  disabled={isLoadingFarmData || isErrorApi}
                   defaultValue=""
                 >
                   <option value="" disabled>Selecione uma fazenda...</option>
-                  {testFarms.map((farm, idx) => (
-                    <option key={idx} value={farm.nome}>
-                      {farm.nome} ({farm.sistema_producao})
+                  {fazendasCadastradas.map((nome, idx) => (
+                    <option key={idx} value={nome}>
+                      {nome}
                     </option>
                   ))}
                 </select>
@@ -371,11 +336,12 @@ export default function FormularioPage() {
                   id="sistema_producao" name="sistema_producao"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={formData.sistema_producao} onChange={handleChange} required
+                  disabled={isErrorApi}
                 >
                   <option value="">Selecione o sistema</option>
-                  <option value="semiconfinado">Semi-confinado</option>
-                  <option value="compost-barn">Compost Barn</option>
-                  <option value="confinado-sem-estrutura">Confinado</option>
+                  {sistemasDisponiveis.map((sis, idx) => (
+                    <option key={idx} value={sis}>{sis}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -468,17 +434,12 @@ export default function FormularioPage() {
                     id="regiao" name="regiao"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     value={formData.regiao} onChange={handleChange} required
+                    disabled={isErrorApi}
                   >
                     <option value="">Selecione a região</option>
-                    <option value="triangulo">Triângulo Mineiro</option>
-                    <option value="rio doce e vale do aco">Rio Doce e Vale do Aço</option>
-                    <option value="noroeste e alto paranaiba">Noroeste e Alto Paranaíba</option>
-                    <option value="centro">Centro</option>
-                    <option value="centro-oeste e sudoeste">Centro-Oeste e Sudoeste</option>
-                    <option value="sul">Sul</option>
-                    <option value="norte">Norte</option>
-                    <option value="zona da mata e vertentes">Zona da Mata e Vertentes</option>
-                    <option value="jequitinhonha e mucuri">Jequitinhonha e Mucuri</option>
+                    {regioesDisponiveis.map((reg, idx) => (
+                      <option key={idx} value={reg}>{reg}</option>
+                    ))}
                   </select>
                 </div>
               </div>
