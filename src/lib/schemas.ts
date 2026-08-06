@@ -64,6 +64,8 @@ export const fazendaSchema = z.object({
 
   ccs: z.coerce.number().min(0).max(FAZENDA_LIMITS.CCS_MAX),
 
+  email: z.string().email('Insira um e-mail válido').optional().or(z.literal('')),
+
   regiao: RegiaoEnum,
 }).superRefine((data, ctx) => {
 

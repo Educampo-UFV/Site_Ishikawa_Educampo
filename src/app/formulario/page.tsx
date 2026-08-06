@@ -232,6 +232,7 @@ function mapFarmApiToFormData(
 
   return {
     nome_fazenda: data?.nome ?? data?.nome_fazenda ?? '',
+    email: data?.email ?? dadosObj?.email ?? '',
     sistema_producao: matchedSistema,
     total_vacas: aplicarLimiteCasasDecimais(dadosObj?.total_vacas, 2),
     percentual_lactacao: aplicarLimiteCasasDecimais(dadosObj?.percentual_lactacao, 1),
@@ -249,6 +250,7 @@ function mapFarmApiToFormData(
 
 const INITIAL_FORM_DATA = {
   nome_fazenda: '',
+  email: '',
   sistema_producao: '',
   total_vacas: '',
   percentual_lactacao: '',
@@ -481,7 +483,14 @@ export default function FormularioPage() {
                 dica="Nome de identificação da sua propriedade."
                 value={formData.nome_fazenda} onChange={handleChange} required maxLength={100}
               />
-              <div className="flex flex-col gap-1 w-full">
+              <InputComDica
+                id="email" name="email" type="email"
+                label="E-mail do Produtor"
+                placeholder="produtor@email.com"
+                dica="E-mail de contato e identificação do produtor."
+                value={formData.email} onChange={handleChange} maxLength={100}
+              />
+              <div className="flex flex-col gap-1 w-full md:col-span-2">
                 <LabelComDica
                   htmlFor="sistema_producao"
                   label="Sistema de Produção"
