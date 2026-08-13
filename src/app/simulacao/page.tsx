@@ -16,6 +16,10 @@ import Link from 'next/link';
 import { formatSidebarNumber } from '@/lib/formatters';
 import { TooltipContextual } from '@/components/ui/TooltipContextual';
 
+/** Valores padrões canônicos para fallback do formulário de simulação */
+const DEFAULT_CANONICAL_SISTEMA_PRODUCAO = 'compost-barn';
+const DEFAULT_CANONICAL_REGIAO_SEBRAE = 'triangulo';
+
 /**
  * @description Renderiza um gráfico de barra comparativo puro, sem dependências.
  * Calcula a escala proporcionalmente aos valores fornecidos para alinhar as barras.
@@ -282,8 +286,8 @@ export default function SimulacaoPage() {
         numero_trabalhadores: sanitizar(dadosFazenda.mao_obra_total, 0.01),
         preco_recebido: sanitizar(dadosFazenda.preco_leite, 0.01),
         producao_vaca: sanitizar(dadosFazenda.producao_vaca, 0.1),
-        regiao_sebrae: dadosFazenda.regiao || 'triangulo',
-        sistema_producao: dadosFazenda.sistema_producao || 'compost-barn',
+        regiao_sebrae: dadosFazenda.regiao || DEFAULT_CANONICAL_REGIAO_SEBRAE,
+        sistema_producao: dadosFazenda.sistema_producao || DEFAULT_CANONICAL_SISTEMA_PRODUCAO,
         total_vacas: sanitizar(dadosFazenda.total_vacas, 0.01),
         percentual_lactacao: sanitizar(dadosFazenda.percentual_lactacao, 0)
       },
