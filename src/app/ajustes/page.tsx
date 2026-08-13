@@ -18,6 +18,13 @@ import Link from 'next/link';
 import { NumericFormat } from 'react-number-format';
 import { fetchComResiliencia } from '@/lib/apiUtils';
 import { DiagnosticoProgress, DiagnosticoStatusResponse } from '@/types/diagnostico';
+import { 
+  FormularioOpcoesResponse, 
+  SistemaProducaoItem, 
+  RegiaoSebraeItem, 
+  getOptionValue, 
+  getOptionLabel 
+} from '@/types/formulario';
 
 /**
  * Componente auxiliar genérico para renderizar um rótulo (label) com uma dica (tooltip) interativa.
@@ -56,6 +63,24 @@ const CampoNumericoAjuste = ({ id, label, unidade, dica, value, onChange }: { id
   </>
 );
 
+const DEFAULT_SISTEMAS_OPCOES: SistemaProducaoItem[] = [
+  { value: 'compost-barn', label: 'Compost Barn' },
+  { value: 'semiconfinado', label: 'Semi-confinado' },
+  { value: 'confinado-sem-estrutura', label: 'Confinado' },
+];
+
+const DEFAULT_REGIOES_OPCOES: RegiaoSebraeItem[] = [
+  { value: 'triangulo', label: 'Triângulo Mineiro' },
+  { value: 'rio doce e vale do aco', label: 'Rio Doce e Vale do Aço' },
+  { value: 'noroeste e alto paranaiba', label: 'Noroeste e Alto Paranaíba' },
+  { value: 'centro', label: 'Centro' },
+  { value: 'centro-oeste e sudoeste', label: 'Centro-Oeste e Sudoeste' },
+  { value: 'sul', label: 'Sul' },
+  { value: 'norte', label: 'Norte' },
+  { value: 'zona da mata e vertentes', label: 'Zona da Mata e Vertentes' },
+  { value: 'jequitinhonha e mucuri', label: 'Jequitinhonha e Mucuri' },
+];
+
 /**
  * Página de Ajustes de Dados da Fazenda.
  * 
@@ -72,11 +97,43 @@ export default function AjustesPage() {
   // Inicializa o estado local com os dados da store (se existirem)
   const [formData, setFormData] = useState<Partial<FazendaFormData>>(dadosFazenda || {});
 
+  // Estados para as opções dinâmicas trazidas da API /api/formularios
+  const [opcoesSistemas, setOpcoesSistemas] = useState<SistemaProducaoItem[]>(DEFAULT_SISTEMAS_OPCOES);
+  const [opcoesRegioes, setOpcoesRegioes] = useState<RegiaoSebraeItem[]>(DEFAULT_REGIOES_OPCOES);
+
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mensagemStatus, setMensagemStatus] = useState<string>('');
   const [progresso, setProgresso] = useState<DiagnosticoProgress | null>(null);
   const [cooldown, setCooldown] = useState(0);
+
+  /**
+   * Efeito colateral para carregar as opções dinâmicas de formulário (sistemas de produção e regiões).
+   */
+  useEffect(() => {
+    let isMounted = true;
+    fetchComResiliencia('/api/formularios', { method: 'GET' }, 1, 500, 2000, 3000)
+      .then(async (res) => {
+        if (res.ok) {
+          const data: FormularioOpcoesResponse = await res.json();
+          if (isMounted) {
+            if (Array.isArray(data.sistemas_producao) && data.sistemas_producao.length > 0) {
+              setOpcoesSistemas(data.sistemas_producao);
+            }
+            if (Array.isArray(data.regioes_sebrae) && data.regioes_sebrae.length > 0) {
+              setOpcoesRegioes(data.regioes_sebrae);
+            }
+          }
+        }
+      })
+      .catch(() => {
+        // Mantém as opções de fallback estáticas em caso de inconsistência no fetch
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /**
    * Efeito colateral para gerenciar a contagem decrescente do tempo de recarga (Cooldown).
@@ -272,9 +329,15 @@ export default function AjustesPage() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition bg-white"
                   >
                     <option value="" disabled>Selecione...</option>
-                    <option value="compost-barn">Compost Barn</option>
-                    <option value="semiconfinado">Semi-confinado</option>
-                    <option value="confinado-sem-estrutura">Confinado</option>
+                    {opcoesSistemas.map((item, idx) => {
+                      const val = getOptionValue(item);
+                      const lbl = getOptionLabel(item);
+                      return (
+                        <option key={`sistema-${val}-${idx}`} value={val}>
+                          {lbl}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div>
@@ -285,15 +348,15 @@ export default function AjustesPage() {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition bg-white"
                   >
                     <option value="" disabled>Selecione...</option>
-                    <option value="triangulo">Triângulo Mineiro</option>
-                    <option value="rio doce e vale do aco">Rio Doce e Vale do Aço</option>
-                    <option value="noroeste e alto paranaiba">Noroeste e Alto Paranaíba</option>
-                    <option value="centro">Centro</option>
-                    <option value="centro-oeste e sudoeste">Centro-Oeste e Sudoeste</option>
-                    <option value="sul">Sul</option>
-                    <option value="norte">Norte</option>
-                    <option value="zona da mata e vertentes">Zona da Mata e Vertentes</option>
-                    <option value="jequitinhonha e mucuri">Jequitinhonha e Mucuri</option>
+                    {opcoesRegioes.map((item, idx) => {
+                      const val = getOptionValue(item);
+                      const lbl = getOptionLabel(item);
+                      return (
+                        <option key={`regiao-${val}-${idx}`} value={val}>
+                          {lbl}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div>

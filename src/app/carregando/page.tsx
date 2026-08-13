@@ -211,18 +211,14 @@ export default function CarregandoPage() {
                 aria-valuemax={100}
               />
             </div>
-            <div className="flex justify-between items-center text-xs text-gray-500 font-medium px-1">
+            <div className="flex justify-between items-center text-lg font-bold text-secondary px-1">
               <span>{progresso.done} de {progresso.total} análises concluídas</span>
-              <span className="font-bold text-primary">{porcentagem}%</span>
+              <span>{porcentagem}%</span>
             </div>
           </div>
         )}
 
-        <div className="space-y-2">
-          <h2 className="text-xl font-bold text-secondary flex items-center justify-center">
-            <span>{mensagem}</span>
-            <span className="w-6 text-left">{dots}</span>
-          </h2>
+        <div>
           <p className="text-sm text-gray-500">
             Isso pode levar alguns segundos, estamos cruzando seus dados com o benchmarking do setor.
           </p>

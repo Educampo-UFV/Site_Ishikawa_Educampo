@@ -62,6 +62,20 @@ describe('Tela de Ajustes (AjustesPage)', () => {
       };
       return selector ? selector(state) : state;
     });
+
+    // Mock padrão para fetch cobrindo a busca inicial de formulários
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (String(url).includes('/api/formularios')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            sistemas_producao: ['compost-barn', 'semiconfinado', 'confinado-sem-estrutura'],
+            regioes_sebrae: ['triangulo', 'sul'],
+          }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
   });
 
   afterEach(() => {
@@ -75,15 +89,31 @@ describe('Tela de Ajustes (AjustesPage)', () => {
   });
 
   it('Deve ativar o cooldown de 30 segundos após submissão com sucesso', async () => {
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ task_id: 'task-123', status: 'processing' }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ status: 'completed', result: { diagnostico: 'ok' } }),
-      });
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/formularios')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            sistemas_producao: ['compost-barn', 'semiconfinado', 'confinado-sem-estrutura'],
+            regioes_sebrae: ['triangulo'],
+          }),
+        });
+      }
+      if (urlStr.includes('/api/diagnostico/status/')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ status: 'completed', result: { diagnostico: 'ok' } }),
+        });
+      }
+      if (urlStr.includes('/api/diagnostico')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ task_id: 'task-123', status: 'processing' }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
 
     render(<AjustesPage />);
     const botaoSubmit = screen.getByRole('button', { name: /Atualizar Dados/i });
@@ -112,23 +142,43 @@ describe('Tela de Ajustes (AjustesPage)', () => {
   });
 
   it('Deve exibir a mensagem dinâmica e a barra de progresso durante o polling na submissão de ajustes', async () => {
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ task_id: 'task-123', status: 'processing' }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          status: 'processing',
-          message: 'Analises em andamento [1/4]',
-          progress: { done: 1, total: 4 }
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ status: 'completed', result: { diagnostico: 'ok' } }),
-      });
+    let pollingCount = 0;
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      const urlStr = String(url);
+      if (urlStr.includes('/api/formularios')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            sistemas_producao: ['compost-barn', 'semiconfinado'],
+            regioes_sebrae: ['triangulo'],
+          }),
+        });
+      }
+      if (urlStr.includes('/api/diagnostico/status/')) {
+        pollingCount++;
+        if (pollingCount === 1) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              status: 'processing',
+              message: 'Analises em andamento [1/4]',
+              progress: { done: 1, total: 4 }
+            }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ status: 'completed', result: { diagnostico: 'ok' } }),
+        });
+      }
+      if (urlStr.includes('/api/diagnostico')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ task_id: 'task-123', status: 'processing' }),
+        });
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) });
+    });
 
     render(<AjustesPage />);
     const botaoSubmit = screen.getByRole('button', { name: /Atualizar Dados/i });
