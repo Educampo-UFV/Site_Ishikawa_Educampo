@@ -1,16 +1,16 @@
 # 🚀 Site Ishikawa Educampo
 
 > [!NOTE]
-> **Business Vision:** Web application for diagnostic assessment, farm management, and cause-and-effect (Ishikawa) analysis for Educampo consultants, integrating secure consultant authentication and producer registration via BFF proxy with the Ishikawa Educampo API v2.0.0.
-> **Ref: Obsidian note [[bdd-consultant-authentication]]** | **Ref: Obsidian note [[sdd-consultant-authentication]]** | **Ref: Obsidian note [[bdd-cadastrar-fazenda]]** | **Ref: Obsidian note [[sdd-cadastrar-fazenda]]**
+> **Business Vision:** Web application for diagnostic assessment, farm management, cause-and-effect (Ishikawa) analysis, and AI diagnostic telemetry for Educampo consultants. Integrates secure consultant authentication, producer registration, structured error parsing (Pydantic/Business), and AI telemetry badge tracking via BFF proxy with the Ishikawa Educampo API v2.0.0.
+> **Ref: Obsidian note [[bdd-consultant-authentication]]** | **Ref: Obsidian note [[sdd-consultant-authentication]]** | **Ref: Obsidian note [[bdd-cadastrar-fazenda]]** | **Ref: Obsidian note [[sdd-cadastrar-fazenda]]** | **Ref: Obsidian note [[bdd-05-erros-estruturados-telemetria]]** | **Ref: Obsidian note [[sdd-05-erros-estruturados-telemetria]]**
 
 ---
 
 ## 🛠️ Tech Stack
 
 * **Core:** Next.js 16 (App Router / React 19 / TypeScript)
-* **BFF & Edge:** Next.js Route Handlers & Edge Proxy (`src/proxy.ts`) with HttpOnly Session Cookies (`session_token`)
-* **State Management & UI:** Zustand, Lucide React, Radix UI, TailwindCSS v4
+* **BFF & Edge:** Next.js Route Handlers, Async Task Status Proxy & Edge Proxy (`src/proxy.ts`) with HttpOnly Session Cookies (`session_token`)
+* **State Management & UI:** Zustand, Lucide React, Radix UI, TailwindCSS v4, `AiTelemetryBadge`
 * **Testing & Quality:** Jest 30, React Testing Library, ESLint
 
 ---
@@ -19,15 +19,17 @@
 
 ```mermaid
 graph TD
-    A["Browser / Next.js Client Component ('src/app/login/page.tsx', 'CadastrarFazendaSection')"] --> B["BFF Route Handler ('POST /api/auth')"]
+    A["Browser / Next.js Client Component ('src/app/carregando/page.tsx', 'AiTelemetryBadge')"] --> B["BFF Route Handler ('POST /api/auth')"]
     A --> C["BFF Route Handler ('GET /api/auth/me')"]
     A --> D["BFF Route Handler ('POST /api/auth/logout')"]
     A --> H["BFF Route Handler ('POST /api/produtores')"]
-    E["Edge Proxy ('src/proxy.ts')"] -->|O(1) Cookie Validation| F["Protected Application Routes ('/formulario', etc.)"]
+    A --> J["BFF Route Handler ('GET /api/diagnostico/status/[task_id]')"]
+    E["Edge Proxy ('src/proxy.ts')"] -->|O(1) Cookie Validation| F["Protected Application Routes ('/formulario', '/carregando')"]
     B --> G["External API ('API_BASE_URL/api/auth/login')"]
     C --> G
     D --> G
     H --> I["External API ('API_BASE_URL/api/produtores')"]
+    J -->|Forwards X-IA-* Headers & Error Contracts| K["External API ('API_BASE_URL/api/diagnostico/status/[task_id]')"]
 ```
 
 ---
