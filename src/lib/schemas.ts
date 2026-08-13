@@ -37,6 +37,7 @@ export const RegiaoEnum = z.enum([
  * utiliza superRefine para validações cruzadas entre campos (ex: lactação vs total).
  */
 export const fazendaSchema = z.object({
+  id_fazenda: z.string().optional(),
   nome_fazenda: z.string()
     .min(1, 'O nome da fazenda é obrigatório')
     .max(FAZENDA_LIMITS.NOME_MAX_LENGTH, `O nome deve ter no máximo ${FAZENDA_LIMITS.NOME_MAX_LENGTH} caracteres`),

@@ -40,8 +40,6 @@ export default function CarregandoPage() {
   }, []);
 
   useEffect(() => {
-    if (!isMounted) return;
-
     if (!dadosFazenda) {
       router.push("/formulario");
       return;
@@ -126,7 +124,10 @@ export default function CarregandoPage() {
             const statusData: DiagnosticoStatusResponse = await statusResponse.json();
             
             if (statusData.message) {
-              setMensagem(statusData.message);
+              const isGenericCountMessage = /an[aá]lises em andamento/i.test(statusData.message);
+              if (!isGenericCountMessage) {
+                setMensagem(statusData.message);
+              }
             }
 
             if (statusData.progress && typeof statusData.progress.done === 'number' && typeof statusData.progress.total === 'number') {
@@ -188,6 +189,14 @@ export default function CarregandoPage() {
     ? Math.min(100, Math.round((progresso.done / progresso.total) * 100))
     : 0;
 
+  const isProgressBarActive = Boolean(progresso && progresso.total > 0);
+  const isGenericLoadingText = 
+    mensagem === "A Inteligência Artificial está projetando seus cenários" ||
+    mensagem === "Preparando análise" ||
+    /an[aá]lises em andamento/i.test(mensagem);
+
+  const shouldShowMessage = !isProgressBarActive || !isGenericLoadingText;
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-fundo p-6">
       <div className="w-full max-w-md text-center space-y-8">
@@ -226,7 +235,13 @@ export default function CarregandoPage() {
           </div>
         )}
 
-        <div>
+        <div className="space-y-2">
+          {shouldShowMessage && (
+            <h2 className="text-xl font-bold text-secondary flex items-center justify-center animate-in fade-in duration-300">
+              <span>{mensagem}</span>
+              <span className="w-6 text-left">{dots}</span>
+            </h2>
+          )}
           <p className="text-sm text-gray-500">
             Isso pode levar alguns segundos, estamos cruzando seus dados com o benchmarking do setor.
           </p>

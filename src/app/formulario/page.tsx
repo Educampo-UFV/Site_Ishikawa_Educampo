@@ -142,6 +142,7 @@ function mapFarmApiToFormData(
   const matchedSistema = findIshikawaOptionValue(rawSistema, listSistemas);
 
   return {
+    id_fazenda: data?.id_fazenda ?? data?.id ?? dadosObj?.id_fazenda ?? dadosObj?.id ?? undefined,
     nome_fazenda: data?.nome ?? data?.nome_fazenda ?? '',
     email: data?.email ?? dadosObj?.email ?? '',
     sistema_producao: matchedSistema,

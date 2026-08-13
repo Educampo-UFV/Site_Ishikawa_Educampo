@@ -9,7 +9,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { BarChart2, Lightbulb, Settings, LogOut } from 'lucide-react';
+import { BarChart2, Lightbulb, Settings, LogOut, FileText } from 'lucide-react';
 import { useFazendaStore } from '../../store/useFazendaStore';
 
 /**
@@ -20,10 +20,12 @@ import { useFazendaStore } from '../../store/useFazendaStore';
  */
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
   const limparDados = useFazendaStore((state) => state.limparDados);
+  const dadosFazenda = useFazendaStore((state) => state.dadosFazenda);
 
   const handleLogout = async () => {
     try {
@@ -33,6 +35,45 @@ export function Navbar() {
     }
     limparDados();
     window.location.href = '/login';
+  };
+
+  const handleGerarRelatorio = async () => {
+    const produtorId = dadosFazenda?.id_fazenda || dadosFazenda?.nome_fazenda;
+
+    if (!produtorId) {
+      alert('Nenhuma fazenda selecionada para emissão do relatório.');
+      return;
+    }
+
+    setIsGeneratingPdf(true);
+    try {
+      const response = await fetch(`/api/produtores/${encodeURIComponent(produtorId)}/relatorio/pdf`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          alert('Esta fazenda ainda não possui dados de diagnóstico salvos para gerar o relatório.');
+          return;
+        }
+        const errJson = await response.json().catch(() => ({}));
+        alert(errJson.error || 'Ocorreu um erro ao gerar o arquivo PDF.');
+        return;
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', `relatorio_produtor_${produtorId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Erro ao baixar relatório em PDF:', error);
+      alert('Ocorreu um erro de conexão ao tentar baixar o relatório.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -86,6 +127,18 @@ export function Navbar() {
               <Settings size={18} />
               Atualizar Dados
             </Link>
+            <button
+              onClick={handleGerarRelatorio}
+              disabled={isGeneratingPdf}
+              className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-emerald-50 hover:text-emerald-600 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {isGeneratingPdf ? (
+                <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <FileText size={18} />
+              )}
+              Gerar Relatório
+            </button>
             <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors">
               <LogOut size={18} />
               Sair
@@ -177,6 +230,37 @@ export function Navbar() {
                   </p>
                 </div>
               </Link>
+
+              {/* Linha Inteira: Gerar Relatório */}
+              <button 
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleGerarRelatorio();
+                }}
+                disabled={isGeneratingPdf}
+                className="col-span-2 block p-6 hover:bg-emerald-50 transition-colors text-left border-b border-gray-100 group disabled:opacity-50"
+              >
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                      {isGeneratingPdf ? (
+                        <div className="w-5 h-5 border-2 border-emerald-600 group-hover:border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <FileText size={20} />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">
+                        Gerar Relatório
+                      </h3>
+                      {isGeneratingPdf && <span className="text-xs text-emerald-600 font-medium">Baixando arquivo PDF...</span>}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Baixar relatório executivo consolidado em PDF com diagnósticos e simulações.
+                  </p>
+                </div>
+              </button>
 
               {/* Linha Inteira: Sair */}
               <button 
