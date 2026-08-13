@@ -15,11 +15,13 @@ import { useRouter } from "next/navigation";
 import { useFazendaStore } from "@/store/useFazendaStore"; 
 import Image from "next/image";
 import { fetchComResiliencia } from "@/lib/apiUtils";
+import { DiagnosticoProgress, DiagnosticoStatusResponse } from "@/types/diagnostico";
 
 export default function CarregandoPage() {
   const router = useRouter();
   const { dadosFazenda, setDiagnosticoIA, setResultadoSimulacao, setTelemetry, apiHealthy } = useFazendaStore();
   const [mensagem, setMensagem] = useState("Preparando análise");
+  const [progresso, setProgresso] = useState<DiagnosticoProgress | null>(null);
   const [dots, setDots] = useState("");
   const processamentoIniciado = useRef(false);
 
@@ -113,7 +115,15 @@ export default function CarregandoPage() {
             
             if (!statusResponse.ok) throw new Error("Falha ao consultar status do processamento.");
             
-            const statusData = await statusResponse.json();
+            const statusData: DiagnosticoStatusResponse = await statusResponse.json();
+            
+            if (statusData.message) {
+              setMensagem(statusData.message);
+            }
+
+            if (statusData.progress && typeof statusData.progress.done === 'number' && typeof statusData.progress.total === 'number') {
+              setProgresso(statusData.progress);
+            }
             
             if (statusData.status === "completed") {
               if (statusData.telemetry) {
@@ -151,6 +161,9 @@ export default function CarregandoPage() {
         setResultadoSimulacao({ ...simData, ...paramData });
 
         setMensagem("Análise concluída! Montando seu Diagnóstico");
+        if (progresso) {
+          setProgresso({ done: progresso.total, total: progresso.total });
+        }
 
         setTimeout(() => router.push("/selecao"), 1500);
       } catch (error) {
@@ -163,9 +176,13 @@ export default function CarregandoPage() {
     processarAnalise();
   }, [dadosFazenda, router, setDiagnosticoIA, setResultadoSimulacao, setTelemetry, apiHealthy]);
 
+  const porcentagem = progresso && progresso.total > 0 
+    ? Math.min(100, Math.round((progresso.done / progresso.total) * 100))
+    : 0;
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-fundo p-6">
-      <div className="w-full max-w-md text-center space-y-8 animate-pulse">
+      <div className="w-full max-w-md text-center space-y-8">
         <div className="relative mx-auto flex justify-center">
           <Image
             src="/logo_educampo.png"
@@ -181,6 +198,25 @@ export default function CarregandoPage() {
         <div className="flex justify-center">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
+
+        {progresso && progresso.total > 0 && (
+          <div className="space-y-2 px-2 animate-in fade-in duration-300">
+            <div className="w-full bg-gray-200 rounded-full h-3.5 overflow-hidden shadow-inner border border-gray-100">
+              <div 
+                className="bg-gradient-to-r from-primary to-primary-light h-full rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${porcentagem}%` }}
+                role="progressbar"
+                aria-valuenow={porcentagem}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              />
+            </div>
+            <div className="flex justify-between items-center text-xs text-gray-500 font-medium px-1">
+              <span>{progresso.done} de {progresso.total} análises concluídas</span>
+              <span className="font-bold text-primary">{porcentagem}%</span>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           <h2 className="text-xl font-bold text-secondary flex items-center justify-center">

@@ -17,6 +17,7 @@ import { Info, AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 import { NumericFormat } from 'react-number-format';
 import { fetchComResiliencia } from '@/lib/apiUtils';
+import { DiagnosticoProgress, DiagnosticoStatusResponse } from '@/types/diagnostico';
 
 /**
  * Componente auxiliar genérico para renderizar um rótulo (label) com uma dica (tooltip) interativa.
@@ -74,6 +75,7 @@ export default function AjustesPage() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mensagemStatus, setMensagemStatus] = useState<string>('');
+  const [progresso, setProgresso] = useState<DiagnosticoProgress | null>(null);
   const [cooldown, setCooldown] = useState(0);
 
   /**
@@ -114,6 +116,7 @@ export default function AjustesPage() {
     setFeedback(null);
     setIsSubmitting(true);
     setMensagemStatus('Iniciando recálculo do diagnóstico...');
+    setProgresso(null);
 
     try {
       // 1. Validação Zod
@@ -144,7 +147,7 @@ export default function AjustesPage() {
       // 3. Polling na rota de status
       const maxTempoPolling = 180000; // 3 minutos
       const tempoInicio = Date.now();
-      let statusData: any = null;
+      let statusData: DiagnosticoStatusResponse | null = null;
 
       while (true) {
         if (Date.now() - tempoInicio > maxTempoPolling) {
@@ -163,16 +166,24 @@ export default function AjustesPage() {
 
         statusData = await statusResponse.json();
 
-        if (statusData.status === 'completed') {
+        if (statusData?.message) {
+          setMensagemStatus(statusData.message);
+        }
+
+        if (statusData?.progress && typeof statusData.progress.done === 'number' && typeof statusData.progress.total === 'number') {
+          setProgresso(statusData.progress);
+        }
+
+        if (statusData?.status === 'completed') {
           break;
-        } else if (statusData.status === 'failed') {
+        } else if (statusData?.status === 'failed') {
           throw new Error('O motor de Inteligência Artificial falhou ao processar o diagnóstico.');
         }
       }
 
       // 4. Sucesso: Atualiza Zustand e redireciona para a tela de diagnóstico
       setDadosFazenda(dadosValidados);
-      setDiagnosticoIA(statusData.result);
+      setDiagnosticoIA(statusData?.result);
       setCooldown(12);
       setFeedback({ type: 'success', message: 'Diagnóstico atualizado com sucesso! Redirecionando...' });
 
@@ -197,6 +208,7 @@ export default function AjustesPage() {
     } finally {
       setIsSubmitting(false);
       setMensagemStatus('');
+      setProgresso(null);
     }
   };
 
@@ -212,6 +224,10 @@ export default function AjustesPage() {
       </div>
     );
   }
+
+  const porcentagemAjustes = progresso && progresso.total > 0
+    ? Math.min(100, Math.round((progresso.done / progresso.total) * 100))
+    : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -323,12 +339,12 @@ export default function AjustesPage() {
               </div>
             </section>
 
-            {/* Rodapé de Ações com Cooldown */}
-            <div className="flex justify-center pt-2">
+            {/* Rodapé de Ações com Cooldown e Progresso */}
+            <div className="flex flex-col items-center justify-center gap-3 w-full max-w-md mx-auto pt-2">
               <button
                 type="submit"
                 disabled={isSubmitting || cooldown > 0}
-                className={`flex items-center justify-center font-bold py-3 px-10 rounded-lg shadow-md transition duration-200 ${isSubmitting || cooldown > 0
+                className={`w-full flex items-center justify-center font-bold py-3 px-10 rounded-lg shadow-md transition duration-200 ${isSubmitting || cooldown > 0
                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     : 'bg-primary hover:bg-primary-light text-white'
                   }`}
@@ -344,6 +360,25 @@ export default function AjustesPage() {
                   'Atualizar Dados'
                 )}
               </button>
+
+              {isSubmitting && progresso && progresso.total > 0 && (
+                <div className="w-full space-y-1.5 animate-in fade-in duration-300">
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner border border-gray-100">
+                    <div 
+                      className="bg-gradient-to-r from-primary to-primary-light h-full rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${porcentagemAjustes}%` }}
+                      role="progressbar"
+                      aria-valuenow={porcentagemAjustes}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-gray-500 font-medium px-1">
+                    <span>{progresso.done} de {progresso.total} análises concluídas</span>
+                    <span className="font-bold text-primary">{porcentagemAjustes}%</span>
+                  </div>
+                </div>
+              )}
             </div>
 
           </form>

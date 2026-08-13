@@ -99,6 +99,28 @@ export interface DiagnosticoIAResponse {
 }
 
 /**
+ * Estrutura de progresso em tempo real do processamento do diagnóstico assíncrono.
+ */
+export interface DiagnosticoProgress {
+  done: number;
+  total: number;
+}
+
+/**
+ * Resposta da rota de status GET /api/diagnostico/status/[task_id].
+ */
+export interface DiagnosticoStatusResponse {
+  task_id?: string;
+  status: 'processing' | 'completed' | 'failed';
+  message?: string;
+  progress?: DiagnosticoProgress;
+  result?: DiagnosticoIAResponse;
+  telemetry?: any;
+  ia_metrics?: any;
+  error?: string;
+}
+
+/**
  * Payload de requisição para a rota de simulação (BFF).
  */
 export interface SimulacaoRequest {

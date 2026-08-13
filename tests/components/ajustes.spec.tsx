@@ -110,4 +110,41 @@ describe('Tela de Ajustes (AjustesPage)', () => {
     expect(botaoSubmit).not.toBeDisabled();
     expect(botaoSubmit).toHaveTextContent('Atualizar Dados');
   });
+
+  it('Deve exibir a mensagem dinâmica e a barra de progresso durante o polling na submissão de ajustes', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ task_id: 'task-123', status: 'processing' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: 'processing',
+          message: 'Analises em andamento [1/4]',
+          progress: { done: 1, total: 4 }
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: 'completed', result: { diagnostico: 'ok' } }),
+      });
+
+    render(<AjustesPage />);
+    const botaoSubmit = screen.getByRole('button', { name: /Atualizar Dados/i });
+
+    await act(async () => {
+      fireEvent.click(botaoSubmit);
+    });
+
+    // 1º tick de polling
+    await act(async () => {
+      jest.advanceTimersByTime(3500);
+    });
+
+    // Verifica se a mensagem dinâmica e o progresso aparecem na UI
+    expect(screen.getByText(/Analises em andamento \[1\/4\]/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 de 4 análises concluídas/i)).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '25');
+  });
 });

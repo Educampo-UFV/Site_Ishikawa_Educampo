@@ -175,4 +175,45 @@ describe('Tela de Carregamento (CarregandoPage)', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/formulario');
   });
+
+  it('deve atualizar a mensagem dinâmica e a barra de progresso durante o polling de status', async () => {
+    let pollCount = 0;
+    mockFetchComResiliencia.mockImplementation(async (url: string) => {
+      if (url === "/api/diagnostico") return { ok: true, json: async () => ({ task_id: "fake-123" }) };
+      if (url.includes("/status/")) {
+        pollCount++;
+        if (pollCount === 1) {
+          return {
+            ok: true,
+            json: async () => ({
+              status: "processing",
+              message: "Analises em andamento [2/3]",
+              progress: { done: 2, total: 3 }
+            })
+          };
+        }
+        return { ok: true, json: async () => ({ status: "completed", result: { diag: "ok" } }) };
+      }
+      if (url === "/api/simulacao") return { ok: true, json: async () => ({ sim: "ok" }) };
+      if (url === "/api/parametros-painel") return { ok: true, json: async () => ({ param: "ok" }) };
+      return { ok: true };
+    });
+
+    render(<CarregandoPage />);
+
+    await act(async () => {
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
+
+    // 1º ciclo de polling (3s)
+    await act(async () => {
+      jest.advanceTimersByTime(3500);
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
+
+    // Verifica se a mensagem dinâmica e a indicação de progresso são renderizadas
+    expect(screen.getByText(/Analises em andamento \[2\/3\]/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 de 3 análises concluídas/i)).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '67');
+  });
 });
