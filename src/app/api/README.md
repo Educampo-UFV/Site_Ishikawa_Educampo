@@ -17,6 +17,8 @@ Cada rota possui responsabilidades de negócio bem delimitadas. Consulte as docu
 
 * **🔑 Auth (`/auth`):** Rota dedicada ao fluxo de segurança. Recebe os dados de login, valida o acesso do produtor e configura uma sessão temporária invisível ao cliente (embutindo o JWT).
 
+* **🚜 Produtores (`/produtores`):** Rota BFF (`POST /api/produtores`) responsável pelo cadastro de novos produtores e fazendas no sistema. Injeta credenciais de servidor (`X-API-KEY`), aplica validação server-side via Zod e executa sanitização SEC-01 de segurança. (`Ref: Obsidian note [[sdd-cadastrar-fazenda.md]]`)
+
 * **🧠 Diagnóstico (`/diagnostico`):** Atua como o proxy de varredura completa do sistema. Mascara as chaves corporativas e atua repassando dados seguros à IA para processar as narrativas descritivas e causas do Diagrama de Ishikawa.
 
 * **📈 Simulação (`/simulacao`):** Uma via de acesso super-rápida, projetada para a alta frequência de chamadas do Simulador de Cenários. Responde em milissegundos conectando a aplicação aos algoritmos preditivos e de *Machine Learning* sem travar a interface do *Frontend*.

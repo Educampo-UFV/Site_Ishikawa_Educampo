@@ -1,8 +1,8 @@
 # 🚀 Site Ishikawa Educampo
 
 > [!NOTE]
-> **Business Vision:** Web application for diagnostic assessment and cause-and-effect (Ishikawa) management for Educampo consultants, integrating secure consultant authentication via BFF proxy with the Ishikawa Educampo API v2.0.0.
-> **Ref: Obsidian note [[bdd-consultant-authentication]]** | **Ref: Obsidian note [[sdd-consultant-authentication]]**
+> **Business Vision:** Web application for diagnostic assessment, farm management, and cause-and-effect (Ishikawa) analysis for Educampo consultants, integrating secure consultant authentication and producer registration via BFF proxy with the Ishikawa Educampo API v2.0.0.
+> **Ref: Obsidian note [[bdd-consultant-authentication]]** | **Ref: Obsidian note [[sdd-consultant-authentication]]** | **Ref: Obsidian note [[bdd-cadastrar-fazenda]]** | **Ref: Obsidian note [[sdd-cadastrar-fazenda]]**
 
 ---
 
@@ -19,13 +19,15 @@
 
 ```mermaid
 graph TD
-    A["Browser / Next.js Client Component ('src/app/login/page.tsx')"] --> B["BFF Route Handler ('POST /api/auth')"]
+    A["Browser / Next.js Client Component ('src/app/login/page.tsx', 'CadastrarFazendaSection')"] --> B["BFF Route Handler ('POST /api/auth')"]
     A --> C["BFF Route Handler ('GET /api/auth/me')"]
     A --> D["BFF Route Handler ('POST /api/auth/logout')"]
+    A --> H["BFF Route Handler ('POST /api/produtores')"]
     E["Edge Proxy ('src/proxy.ts')"] -->|O(1) Cookie Validation| F["Protected Application Routes ('/formulario', etc.)"]
     B --> G["External API ('API_BASE_URL/api/auth/login')"]
     C --> G
     D --> G
+    H --> I["External API ('API_BASE_URL/api/produtores')"]
 ```
 
 ---

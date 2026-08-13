@@ -52,6 +52,13 @@ A camada de componentes atua como a fundação visual do sistema. Os dados são 
 * **Principais Funções/Classes:**
     * `SessionRefresher`: Roda silenciosamente no *client-side* disparando requisições periódicas via hook para revalidar a sessão e empurrar o limite de expiração caso o usuário permaneça ativo na tela.
 
+#### `📄 CadastrarFazendaSection.tsx`
+
+* **Responsabilidade:** Componente expansível para cadastro de novas propriedades rurais e produtores.
+* **Principais Funções/Classes:**
+    * `CadastrarFazendaSection`: Formulário colapsável integrado ao endpoint BFF `POST /api/produtores`, com validações zootécnicas client-side via Zod e callback de atualização.
+* **Rastreabilidade:** `Ref: Obsidian note [[sdd-cadastrar-fazenda.md]]` | `Ref: Obsidian note [[bdd-cadastrar-fazenda.md]]`
+
 ---
 
 ## 🧠 Decisões de Design & Trade-offs
