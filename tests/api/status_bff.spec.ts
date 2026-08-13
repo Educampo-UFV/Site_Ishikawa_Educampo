@@ -1,7 +1,7 @@
 /**
  * @file status_bff.spec.ts
  * @description Suíte de testes para a rota Backend-For-Frontend (BFF) de status do diagnóstico.
- * Garante o correto polling e o repasse dos cabeçalhos de custo/tokens.
+ * Garante o correto polling e o repasse dos cabeçalhos de custo/tokens e nó telemetry.
  */
 
 import { GET } from '@/app/api/diagnostico/status/[task_id]/route';
@@ -50,6 +50,7 @@ describe('BFF Proxy API - GET /api/diagnostico/status/[task_id]', () => {
   });
 
   it('deve repassar a requisição e retornar o status processing', async () => {
+    // Arrange
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       status: 200,
@@ -58,9 +59,12 @@ describe('BFF Proxy API - GET /api/diagnostico/status/[task_id]', () => {
     });
 
     const req = new NextRequest('http://localhost:3000/api/diagnostico/status/123');
-    const response = await GET(req, { params: { task_id: '123' } });
+
+    // Act
+    const response = await GET(req, { params: Promise.resolve({ task_id: '123' }) });
     const data = await response.json();
 
+    // Assert
     expect(response.status).toBe(200);
     expect(global.fetch).toHaveBeenCalledWith(
       `${process.env.API_BASE_URL}/api/diagnostico/status/123`,
@@ -75,11 +79,13 @@ describe('BFF Proxy API - GET /api/diagnostico/status/[task_id]', () => {
     expect(data).toHaveProperty('status', 'processing');
   });
 
-  it('deve repassar a requisição e retornar o status completed com os cabeçalhos de métricas na resposta JSON', async () => {
+  it('deve repassar a requisição e retornar o status completed com o nó telemetry e ia_metrics', async () => {
+    // Arrange
     const mockHeaders = new Headers();
     mockHeaders.set('X-IA-Tokens', '1500');
+    mockHeaders.set('X-IA-Reasoning-Tokens', '300');
     mockHeaders.set('X-IA-Custo-Dolar', '0.02');
-    mockHeaders.set('X-IA-Provider', 'openai');
+    mockHeaders.set('X-IA-Provider', 'openai/gpt-4o');
 
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
@@ -89,15 +95,22 @@ describe('BFF Proxy API - GET /api/diagnostico/status/[task_id]', () => {
     });
 
     const req = new NextRequest('http://localhost:3000/api/diagnostico/status/123');
-    const response = await GET(req, { params: { task_id: '123' } });
+
+    // Act
+    const response = await GET(req, { params: Promise.resolve({ task_id: '123' }) });
     const data = await response.json();
 
+    // Assert
     expect(response.status).toBe(200);
     expect(data).toHaveProperty('status', 'completed');
     expect(data).toHaveProperty('result');
-    expect(data).toHaveProperty('ia_metrics');
+    expect(data).toHaveProperty('telemetry');
+    expect(data.telemetry).toEqual({
+      tokens: 1500,
+      reasoningTokens: 300,
+      costUsd: 0.02,
+      provider: 'openai/gpt-4o'
+    });
     expect(data.ia_metrics).toHaveProperty('tokens', '1500');
-    expect(data.ia_metrics).toHaveProperty('custo', '0.02');
-    expect(data.ia_metrics).toHaveProperty('provider', 'openai');
   });
 });

@@ -3,10 +3,11 @@
  * @description Implementação da Rota de Polling BFF para o Diagnóstico Ishikawa.
  * 
  * Esta rota atua como proxy seguro para consultar o status de uma task assíncrona
- * do Celery/Redis rodando na API Python.
+ * da API Python, injetando e repassando dados de telemetria de IA.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { extractAiTelemetry } from '@/lib/apiUtils';
 
 export async function GET(
   req: NextRequest,
@@ -53,24 +54,35 @@ export async function GET(
     }
 
     const data = await apiResponse.json();
+    const responseHeaders = new Headers({ 'Content-Type': 'application/json' });
 
     // Se o processamento concluiu, extrai as métricas de IA injetando no payload JSON para o frontend
     if (data.status === 'completed') {
+      const telemetry = extractAiTelemetry(apiResponse.headers);
       const tokens = apiResponse.headers.get('X-IA-Tokens');
+      const reasoningTokens = apiResponse.headers.get('X-IA-Reasoning-Tokens');
       const custo = apiResponse.headers.get('X-IA-Custo-Dolar');
       const provider = apiResponse.headers.get('X-IA-Provider');
 
-      if (tokens || custo) {
+      if (tokens || custo || reasoningTokens || provider) {
         console.log(`[BFF Status Metrics] Tokens: ${tokens || 'N/A'}, Custo (USD): ${custo || 'N/A'}`);
+        
+        data.telemetry = telemetry;
         data.ia_metrics = {
           tokens: tokens || undefined,
+          reasoning_tokens: reasoningTokens || undefined,
           custo: custo || undefined,
           provider: provider || undefined
         };
+
+        if (tokens) responseHeaders.set('X-IA-Tokens', tokens);
+        if (reasoningTokens) responseHeaders.set('X-IA-Reasoning-Tokens', reasoningTokens);
+        if (custo) responseHeaders.set('X-IA-Custo-Dolar', custo);
+        if (provider) responseHeaders.set('X-IA-Provider', provider);
       }
     }
 
-    return NextResponse.json(data, { status: 200 });
+    return NextResponse.json(data, { status: 200, headers: responseHeaders });
 
   } catch (error) {
     console.error('[BFF Status Error]:', error);
