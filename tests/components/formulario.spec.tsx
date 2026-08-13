@@ -179,8 +179,8 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
         json: async () => mockFarmData,
       });
 
-      const selectFazenda = await screen.findByLabelText(/Selecionar Fazenda Cadastrada/i);
-      await user.selectOptions(selectFazenda, 'Fazenda Recanto');
+      const btnCarregar = await screen.findByRole('button', { name: /Carregar Fazenda Recanto no formulário/i });
+      await user.click(btnCarregar);
 
       expect(global.fetch).toHaveBeenCalledWith('/api/formularios?nome=Fazenda%20Recanto');
 
@@ -189,6 +189,7 @@ describe('Tela de Coleta de Dados (Formulário)', () => {
         expect(screen.getByLabelText(/Total de Vacas/i)).toHaveValue('200');
       });
     });
+
 
     it('deve renderizar corretamente quando a API retorna objetos { value, label } e { id, nome }', async () => {
       const mockOpcoesObjetos = {

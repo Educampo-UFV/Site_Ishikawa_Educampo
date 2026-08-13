@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useFazendaStore } from '@/store/useFazendaStore';
 import { fazendaSchema } from '@/lib/schemas';
 import { CadastrarFazendaSection } from '@/components/CadastrarFazendaSection';
+import { FazendasCadastradasGrid } from '@/components/FazendasCadastradasGrid';
 import { Info, AlertCircle, RefreshCw } from 'lucide-react';
 
 import { NumericFormat } from 'react-number-format';
@@ -311,8 +312,7 @@ export default function FormularioPage() {
     fetchOpcoes();
   }, []);
 
-  const handleFazendaChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const nome = e.target.value;
+  const handleCarregarFazendaPorNome = async (nome: string) => {
     if (!nome) return;
 
     if (cacheFazendas.current[nome]) {
@@ -336,6 +336,59 @@ export default function FormularioPage() {
       setIsLoadingFarmData(false);
     }
   };
+
+  const handleIniciarDiagnosticoDirect = async (nome: string) => {
+    let farmDataMapped: any;
+
+    if (cacheFazendas.current[nome]) {
+      farmDataMapped = cacheFazendas.current[nome];
+    } else {
+      const res = await fetch(`/api/formularios?nome=${encodeURIComponent(nome)}`);
+      if (!res.ok) {
+        throw new Error('Não foi possível carregar os dados da fazenda.');
+      }
+      const data: FazendaDetalhadaResponse = await res.json();
+      farmDataMapped = mapFarmApiToFormData(data, regioesDisponiveis, sistemasDisponiveis);
+      cacheFazendas.current[nome] = farmDataMapped;
+    }
+
+    const payloadParaMl = {
+      ...farmDataMapped,
+      regiao: mapToMlRegion(farmDataMapped.regiao),
+      sistema_producao: mapToMlSystem(farmDataMapped.sistema_producao),
+    };
+
+    const validacao = fazendaSchema.safeParse(payloadParaMl);
+    if (!validacao.success) {
+      throw new Error('Dados da fazenda inconsistentes para o diagnóstico.');
+    }
+
+    const resDiagnostico = await fetch('/api/diagnostico', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validacao.data),
+    });
+
+    if (!resDiagnostico.ok) {
+      throw new Error('Falha ao acionar a API de Diagnóstico.');
+    }
+
+    const dataDiagnostico = await resDiagnostico.json();
+    setDadosFazenda(validacao.data);
+
+    const taskId = dataDiagnostico?.task_id;
+    if (taskId) {
+      router.push(`/carregando?task_id=${encodeURIComponent(taskId)}`);
+    } else {
+      router.push('/carregando');
+    }
+  };
+
+  const handleFazendaChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const nome = e.target.value;
+    await handleCarregarFazendaPorNome(nome);
+  };
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     let { name, value, type } = e.target;
@@ -449,38 +502,14 @@ export default function FormularioPage() {
             </div>
           )}
 
-          {/* Seção Dinâmica de Fazendas Cadastradas */}
-          {fazendasCadastradas.length > 0 && (
-            <section className="bg-blue-50 p-8 rounded-xl shadow-sm border border-blue-100">
-              <h2 className="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2">
-                <span className="text-2xl font-normal">🏡</span> Fazendas Cadastradas
-              </h2>
-              <div className="flex flex-col gap-1 w-full md:w-1/2">
-                <LabelComDica
-                  htmlFor="fazendas_cadastradas_select"
-                  label="Selecionar Fazenda Cadastrada"
-                  dica="Escolha uma fazenda cadastrada para autopopular os campos do formulário."
-                />
-                <select
-                  id="fazendas_cadastradas_select"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
-                  onChange={handleFazendaChange}
-                  disabled={isLoadingFarmData || isErrorApi}
-                  defaultValue=""
-                >
-                  <option value="" disabled>Selecione uma fazenda...</option>
-                  {fazendasCadastradas.map((item, idx) => {
-                    const nome = getFazendaNome(item);
-                    return (
-                      <option key={idx} value={nome}>
-                        {nome}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </section>
-          )}
+          {/* Seção Dinâmica de Fazendas Cadastradas em Grid com Ação Direta de Diagnóstico */}
+          <FazendasCadastradasGrid
+            fazendas={fazendasCadastradas}
+            onCarregarFormulario={handleCarregarFazendaPorNome}
+            onIniciarDiagnostico={handleIniciarDiagnosticoDirect}
+            isLoadingGlobal={isLoadingFarmData}
+          />
+
 
           {/* Quadrante 1: Informações Gerais */}
           <section className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">

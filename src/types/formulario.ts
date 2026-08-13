@@ -45,6 +45,16 @@ export interface MetricasFazenda {
 }
 
 export interface FazendaDetalhadaResponse {
+  id_fazenda?: string;
   nome: string;
   dados: MetricasFazenda;
 }
+
+export type DadosFazendaZootecnicos = MetricasFazenda;
+
+export interface DiagnosticoTriggerResponse {
+  task_id: string;
+  status: 'processing' | 'completed' | 'failed';
+  message?: string;
+}
+
