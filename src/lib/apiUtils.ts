@@ -4,6 +4,25 @@
  * tratamento estruturado de erros e telemetria de IA.
  */
 
+export const HTTP_STATUS = {
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
+  INTERNAL_SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+} as const;
+
+export const DEFAULT_ERROR_MESSAGES = {
+  GENERIC_SERVER_ERROR: "Ocorreu um erro inesperado no servidor. Por favor, tente novamente.",
+  VALIDATION_ERROR: "Por favor, corrija os erros nos campos indicados.",
+  EXPIRED_SESSION: "Sessão expirada ou credenciais inválidas.",
+  UNAVAILABLE_SERVICE: "Serviço temporariamente indisponível.",
+} as const;
+
 export interface ApiErrorDetail {
   loc: (string | number)[];
   msg: string;
@@ -32,29 +51,59 @@ export interface AiTelemetry {
 }
 
 /**
+ * @description Extrai dicionário de erros por campo a partir da lista de detalhes Pydantic (HTTP 422).
+ */
+function parsePydanticFieldErrors(detail: ApiErrorDetail[]): Record<string, string> {
+  const fieldErrors: Record<string, string> = {};
+  for (const item of detail) {
+    if (item.loc && item.loc.length > 0) {
+      const fieldKey = String(item.loc[item.loc.length - 1]);
+      fieldErrors[fieldKey] = item.msg;
+    }
+  }
+  return fieldErrors;
+}
+
+/**
+ * @description Map do código de erro baseado no status HTTP quando a API não retorna error_code explícito.
+ */
+function resolveErrorCodeByStatus(status: number): string {
+  switch (status) {
+    case HTTP_STATUS.UNAUTHORIZED: return "UNAUTHORIZED";
+    case HTTP_STATUS.FORBIDDEN: return "FORBIDDEN";
+    case HTTP_STATUS.NOT_FOUND: return "NOT_FOUND";
+    case HTTP_STATUS.CONFLICT: return "CONFLICT";
+    case HTTP_STATUS.TOO_MANY_REQUESTS: return "RATE_LIMIT_EXCEEDED";
+    case HTTP_STATUS.SERVICE_UNAVAILABLE: return "SERVICE_UNAVAILABLE";
+    case HTTP_STATUS.INTERNAL_SERVER_ERROR: return "INTERNAL_SERVER_ERROR";
+    default: return "UNKNOWN_ERROR";
+  }
+}
+
+/**
  * @description Parseia respostas HTTP de erro da API v2.0.0, desestruturando erros de negócio
  * (`EducampoBaseException`) e erros de validação do Pydantic (`HTTP 422`).
  */
 export async function parseApiError(response: Response): Promise<ApiErrorResult> {
   const httpStatus = response.status;
   const fieldErrors: Record<string, string> = {};
-  let errorCode = "UNKNOWN_ERROR";
-  let userMessage = "Ocorreu um erro inesperado no servidor. Por favor, tente novamente.";
+  let errorCode = resolveErrorCodeByStatus(httpStatus);
+  let userMessage: string = DEFAULT_ERROR_MESSAGES.GENERIC_SERVER_ERROR;
 
   try {
     const data: ApiErrorPayload = await response.json();
 
-    if (httpStatus === 422 && Array.isArray(data.detail)) {
-      errorCode = "VALIDATION_ERROR";
-      userMessage = "Por favor, corrija os erros nos campos indicados.";
-      for (const item of data.detail) {
-        if (item.loc && item.loc.length > 0) {
-          const fieldKey = String(item.loc[item.loc.length - 1]);
-          fieldErrors[fieldKey] = item.msg;
-        }
-      }
-    } else if (data.error_code || data.message || typeof data.detail === "string") {
-      errorCode = data.error_code || (httpStatus === 503 ? "SERVICE_UNAVAILABLE" : "BUSINESS_ERROR");
+    if (httpStatus === HTTP_STATUS.UNPROCESSABLE_ENTITY && Array.isArray(data.detail)) {
+      return {
+        errorCode: "VALIDATION_ERROR",
+        userMessage: DEFAULT_ERROR_MESSAGES.VALIDATION_ERROR,
+        fieldErrors: parsePydanticFieldErrors(data.detail),
+        httpStatus
+      };
+    }
+
+    if (data.error_code || data.message || typeof data.detail === "string") {
+      errorCode = data.error_code || (httpStatus === HTTP_STATUS.SERVICE_UNAVAILABLE ? "SERVICE_UNAVAILABLE" : "BUSINESS_ERROR");
       userMessage = data.message || (typeof data.detail === "string" ? data.detail : userMessage);
 
       if (data.details && typeof data.details === "object") {
@@ -64,25 +113,12 @@ export async function parseApiError(response: Response): Promise<ApiErrorResult>
           }
         }
       }
-    } else {
-      if (httpStatus === 401) errorCode = "UNAUTHORIZED";
-      else if (httpStatus === 403) errorCode = "FORBIDDEN";
-      else if (httpStatus === 404) errorCode = "NOT_FOUND";
-      else if (httpStatus === 409) errorCode = "CONFLICT";
-      else if (httpStatus === 429) errorCode = "RATE_LIMIT_EXCEEDED";
-      else if (httpStatus === 503) errorCode = "SERVICE_UNAVAILABLE";
-      else if (httpStatus >= 500) errorCode = "INTERNAL_SERVER_ERROR";
     }
   } catch (e) {
-    if (httpStatus === 401) {
-      errorCode = "UNAUTHORIZED";
-      userMessage = "Sessão expirada ou credenciais inválidas.";
-    } else if (httpStatus === 503) {
-      errorCode = "SERVICE_UNAVAILABLE";
-      userMessage = "Serviço temporariamente indisponível.";
-    } else if (httpStatus >= 500) {
-      errorCode = "INTERNAL_SERVER_ERROR";
-      userMessage = "Ocorreu um erro inesperado no servidor. Por favor, tente novamente.";
+    if (httpStatus === HTTP_STATUS.UNAUTHORIZED) {
+      userMessage = DEFAULT_ERROR_MESSAGES.EXPIRED_SESSION;
+    } else if (httpStatus === HTTP_STATUS.SERVICE_UNAVAILABLE) {
+      userMessage = DEFAULT_ERROR_MESSAGES.UNAVAILABLE_SERVICE;
     }
   }
 
