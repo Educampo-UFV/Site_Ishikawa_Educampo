@@ -1,6 +1,6 @@
 /**
  * @file src/app/login/page.tsx
- * @description Interface visual e lógica de autenticação do produtor.
+ * @description Interface visual e lógica de autenticação do consultor.
  * 
  * COMO ESTE CÓDIGO FUNCIONA:
  * 1. Abstração Visual: Utiliza o 'SplitScreenLayout' para gerenciar a responsividade, 
@@ -8,10 +8,10 @@
  * 2. Segurança Zero-Token-Exposure: Não armazena nem lê tokens no cliente (localStorage). 
  *    A autenticação é processada via BFF, que injeta cookies HttpOnly no navegador.
  * 3. Fluxo de Autenticação: Captura inputs via useState, valida campos básicos e realiza 
- *    uma requisição POST para '/api/auth'. Em caso de sucesso, o roteador do Next.js 
+ *    uma requisição POST para '/api/auth' enviando email e senha. Em caso de sucesso, o roteador do Next.js 
  *    redireciona o usuário.
- * 4. Atalho de Teste: Implementa a função 'fillTestCredentials' para agilizar a validação 
- *    funcional em ambiente de desenvolvimento.
+ * 4. Atalho de Teste: Preenche automaticamente as credenciais de homologação
+ *    (consultor@educampo.com / admin123) para agilizar os testes.
  */
 
 'use client';
@@ -20,28 +20,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SplitScreenLayout } from '@/components/ui/SplitScreenLayout';
 
-/**
- * Componente principal da página de Login.
- * Renderiza o formulário de autenticação e gerencia o estado local dos inputs.
- * 
- * @returns {JSX.Element} Interface do formulário de login envolta no SplitScreenLayout.
- */
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const router = useRouter();
 
-  /**
-   * Processa a submissão do formulário de login.
-   * Exibe estado de carregamento e dispara a requisição POST para o BFF (/api/auth) para validar as credenciais.
-   * Em caso de sucesso (cookies injetados pelo servidor), redireciona para a tela de formulário.
-   * 
-   * @param {React.FormEvent} e - Evento de submissão do formulário.
-   */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -51,7 +38,7 @@ export default function LoginPage() {
       const response = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, rememberMe }),
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
       if (response.ok) {
@@ -67,13 +54,9 @@ export default function LoginPage() {
     }
   };
 
-  /**
-   * Preenche automaticamente os campos de usuário e senha com credenciais de teste.
-   * Função utilitária para agilizar validações funcionais no ambiente de desenvolvimento.
-   */
   const fillTestCredentials = () => {
-    setUsername('educampo');
-    setPassword('leite123');
+    setEmail('consultor@educampo.com');
+    setPassword('admin123');
     setError('');
   };
 
@@ -86,15 +69,15 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Usuário <span className="text-blue-600">*</span>
+              E-mail do Consultor <span className="text-blue-600">*</span>
             </label>
             <input
-              type="text"
+              type="email"
               required
-              placeholder="Ex: educampo"
+              placeholder="consultor@educampo.com"
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-colors outline-none text-gray-800"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
