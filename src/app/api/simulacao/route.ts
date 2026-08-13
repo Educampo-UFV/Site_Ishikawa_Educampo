@@ -3,6 +3,7 @@
  * @description Proxy BFF para o endpoint central de Simulação de Gráficos. Recebe o estado ancorado
  * (`dados_originais` com 10 campos) e os `dados_simulados` manipulados pelo produtor.
  * Oculta as chaves de API e devolve exclusivamente o bloco `simulacao` com as predições e benchmarking.
+ * Ref: Obsidian note [[sdd-04-simulacao-padronizacao]]
  */
 
 import { NextRequest, NextResponse } from 'next/server';

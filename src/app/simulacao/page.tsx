@@ -4,6 +4,7 @@
  * Permite ao produtor alterar variáveis em tempo real (Painel Esquerdo) e 
  * visualizar o impacto em 9 indicadores cruciais (Painel Central), comparando
  * contra linhas de base (Cenários: Inferior, Intermediário, Superior) sem custos de API.
+ * Ref: Obsidian note [[sdd-04-simulacao-padronizacao]]
  */
 
 'use client';
