@@ -282,8 +282,8 @@ export default function SimulacaoPage() {
         numero_trabalhadores: sanitizar(dadosFazenda.mao_obra_total, 0.01),
         preco_recebido: sanitizar(dadosFazenda.preco_leite, 0.01),
         producao_vaca: sanitizar(dadosFazenda.producao_vaca, 0.1),
-        regiao_sebrae: dadosFazenda.regiao || 'desconhecida',
-        sistema_producao: dadosFazenda.sistema_producao || 'desconhecido',
+        regiao_sebrae: dadosFazenda.regiao || 'triangulo',
+        sistema_producao: dadosFazenda.sistema_producao || 'compost-barn',
         total_vacas: sanitizar(dadosFazenda.total_vacas, 0.01),
         percentual_lactacao: sanitizar(dadosFazenda.percentual_lactacao, 0)
       },

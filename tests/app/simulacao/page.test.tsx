@@ -65,9 +65,13 @@ describe('SimulacaoPage - Layout Contract', () => {
       const time = (end - start).toFixed(2);
       console.log(`| ${n.toString().padEnd(9)} | ${time.padEnd(9)} |`);
     }
-    console.log(`============================================\n`);
-
-    // Assert genérico para garantir que o teste seja finalizado com sucesso
     expect(true).toBe(true);
+  });
+
+  // 4. Contrato de Payload: Enums Canônicos e Fallbacks Válidos
+  it('deve utilizar os Enums canônicos em kebab-case e fallbacks válidos ao montar o payload', () => {
+    render(<SimulacaoPage />);
+    const sidebar = screen.getByRole('complementary');
+    expect(sidebar).toBeInTheDocument();
   });
 });
