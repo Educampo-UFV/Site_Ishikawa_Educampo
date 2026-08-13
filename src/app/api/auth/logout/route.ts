@@ -4,25 +4,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SECURITY_CONSTANTS, API_ENDPOINTS, API_HEADERS } from '@/lib/constants';
+import { SECURITY_CONSTANTS, API_ENDPOINTS } from '@/lib/constants';
+import { getBffBackendConfig, createBffHeaders } from '@/lib/bff-config';
 
 export const runtime = 'edge';
 
 export async function POST(request: NextRequest) {
   try {
-    const baseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
-    const apiKey = process.env.API_KEY || process.env.API_TOKEN || '42';
-
+    const { baseUrl } = getBffBackendConfig();
     const sessionCookie = request.cookies.get(SECURITY_CONSTANTS.SESSION_COOKIE_NAME);
     const backendUrl = `${baseUrl}${API_ENDPOINTS.AUTH_LOGOUT}`;
-
-    const headers: Record<string, string> = {
-      [API_HEADERS.API_KEY]: apiKey,
-    };
-
-    if (sessionCookie?.value) {
-      headers['Cookie'] = `${SECURITY_CONSTANTS.SESSION_COOKIE_NAME}=${sessionCookie.value}`;
-    }
+    const headers = createBffHeaders(sessionCookie?.value);
 
     try {
       await fetch(backendUrl, {

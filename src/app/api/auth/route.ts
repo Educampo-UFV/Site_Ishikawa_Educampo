@@ -5,7 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SECURITY_CONSTANTS, API_ENDPOINTS, API_HEADERS } from '@/lib/constants';
+import { SECURITY_CONSTANTS, API_ENDPOINTS } from '@/lib/constants';
+import { getBffBackendConfig, createBffHeaders } from '@/lib/bff-config';
 
 export const runtime = 'edge';
 
@@ -18,17 +19,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'E-mail e senha são obrigatórios.' }, { status: 400 });
     }
 
-    const baseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
-    const apiKey = process.env.API_KEY || process.env.API_TOKEN || '42';
-
+    const { baseUrl } = getBffBackendConfig();
     const backendUrl = `${baseUrl}${API_ENDPOINTS.AUTH_LOGIN}`;
 
     const backendResponse = await fetch(backendUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        [API_HEADERS.API_KEY]: apiKey,
-      },
+      headers: createBffHeaders(undefined, { 'Content-Type': 'application/json' }),
       body: JSON.stringify({ email, password }),
     });
 

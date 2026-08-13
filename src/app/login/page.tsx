@@ -17,8 +17,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { SplitScreenLayout } from '@/components/ui/SplitScreenLayout';
+import { ROUTES } from '@/lib/constants';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -26,8 +26,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +40,7 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        window.location.href = '/formulario';
+        window.location.href = ROUTES.FORMULARIO;
       } else {
         const data = await response.json();
         setError(data.error || 'Falha na autenticação.');

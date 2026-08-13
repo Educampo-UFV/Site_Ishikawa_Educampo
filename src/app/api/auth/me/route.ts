@@ -4,7 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SECURITY_CONSTANTS, API_ENDPOINTS, API_HEADERS } from '@/lib/constants';
+import { SECURITY_CONSTANTS, API_ENDPOINTS } from '@/lib/constants';
+import { getBffBackendConfig, createBffHeaders } from '@/lib/bff-config';
 
 export const runtime = 'edge';
 
@@ -16,17 +17,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Sessão não encontrada' }, { status: 401 });
     }
 
-    const baseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
-    const apiKey = process.env.API_KEY || process.env.API_TOKEN || '42';
-
+    const { baseUrl } = getBffBackendConfig();
     const backendUrl = `${baseUrl}${API_ENDPOINTS.AUTH_ME}`;
 
     const backendResponse = await fetch(backendUrl, {
       method: 'GET',
-      headers: {
-        [API_HEADERS.API_KEY]: apiKey,
-        Cookie: `${SECURITY_CONSTANTS.SESSION_COOKIE_NAME}=${sessionCookie.value}`,
-      },
+      headers: createBffHeaders(sessionCookie.value),
     });
 
     if (!backendResponse.ok) {

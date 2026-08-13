@@ -43,6 +43,8 @@ export const ROUTES = {
   LOGIN: '/login',
   /** Rota principal interna (Hub) para onde o usuário logado é redirecionado */
   HOME: '/selecao',
+  /** Formulário de inserção/edição de dados da propriedade */
+  FORMULARIO: '/formulario',
   /** Tela de feedback visual (Espera) e validação da API */
   CARREGANDO: '/carregando',
   /** Painel central unificado: Benchmarking, IA e Diagrama de Ishikawa */
