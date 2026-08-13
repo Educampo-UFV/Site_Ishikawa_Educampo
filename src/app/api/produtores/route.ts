@@ -64,6 +64,11 @@ export async function POST(request: NextRequest) {
 
     const responseData = await backendResponse.json().catch(() => ({}));
 
+    // SEC-01: Sanitização de dados sensíveis - Garantir remoção da senha no payload de resposta
+    if (responseData && typeof responseData === 'object' && 'senha' in responseData) {
+      delete (responseData as Record<string, unknown>).senha;
+    }
+
     return NextResponse.json(
       responseData,
       { status: backendResponse.status }
