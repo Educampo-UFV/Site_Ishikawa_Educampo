@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-
     let body: unknown;
     try {
       body = await request.json();
@@ -65,16 +64,9 @@ export async function POST(request: NextRequest) {
 
     const responseData = await backendResponse.json().catch(() => ({}));
 
-    if (!backendResponse.ok) {
-      return NextResponse.json(
-        responseData,
-        { status: backendResponse.status }
-      );
-    }
-
     return NextResponse.json(
       responseData,
-      { status: backendResponse.status || 201 }
+      { status: backendResponse.status }
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
