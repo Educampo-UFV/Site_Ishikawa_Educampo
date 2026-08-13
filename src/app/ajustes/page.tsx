@@ -96,6 +96,24 @@ export default function AjustesPage() {
 
   // Inicializa o estado local com os dados da store (se existirem)
   const [formData, setFormData] = useState<Partial<FazendaFormData>>(dadosFazenda || {});
+  const [isMounted, setIsMounted] = useState(false);
+
+  /**
+   * Marca o componente como montado no cliente para prevenir mismatch de hidratação do Next.js.
+   */
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  /**
+   * Sincroniza os dados da fazenda vindos do Zustand (sessionStorage) com o estado local do formulário
+   * assim que a rehidratação assíncrona for concluída pelo cliente.
+   */
+  useEffect(() => {
+    if (dadosFazenda) {
+      setFormData(dadosFazenda);
+    }
+  }, [dadosFazenda]);
 
   // Estados para as opções dinâmicas trazidas da API /api/formularios
   const [opcoesSistemas, setOpcoesSistemas] = useState<SistemaProducaoItem[]>(DEFAULT_SISTEMAS_OPCOES);
@@ -268,6 +286,15 @@ export default function AjustesPage() {
       setProgresso(null);
     }
   };
+
+  // Aguarda a hidratação do cliente para evitar falsos negativos durante a rehidratação do Zustand
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="h-12 w-12 border-4 border-[#1973d3] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   // Intercepta e renderiza um aviso de escape rápido se a fazenda base não existir na store
   if (!dadosFazenda) {

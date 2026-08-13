@@ -25,6 +25,12 @@ export default function CarregandoPage() {
   const [dots, setDots] = useState("");
   const processamentoIniciado = useRef(false);
 
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Efeito para criar a animação dos "3 pontinhos"
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,6 +40,8 @@ export default function CarregandoPage() {
   }, []);
 
   useEffect(() => {
+    if (!isMounted) return;
+
     if (!dadosFazenda) {
       router.push("/formulario");
       return;

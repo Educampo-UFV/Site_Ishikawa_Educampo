@@ -190,6 +190,15 @@ export default function SimulacaoPage() {
   const [isMercadoOpen, setIsMercadoOpen] = useState(true);
   const [isTecnicoOpen, setIsTecnicoOpen] = useState(false);
 
+  const [isMounted, setIsMounted] = useState(false);
+
+  /**
+   * Marca o componente como montado no cliente para prevenir mismatch de hidratação do Next.js.
+   */
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   /**
    * Estado local para a Simulação (não altera a store principal para não estragar o diagnóstico real do produtor).
    */
@@ -203,6 +212,24 @@ export default function SimulacaoPage() {
     numero_trabalhadores: dadosFazenda?.mao_obra_total || 2,
     custo_concentrado: dadosFazenda?.preco_concentrado || 2.00,
   });
+
+  /**
+   * Sincroniza o estado inicial da simulação assim que dadosFazenda for rehidratado pelo Zustand (sessionStorage).
+   */
+  useEffect(() => {
+    if (dadosFazenda) {
+      setSimulacao({
+        total_vacas: dadosFazenda.total_vacas || 100,
+        percentual_lactacao: dadosFazenda.percentual_lactacao || 85,
+        producao_vaca: dadosFazenda.producao_vaca || 30.0,
+        preco_recebido: dadosFazenda.preco_leite || 3.00,
+        area_atividade: dadosFazenda.area_atividade || 10.0,
+        ccs: dadosFazenda.ccs || 150,
+        numero_trabalhadores: dadosFazenda.mao_obra_total || 2,
+        custo_concentrado: dadosFazenda.preco_concentrado || 2.00,
+      });
+    }
+  }, [dadosFazenda]);
 
   /**
    * @description Restaura os valores da simulação para os originais do produtor.
@@ -629,6 +656,14 @@ export default function SimulacaoPage() {
       );
     });
   };
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="h-12 w-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (!dadosFazenda) {
     return (
