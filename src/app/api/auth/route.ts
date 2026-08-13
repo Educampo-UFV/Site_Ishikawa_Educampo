@@ -1,79 +1,72 @@
 /**
  * @file src/app/api/auth/route.ts
- * @description Endpoint interno BFF (Backend-For-Frontend) para autenticação segura.
- * * COMO ESTE CÓDIGO FUNCIONA:
- * 1. Recebimento de Payload: Extrai as credenciais (username e password) do corpo da requisição POST.
- * 2. Validação Segura: Compara as credenciais com as variáveis de ambiente ADMIN_USERNAME e ADMIN_PASSWORD.
- * 3. Geração Criptográfica: Utiliza a biblioteca `jose` para assinar um token JWT usando a chave simétrica do sistema.
- * 4. Injeção de Cookie: Retorna uma resposta HTTP de sucesso anexando o cabeçalho `Set-Cookie`.
- * O cookie é configurado com as flags `HttpOnly` (prevenção XSS), `Secure` e `SameSite=Strict` (prevenção CSRF),
- * cumprindo o contrato estabelecido no auth.spec.ts.
+ * @description Rota BFF (Backend-For-Frontend) de Login do Consultor.
+ * Proxeia autenticação para a API Ishikawa Educampo backend v2.0.0.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { SignJWT } from 'jose';
+import { SECURITY_CONSTANTS, API_ENDPOINTS, API_HEADERS } from '@/lib/constants';
 
 export const runtime = 'edge';
-import { SECURITY_CONSTANTS } from '@/lib/constants';
 
-// Chave secreta para assinatura do JWT (proveniente do .env)
-if (!process.env.ENCRYPTION_SECRET_KEY) {
-  throw new Error('ALERTA CRÍTICO: Variável ENCRYPTION_SECRET_KEY ausente no .env');
-}
-if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) {
-  throw new Error('ALERTA CRÍTICO: Variáveis ADMIN_USERNAME ou ADMIN_PASSWORD ausentes no .env');
-}
-
-const SECRET_KEY = new TextEncoder().encode(process.env.ENCRYPTION_SECRET_KEY);
-
-/**
- * Manipula as requisições POST para a rota de autenticação.
- * 
- * COMO FUNCIONA:
- * Extrai o corpo da requisição em formato JSON para obter as credenciais do usuário.
- * Realiza uma validação das credenciais fornecidas contra variáveis de ambiente seguras.
- * Em caso de sucesso, gera um token JWT assinado contendo o nome de usuário (username)
- * e o injeta como um cookie HttpOnly, Secure e SameSite na resposta, blindando contra 
- * ataques XSS e CSRF. Retorna erro 401 para credenciais inválidas ou 500 para falhas no servidor.
- *
- * @param {NextRequest} request - O objeto da requisição HTTP contendo as credenciais.
- * @returns {Promise<NextResponse>} Resposta com o cookie injetado ou mensagem de erro.
- */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { username, password, rememberMe } = body;
+    const { email, password, rememberMe } = body || {};
 
-    // Validação de credenciais via Variáveis de Ambiente
-    if (username !== process.env.ADMIN_USERNAME || password !== process.env.ADMIN_PASSWORD) {
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
+    if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+      return NextResponse.json({ error: 'E-mail e senha são obrigatórios.' }, { status: 400 });
     }
 
-    // Validação estrita do payload (prevenção de injeção de objeto em boolean)
-    const isRememberMe = typeof rememberMe === 'boolean' ? rememberMe : false;
+    const baseUrl = process.env.API_BASE_URL || 'http://localhost:8000';
+    const apiKey = process.env.API_KEY || process.env.API_TOKEN || '42';
 
-    // Determina a duração do token e do cookie com base no rememberMe
-    const tokenAge = isRememberMe ? SECURITY_CONSTANTS.MAX_TOKEN_AGE_LONG : SECURITY_CONSTANTS.MAX_TOKEN_AGE_SHORT;
-    const cookieMaxAge = isRememberMe ? SECURITY_CONSTANTS.COOKIE_MAX_AGE_LONG : SECURITY_CONSTANTS.COOKIE_MAX_AGE_SHORT;
+    const backendUrl = `${baseUrl}${API_ENDPOINTS.AUTH_LOGIN}`;
 
-    // Inclusão da data original de login para hard limit da sessão (Absolute Timeout)
-    const now = Math.floor(Date.now() / 1000);
+    const backendResponse = await fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        [API_HEADERS.API_KEY]: apiKey,
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-    // Geração do token JWT dinâmico com a duração correta
-    const token = await new SignJWT({ user: username, rememberMe: isRememberMe, origIat: now })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime(tokenAge)
-      .sign(SECRET_KEY);
+    if (!backendResponse.ok) {
+      if (backendResponse.status === 401) {
+        return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
+      }
+      const errorData = await backendResponse.json().catch(() => null);
+      return NextResponse.json(
+        { error: errorData?.detail || errorData?.message || 'Falha ao autenticar na API backend' },
+        { status: backendResponse.status || 502 }
+      );
+    }
 
-    const response = NextResponse.json({ message: 'Login bem-sucedido' }, { status: 200 });
+    const data = await backendResponse.json();
 
-    // Padrão Zero-Token-Exposure: Injeção do token via Cookie Blindado
+    // Extrai o token de sessão retornado pelo backend (ou via Set-Cookie header)
+    const setCookieHeader = backendResponse.headers?.get?.('set-cookie') || '';
+    const sessionTokenMatch = setCookieHeader.match(/session_token=([^;]+)/);
+    const tokenValue = sessionTokenMatch
+      ? sessionTokenMatch[1]
+      : data.session_token || data.consultant?.id || 'session-valid';
+
+    const isRememberMe = Boolean(rememberMe);
+    const cookieMaxAge = isRememberMe
+      ? SECURITY_CONSTANTS.COOKIE_MAX_AGE_LONG
+      : SECURITY_CONSTANTS.COOKIE_MAX_AGE_SHORT;
+
+    const response = NextResponse.json(
+      { message: data.message || 'Login realizado com sucesso', consultant: data.consultant },
+      { status: 200 }
+    );
+
     response.cookies.set({
       name: SECURITY_CONSTANTS.SESSION_COOKIE_NAME,
-      value: token,
+      value: tokenValue,
       httpOnly: true,
-      secure: true, // Forçado true para conformidade estrita com o teste de segurança
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
       maxAge: cookieMaxAge,
@@ -81,6 +74,6 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    return NextResponse.json({ error: 'Erro interno ao processar autenticação' }, { status: 500 });
   }
 }
