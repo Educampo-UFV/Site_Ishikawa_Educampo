@@ -17,6 +17,7 @@ export interface RegiaoSebraeObjeto {
 export interface FazendaCadastradaObjeto {
   id?: string;
   nome: string;
+  email?: string;
 }
 
 export type SistemaProducaoItem = SistemaProducaoObjeto | string;
@@ -28,6 +29,13 @@ export function getFazendaNome(item: FazendaCadastradaItem): string {
     return item.nome;
   }
   return String(item);
+}
+
+export function getFazendaEmail(item: FazendaCadastradaItem): string {
+  if (typeof item === 'object' && item !== null && 'email' in item && item.email) {
+    return item.email;
+  }
+  return '';
 }
 
 export function getOptionValue(item: SistemaProducaoItem | RegiaoSebraeItem): string {

@@ -46,7 +46,12 @@ export async function POST(request: NextRequest) {
     const sessionTokenMatch = setCookieHeader.match(/session_token=([^;]+)/);
     const tokenValue = sessionTokenMatch
       ? sessionTokenMatch[1]
-      : data.session_token || data.consultant?.id || 'session-valid';
+      : data.session_token || data.access_token || data.token || data.consultant_id || data.consultant?.id || 'session-valid';
+
+    const consultantData = data.consultant || {
+      id: data.consultant_id || 'consultant-default-uuid',
+      email: data.email || email,
+    };
 
     const isRememberMe = Boolean(rememberMe);
     const cookieMaxAge = isRememberMe
@@ -54,7 +59,7 @@ export async function POST(request: NextRequest) {
       : SECURITY_CONSTANTS.COOKIE_MAX_AGE_SHORT;
 
     const response = NextResponse.json(
-      { message: data.message || 'Login realizado com sucesso', consultant: data.consultant },
+      { message: data.message || 'Login realizado com sucesso', consultant: consultantData },
       { status: 200 }
     );
 
@@ -62,8 +67,8 @@ export async function POST(request: NextRequest) {
       name: SECURITY_CONSTANTS.SESSION_COOKIE_NAME,
       value: tokenValue,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production' && request.url.startsWith('https:'),
+      sameSite: 'lax',
       path: '/',
       maxAge: cookieMaxAge,
     });

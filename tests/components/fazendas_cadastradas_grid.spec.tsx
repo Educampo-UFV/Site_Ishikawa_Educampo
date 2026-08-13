@@ -18,7 +18,6 @@ describe('FazendasCadastradasGrid', () => {
     const { container } = render(
       <FazendasCadastradasGrid
         fazendas={fazendas}
-        onCarregarFormulario={jest.fn()}
         onIniciarDiagnostico={jest.fn()}
       />
     );
@@ -27,7 +26,7 @@ describe('FazendasCadastradasGrid', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('deve renderizar os cards das fazendas com os botões de ação', () => {
+  it('deve renderizar os cards das fazendas com apenas o botão de Iniciar Diagnóstico', () => {
     // Arrange
     const fazendas = ['Fazenda Boa Vista', 'Fazenda Santa Maria'];
 
@@ -35,7 +34,6 @@ describe('FazendasCadastradasGrid', () => {
     render(
       <FazendasCadastradasGrid
         fazendas={fazendas}
-        onCarregarFormulario={jest.fn()}
         onIniciarDiagnostico={jest.fn()}
       />
     );
@@ -44,30 +42,31 @@ describe('FazendasCadastradasGrid', () => {
     expect(screen.getByText('Fazenda Boa Vista')).toBeInTheDocument();
     expect(screen.getByText('Fazenda Santa Maria')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Iniciar Diagnóstico/i })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: /Carregar .* no formulário/i })).toHaveLength(2);
-
+    expect(screen.queryByRole('button', { name: /Carregar .* no formulário/i })).not.toBeInTheDocument();
   });
 
-  it('deve chamar onCarregarFormulario ao clicar no botão "Carregar no Formulário"', async () => {
+  it('deve filtrar fazendas por nome ou e-mail de forma insensível a maiúsculas/minúsculas', async () => {
     // Arrange
     const user = userEvent.setup();
-    const mockCarregar = jest.fn();
-    const fazendas = ['Fazenda Boa Vista'];
+    const fazendas = [
+      { nome: 'Fazenda Alfa', email: 'alfa@fazenda.com' },
+      { nome: 'Fazenda Beta', email: 'beta@educampo.com' },
+    ];
 
     render(
       <FazendasCadastradasGrid
         fazendas={fazendas}
-        onCarregarFormulario={mockCarregar}
         onIniciarDiagnostico={jest.fn()}
       />
     );
 
-    // Act
-    const btnCarregar = screen.getByRole('button', { name: /Carregar Fazenda Boa Vista no formulário/i });
-    await user.click(btnCarregar);
+    // Act: digita filtro por email 'educampo'
+    const inputBusca = screen.getByTestId('busca-fazenda-input');
+    await user.type(inputBusca, 'EDUCAMPO');
 
-    // Assert
-    expect(mockCarregar).toHaveBeenCalledWith('Fazenda Boa Vista');
+    // Assert: apenas Fazenda Beta é exibida
+    expect(screen.queryByText('Fazenda Alfa')).not.toBeInTheDocument();
+    expect(screen.getByText('Fazenda Beta')).toBeInTheDocument();
   });
 
   it('deve alternar para o estado de loading e chamar onIniciarDiagnostico ao clicar em "Iniciar Diagnóstico"', async () => {
@@ -84,7 +83,6 @@ describe('FazendasCadastradasGrid', () => {
     render(
       <FazendasCadastradasGrid
         fazendas={fazendas}
-        onCarregarFormulario={jest.fn()}
         onIniciarDiagnostico={mockDiagnostico}
       />
     );
@@ -113,7 +111,6 @@ describe('FazendasCadastradasGrid', () => {
     render(
       <FazendasCadastradasGrid
         fazendas={fazendas}
-        onCarregarFormulario={jest.fn()}
         onIniciarDiagnostico={mockDiagnostico}
       />
     );

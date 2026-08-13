@@ -1,7 +1,7 @@
 /**
  * @file tests/app/formulario.spec.tsx
  * @description Suíte de testes para o componente FormularioPage.
- * Garante o tratamento de opções dinâmicas, auto-preenchimento e UX de resiliência/retry em falhas de API.
+ * Garante o consumo de opções dinâmicas, inicialização de diagnóstico e resiliência/retry em falhas de API.
  * Ref: Obsidian note [[sdd-promover-rota-formularios-frontend]]
  */
 
@@ -11,9 +11,10 @@ import FormularioPage from '@/app/formulario/page';
 
 jest.setTimeout(15000);
 
+const mockPush = jest.fn();
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
   }),
 }));
 
@@ -22,15 +23,16 @@ jest.mock('next/image', () => ({
   default: (props: any) => <img {...props} alt={props.alt || ''} />,
 }));
 
+const mockSetDadosFazenda = jest.fn();
 jest.mock('@/store/useFazendaStore', () => ({
   useFazendaStore: (selector: any) => selector({
-    setDadosFazenda: jest.fn(),
+    setDadosFazenda: mockSetDadosFazenda,
   }),
 }));
 
 global.fetch = jest.fn();
 
-describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
+describe('FormularioPage - Dynamic Options & Diagnosis Integration', () => {
   beforeAll(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -44,7 +46,7 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     jest.restoreAllMocks();
   });
 
-  it('deve carregar opções dinâmicas da API /api/formularios e popular selects na montagem', async () => {
+  it('deve carregar opções dinâmicas da API /api/formularios e popular a lista na montagem', async () => {
     // Arrange
     const mockOpcoes = {
       sistemas_producao: ['compost-barn', 'pastoreio'],
@@ -72,7 +74,7 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     }, { timeout: 4000 });
   });
 
-  it('deve realizar auto-preenchimento ao selecionar uma fazenda cadastrada', async () => {
+  it('deve disparar diagnóstico direto ao clicar em "Iniciar Diagnóstico" em uma fazenda cadastrada', async () => {
     // Arrange
     const mockOpcoes = {
       sistemas_producao: ['compost-barn'],
@@ -84,7 +86,7 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
       nome: 'Fazenda Leiteira Experimental 1',
       dados: {
         sistema_producao: 'compost-barn',
-        regiao_sebrae: 'Zona da Mata',
+        regiao_sebrae: 'zona da mata e vertentes',
         total_vacas: 150,
         percentual_lactacao: 85,
         total_rebanho: 200,
@@ -108,6 +110,11 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
         ok: true,
         status: 200,
         json: async () => mockFazendaDetalhes,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ task_id: 'task-123', status: 'processing' }),
       });
 
     render(<FormularioPage />);
@@ -117,65 +124,13 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     }, { timeout: 4000 });
 
     // Act
-    const carregarBtn = screen.getByRole('button', { name: /Carregar Fazenda Leiteira Experimental 1 no formulário/i });
-    fireEvent.click(carregarBtn);
+    const diagnosticoBtn = screen.getByRole('button', { name: /Iniciar Diagnóstico para Fazenda Leiteira Experimental 1/i });
+    fireEvent.click(diagnosticoBtn);
 
     // Assert
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/formularios?nome=Fazenda%20Leiteira%20Experimental%201');
-    }, { timeout: 4000 });
-
-    await waitFor(() => {
-      const inputNome = screen.getByLabelText(/Nome da Fazenda/i) as HTMLInputElement;
-      const selectRegiao = screen.getByLabelText(/Região/i) as HTMLSelectElement;
-      expect(inputNome.value).toBe('Fazenda Leiteira Experimental 1');
-      expect(selectRegiao.value).toBe('Zona da Mata');
-    }, { timeout: 4000 });
-  });
-
-  it('deve normalizar e autopreencher o campo Região flexivelmente quando a API retornar com maiúsculas, acentos ou a chave regiao', async () => {
-    // Arrange
-    const mockOpcoes = {
-      sistemas_producao: ['compost-barn'],
-      regioes_sebrae: ['triangulo', 'zona da mata e vertentes'],
-      fazendas_cadastradas: ['Fazenda Teste Regiao']
-    };
-
-    const mockFazendaComRegiaoCustom = {
-      nome: 'Fazenda Teste Regiao',
-      dados: {
-        sistema_producao: 'compost-barn',
-        regiao: 'Triângulo', // Retorna 'regiao' com maiúscula e acento
-        total_vacas: 100
-      }
-    };
-
-    (global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => mockOpcoes,
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => mockFazendaComRegiaoCustom,
-      });
-
-    render(<FormularioPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Fazenda Teste Regiao')).toBeInTheDocument();
-    }, { timeout: 4000 });
-
-    // Act
-    const carregarBtn = screen.getByRole('button', { name: /Carregar Fazenda Teste Regiao no formulário/i });
-    fireEvent.click(carregarBtn);
-
-    // Assert
-    await waitFor(() => {
-      const selectRegiao = screen.getByLabelText(/Região/i) as HTMLSelectElement;
-      expect(selectRegiao.value).toBe('triangulo');
+      expect(mockSetDadosFazenda).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith('/carregando?task_id=task-123');
     }, { timeout: 4000 });
   });
 

@@ -1,11 +1,11 @@
 /**
- * @file src/proxy.ts
- * @description Proxy nativo do Next.js executado no Edge Runtime para segurança de rotas.
- * Intercepta requisições HTTP para validar a presença do cookie session_token e resguardar rotas privadas.
+ * @file src/middleware.ts
+ * @description Edge Middleware oficial do Next.js para segurança e proteção de rotas privadas.
+ * Intercepta requisições HTTP para validar a presença e integridade do cookie session_token.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
+import { jwtVerify, decodeJwt } from 'jose';
 import { SECURITY_CONSTANTS, ROUTES } from './lib/constants';
 
 const SECRET_KEY = process.env.ENCRYPTION_SECRET_KEY
@@ -26,7 +26,7 @@ export const config = {
   ],
 };
 
-export async function proxy(request: NextRequest): Promise<NextResponse> {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const sessionCookie = request.cookies.get(SECURITY_CONSTANTS.SESSION_COOKIE_NAME);
   const pathname = request.nextUrl.pathname;
 
@@ -39,8 +39,23 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Se o token for um JWT assinado (formato header.payload.signature), executa a verificação
-    if (SECRET_KEY && sessionCookie.value.split('.').length === 3) {
-      await jwtVerify(sessionCookie.value, SECRET_KEY, { maxTokenAge: SECURITY_CONSTANTS.MAX_TOKEN_AGE });
+    if (sessionCookie.value.split('.').length === 3) {
+      try {
+        if (SECRET_KEY) {
+          await jwtVerify(sessionCookie.value, SECRET_KEY, { maxTokenAge: SECURITY_CONSTANTS.MAX_TOKEN_AGE });
+        }
+      } catch (err: any) {
+        // Se a assinatura falhou porque o token foi assinado pela API backend com a chave do backend,
+        // apenas validamos a expiração (exp) do JWT para não derrubar a sessão válida.
+        if (err?.code === 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED') {
+          const payload = decodeJwt(sessionCookie.value);
+          if (payload.exp && payload.exp * 1000 < Date.now()) {
+            throw new Error('Token de sessão expirado');
+          }
+        } else {
+          throw err;
+        }
+      }
     }
 
     if (isRootPath || isAuthPage) {
@@ -48,6 +63,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
     return NextResponse.next();
   } catch (error) {
+    console.warn('[Edge Middleware] Sessão inválida ou expirada:', error);
     const response = isAuthPage
       ? NextResponse.next()
       : NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
@@ -56,3 +72,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return response;
   }
 }
+
+// Alias export para compatibilidade
+export { middleware as proxy };

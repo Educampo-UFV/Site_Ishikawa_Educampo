@@ -159,7 +159,7 @@ describe('BFF Auth API Routes - Feature 1: Autenticação do Consultor', () => {
       expect(sessionCookie).toBeDefined();
       expect(sessionCookie?.value).toBe('backend-session-jwt');
       expect(sessionCookie?.httpOnly).toBe(true);
-      expect(sessionCookie?.sameSite).toBe('strict');
+      expect(sessionCookie?.sameSite).toBe('lax');
     });
 
     it('deve retornar 401 Unauthorized e não emitir cookie se as credenciais forem inválidas', async () => {

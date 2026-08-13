@@ -17,6 +17,7 @@ interface CadastrarFazendaSectionProps {
   sistemasDisponiveis?: SistemaProducaoItem[];
   regioesDisponiveis?: RegiaoSebraeItem[];
   onSuccess?: () => void;
+  onCadastrarEDiagnosticar?: (formData: CadastrarFazendaFormData) => void;
 }
 
 function getOptionValue(item: SistemaProducaoItem | RegiaoSebraeItem): string {
@@ -154,6 +155,7 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
   sistemasDisponiveis = [],
   regioesDisponiveis = [],
   onSuccess,
+  onCadastrarEDiagnosticar,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [formData, setFormData] = useState<CadastrarFazendaFormData>(INITIAL_STATE);
@@ -209,9 +211,13 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
 
       if (response.ok) {
         setSuccessMessage('Fazenda cadastrada com sucesso!');
-        setFormData(INITIAL_STATE);
-        setIsExpanded(false);
         onSuccess?.();
+        if (onCadastrarEDiagnosticar) {
+          onCadastrarEDiagnosticar(validacao.data);
+        } else {
+          setFormData(INITIAL_STATE);
+          setIsExpanded(false);
+        }
       } else {
         const parsedError = await parseApiError(response);
         setSubmitError(parsedError.userMessage);
@@ -268,166 +274,192 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormInput
-              id="cad_email"
-              name="email"
-              type="email"
-              label="E-mail do Produtor *"
-              value={formData.email}
-              error={fieldErrors.email}
-              placeholder="ex: produtor@fazenda.com.br"
-              onChange={handleChange}
-            />
+          {/* Seção 1: Informações Gerais */}
+          <div className="bg-gray-50/70 p-5 rounded-lg border border-gray-200 space-y-4">
+            <h3 className="text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
+              Informações Gerais
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormInput
+                id="cad_email"
+                name="email"
+                type="email"
+                label="E-mail do Produtor *"
+                value={formData.email}
+                error={fieldErrors.email}
+                placeholder="ex: produtor@fazenda.com.br"
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_senha"
-              name="senha"
-              type="password"
-              label="Senha (mínimo 6 caracteres) *"
-              value={formData.senha}
-              error={fieldErrors.senha}
-              placeholder="******"
-              onChange={handleChange}
-            />
+              <FormInput
+                id="cad_senha"
+                name="senha"
+                type="password"
+                label="Senha (mínimo 6 caracteres) *"
+                value={formData.senha}
+                error={fieldErrors.senha}
+                placeholder="******"
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_nome_fazenda"
-              name="nome_fazenda"
-              type="text"
-              label="Nome da Fazenda *"
-              value={formData.nome_fazenda}
-              error={fieldErrors.nome_fazenda}
-              placeholder="ex: Fazenda Santa Maria"
-              onChange={handleChange}
-            />
+              <FormInput
+                id="cad_nome_fazenda"
+                name="nome_fazenda"
+                type="text"
+                label="Nome da Fazenda *"
+                value={formData.nome_fazenda}
+                error={fieldErrors.nome_fazenda}
+                placeholder="ex: Fazenda Santa Maria"
+                onChange={handleChange}
+              />
 
-            <FormSelect
-              id="cad_sistema_producao"
-              name="sistema_producao"
-              label="Sistema de Produção *"
-              value={formData.sistema_producao}
-              error={fieldErrors.sistema_producao}
-              placeholder="Selecione o sistema"
-              options={sistemasDisponiveis}
-              onChange={handleChange}
-            />
+              <FormSelect
+                id="cad_sistema_producao"
+                name="sistema_producao"
+                label="Sistema de Produção *"
+                value={formData.sistema_producao}
+                error={fieldErrors.sistema_producao}
+                placeholder="Selecione o sistema"
+                options={sistemasDisponiveis}
+                onChange={handleChange}
+              />
 
-            <FormSelect
-              id="cad_regiao_sebrae"
-              name="regiao_sebrae"
-              label="Região SEBRAE *"
-              value={formData.regiao_sebrae}
-              error={fieldErrors.regiao_sebrae}
-              placeholder="Selecione a região"
-              options={regioesDisponiveis}
-              onChange={handleChange}
-            />
+              <div className="md:col-span-2">
+                <FormSelect
+                  id="cad_regiao_sebrae"
+                  name="regiao_sebrae"
+                  label="Região SEBRAE *"
+                  value={formData.regiao_sebrae}
+                  error={fieldErrors.regiao_sebrae}
+                  placeholder="Selecione a região"
+                  options={regioesDisponiveis}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
 
-            <FormInput
-              id="cad_total_vacas"
-              name="total_vacas"
-              type="number"
-              label="Total de Vacas (cab.) *"
-              value={formData.total_vacas}
-              error={fieldErrors.total_vacas}
-              min={0}
-              onChange={handleChange}
-            />
+          {/* Seção 2: Estrutura e Rebanho */}
+          <div className="bg-gray-50/70 p-5 rounded-lg border border-gray-200 space-y-4">
+            <h3 className="text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
+              Estrutura e Rebanho
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormInput
+                id="cad_total_vacas"
+                name="total_vacas"
+                type="number"
+                label="Total de Vacas (cab.) *"
+                value={formData.total_vacas}
+                error={fieldErrors.total_vacas}
+                min={0}
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_percentual_lactacao"
-              name="percentual_lactacao"
-              type="number"
-              label="Perc. em Lactação (%) *"
-              value={formData.percentual_lactacao}
-              error={fieldErrors.percentual_lactacao}
-              min={0}
-              max={100}
-              step={0.1}
-              onChange={handleChange}
-            />
+              <FormInput
+                id="cad_percentual_lactacao"
+                name="percentual_lactacao"
+                type="number"
+                label="Perc. em Lactação (%) *"
+                value={formData.percentual_lactacao}
+                error={fieldErrors.percentual_lactacao}
+                min={0}
+                max={100}
+                step={0.1}
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_total_rebanho"
-              name="total_rebanho"
-              type="number"
-              label="Total do Rebanho (cab.) *"
-              value={formData.total_rebanho}
-              error={fieldErrors.total_rebanho}
-              min={0}
-              onChange={handleChange}
-            />
+              <FormInput
+                id="cad_total_rebanho"
+                name="total_rebanho"
+                type="number"
+                label="Total do Rebanho (cab.) *"
+                value={formData.total_rebanho}
+                error={fieldErrors.total_rebanho}
+                min={0}
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_area_atividade"
-              name="area_atividade"
-              type="number"
-              label="Área da Atividade (ha) *"
-              value={formData.area_atividade}
-              error={fieldErrors.area_atividade}
-              min={0.1}
-              step={0.1}
-              onChange={handleChange}
-            />
+              <FormInput
+                id="cad_area_atividade"
+                name="area_atividade"
+                type="number"
+                label="Área da Atividade (ha) *"
+                value={formData.area_atividade}
+                error={fieldErrors.area_atividade}
+                min={0.1}
+                step={0.1}
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_numero_trabalhadores"
-              name="numero_trabalhadores"
-              type="number"
-              label="Mão de Obra (trabalhadores) *"
-              value={formData.numero_trabalhadores}
-              error={fieldErrors.numero_trabalhadores}
-              min={1}
-              onChange={handleChange}
-            />
+              <div className="md:col-span-2">
+                <FormInput
+                  id="cad_numero_trabalhadores"
+                  name="numero_trabalhadores"
+                  type="number"
+                  label="Mão de Obra (trabalhadores) *"
+                  value={formData.numero_trabalhadores}
+                  error={fieldErrors.numero_trabalhadores}
+                  min={1}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </div>
 
-            <FormInput
-              id="cad_producao_vaca"
-              name="producao_vaca"
-              type="number"
-              label="Produção por Vaca (L/dia) *"
-              value={formData.producao_vaca}
-              error={fieldErrors.producao_vaca}
-              min={0}
-              step={0.1}
-              onChange={handleChange}
-            />
+          {/* Seção 3: Produção e Qualidade */}
+          <div className="bg-gray-50/70 p-5 rounded-lg border border-gray-200 space-y-4">
+            <h3 className="text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
+              Produção e Qualidade
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormInput
+                id="cad_producao_vaca"
+                name="producao_vaca"
+                type="number"
+                label="Produção por Vaca (L/dia) *"
+                value={formData.producao_vaca}
+                error={fieldErrors.producao_vaca}
+                min={0}
+                step={0.1}
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_preco_recebido"
-              name="preco_recebido"
-              type="number"
-              label="Preço Recebido (R$/L) *"
-              value={formData.preco_recebido}
-              error={fieldErrors.preco_recebido}
-              min={0}
-              step={0.01}
-              onChange={handleChange}
-            />
+              <FormInput
+                id="cad_preco_recebido"
+                name="preco_recebido"
+                type="number"
+                label="Preço Recebido (R$/L) *"
+                value={formData.preco_recebido}
+                error={fieldErrors.preco_recebido}
+                min={0}
+                step={0.01}
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_preco_referencia"
-              name="preco_referencia"
-              type="number"
-              label="Preço Referência (R$/L) *"
-              value={formData.preco_referencia}
-              error={fieldErrors.preco_referencia}
-              min={0}
-              step={0.01}
-              onChange={handleChange}
-            />
+              <FormInput
+                id="cad_preco_referencia"
+                name="preco_referencia"
+                type="number"
+                label="Preço Referência (R$/L) *"
+                value={formData.preco_referencia}
+                error={fieldErrors.preco_referencia}
+                min={0}
+                step={0.01}
+                onChange={handleChange}
+              />
 
-            <FormInput
-              id="cad_ccs"
-              name="ccs"
-              type="number"
-              label="Qualidade CCS (x1000) *"
-              value={formData.ccs}
-              error={fieldErrors.ccs}
-              min={0}
-              onChange={handleChange}
-            />
+              <FormInput
+                id="cad_ccs"
+                name="ccs"
+                type="number"
+                label="Qualidade CCS (x1000) *"
+                value={formData.ccs}
+                error={fieldErrors.ccs}
+                min={0}
+                onChange={handleChange}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

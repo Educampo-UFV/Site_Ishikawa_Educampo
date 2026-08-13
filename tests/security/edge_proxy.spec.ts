@@ -63,8 +63,8 @@ jest.mock('next/server', () => {
   };
 });
 
-// Importa o proxy após registrar os mocks globais do Jest
-import { proxy } from '@/proxy';
+// Importa o middleware após registrar os mocks globais do Jest
+import { middleware as proxy } from '@/middleware';
 
 describe('Edge Security Proxy (src/proxy.ts) - Batch 3', () => {
   const originalEnv = process.env;
