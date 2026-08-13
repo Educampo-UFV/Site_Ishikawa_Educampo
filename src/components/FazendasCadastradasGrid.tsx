@@ -8,7 +8,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FazendaCadastradaItem } from '@/types/formulario';
+import { FazendaCadastradaItem, getFazendaNome } from '@/types/formulario';
 import { Home, Play, FileText, Loader2, AlertCircle } from 'lucide-react';
 
 export interface FazendasCadastradasGridProps {
@@ -18,12 +18,78 @@ export interface FazendasCadastradasGridProps {
   isLoadingGlobal?: boolean;
 }
 
-function getFazendaNome(item: FazendaCadastradaItem): string {
-  if (typeof item === 'object' && item !== null && 'nome' in item) {
-    return item.nome;
-  }
-  return String(item);
+interface FazendaCardProps {
+  nome: string;
+  isLoadingThis: boolean;
+  isLoadingGlobal: boolean;
+  erro?: string;
+  onDiagnostico: (nome: string) => void;
+  onCarregarFormulario: (nome: string) => void;
 }
+
+const FazendaCard: React.FC<FazendaCardProps> = ({
+  nome,
+  isLoadingThis,
+  isLoadingGlobal,
+  erro,
+  onDiagnostico,
+  onCarregarFormulario,
+}) => {
+  const isDisabled = isLoadingThis || isLoadingGlobal;
+
+  return (
+    <div className="bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between">
+      <div>
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <h3 className="font-bold text-gray-800 text-base line-clamp-2">{nome}</h3>
+          <span className="text-xs font-semibold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full shrink-0">
+            Cadastrada
+          </span>
+        </div>
+
+        {erro && (
+          <div className="mb-3 p-2 bg-red-50 text-red-600 text-xs rounded border border-red-200 flex items-center gap-1.5">
+            <AlertCircle size={14} className="shrink-0" />
+            <span>{erro}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-gray-100">
+        <button
+          type="button"
+          onClick={() => onDiagnostico(nome)}
+          disabled={isDisabled}
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold text-sm py-2 px-3 rounded-lg shadow-sm transition-colors"
+          aria-label={`Iniciar Diagnóstico para ${nome}`}
+        >
+          {isLoadingThis ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              <span>Processando...</span>
+            </>
+          ) : (
+            <>
+              <Play size={16} />
+              <span>Iniciar Diagnóstico</span>
+            </>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onCarregarFormulario(nome)}
+          disabled={isDisabled}
+          className="w-full flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 text-gray-700 font-medium text-xs py-2 px-3 rounded-lg border border-gray-200 transition-colors"
+          aria-label={`Carregar ${nome} no formulário`}
+        >
+          <FileText size={14} />
+          <span>Carregar no Formulário</span>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export const FazendasCadastradasGrid: React.FC<FazendasCadastradasGridProps> = ({
   fazendas,
@@ -68,63 +134,16 @@ export const FazendasCadastradasGrid: React.FC<FazendasCadastradasGridProps> = (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {fazendas.map((item, idx) => {
           const nome = getFazendaNome(item);
-          const isLoadingThis = loadingFarm === nome;
-          const erro = erroFarm[nome];
-
           return (
-            <div
+            <FazendaCard
               key={idx}
-              className="bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <h3 className="font-bold text-gray-800 text-base line-clamp-2">{nome}</h3>
-                  <span className="text-xs font-semibold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full shrink-0">
-                    Cadastrada
-                  </span>
-                </div>
-
-                {erro && (
-                  <div className="mb-3 p-2 bg-red-50 text-red-600 text-xs rounded border border-red-200 flex items-center gap-1.5">
-                    <AlertCircle size={14} className="shrink-0" />
-                    <span>{erro}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => handleDiagnostico(nome)}
-                  disabled={isLoadingThis || isLoadingGlobal}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold text-sm py-2 px-3 rounded-lg shadow-sm transition-colors"
-                  aria-label={`Iniciar Diagnóstico para ${nome}`}
-                >
-                  {isLoadingThis ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>Processando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play size={16} />
-                      <span>Iniciar Diagnóstico</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onCarregarFormulario(nome)}
-                  disabled={isLoadingThis || isLoadingGlobal}
-                  className="w-full flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 text-gray-700 font-medium text-xs py-2 px-3 rounded-lg border border-gray-200 transition-colors"
-                  aria-label={`Carregar ${nome} no formulário`}
-                >
-                  <FileText size={14} />
-                  <span>Carregar no Formulário</span>
-                </button>
-              </div>
-            </div>
+              nome={nome}
+              isLoadingThis={loadingFarm === nome}
+              isLoadingGlobal={isLoadingGlobal}
+              erro={erroFarm[nome]}
+              onDiagnostico={handleDiagnostico}
+              onCarregarFormulario={onCarregarFormulario}
+            />
           );
         })}
       </div>

@@ -21,29 +21,11 @@ import {
   FazendaDetalhadaResponse,
   SistemaProducaoItem,
   RegiaoSebraeItem,
-  FazendaCadastradaItem
+  FazendaCadastradaItem,
+  getOptionValue,
+  getOptionLabel,
+  getFazendaNome,
 } from '@/types/formulario';
-
-function getOptionValue(item: SistemaProducaoItem | RegiaoSebraeItem): string {
-  if (typeof item === 'object' && item !== null && 'value' in item) {
-    return item.value;
-  }
-  return String(item);
-}
-
-function getOptionLabel(item: SistemaProducaoItem | RegiaoSebraeItem): string {
-  if (typeof item === 'object' && item !== null && 'label' in item) {
-    return item.label;
-  }
-  return String(item);
-}
-
-function getFazendaNome(item: FazendaCadastradaItem): string {
-  if (typeof item === 'object' && item !== null && 'nome' in item) {
-    return item.nome;
-  }
-  return String(item);
-}
 
 const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, label: string, unidade?: string, dica?: string }) => (
   <div className="flex items-center gap-2 mb-1">

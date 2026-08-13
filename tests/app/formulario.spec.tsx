@@ -117,8 +117,8 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     }, { timeout: 4000 });
 
     // Act
-    const farmSelect = screen.getByLabelText(/Selecionar Fazenda Cadastrada/i);
-    fireEvent.change(farmSelect, { target: { value: 'Fazenda Leiteira Experimental 1' } });
+    const carregarBtn = screen.getByRole('button', { name: /Carregar Fazenda Leiteira Experimental 1 no formulário/i });
+    fireEvent.click(carregarBtn);
 
     // Assert
     await waitFor(() => {
@@ -169,8 +169,8 @@ describe('FormularioPage - Dynamic Options & Auto-fill Integration', () => {
     }, { timeout: 4000 });
 
     // Act
-    const farmSelect = screen.getByLabelText(/Selecionar Fazenda Cadastrada/i);
-    fireEvent.change(farmSelect, { target: { value: 'Fazenda Teste Regiao' } });
+    const carregarBtn = screen.getByRole('button', { name: /Carregar Fazenda Teste Regiao no formulário/i });
+    fireEvent.click(carregarBtn);
 
     // Assert
     await waitFor(() => {

@@ -23,6 +23,27 @@ export type SistemaProducaoItem = SistemaProducaoObjeto | string;
 export type RegiaoSebraeItem = RegiaoSebraeObjeto | string;
 export type FazendaCadastradaItem = FazendaCadastradaObjeto | string;
 
+export function getFazendaNome(item: FazendaCadastradaItem): string {
+  if (typeof item === 'object' && item !== null && 'nome' in item) {
+    return item.nome;
+  }
+  return String(item);
+}
+
+export function getOptionValue(item: SistemaProducaoItem | RegiaoSebraeItem): string {
+  if (typeof item === 'object' && item !== null && 'value' in item) {
+    return item.value;
+  }
+  return String(item);
+}
+
+export function getOptionLabel(item: SistemaProducaoItem | RegiaoSebraeItem): string {
+  if (typeof item === 'object' && item !== null && 'label' in item) {
+    return item.label;
+  }
+  return String(item);
+}
+
 export interface FormularioOpcoesResponse {
   sistemas_producao: SistemaProducaoItem[];
   regioes_sebrae: RegiaoSebraeItem[];
