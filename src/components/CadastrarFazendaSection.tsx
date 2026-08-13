@@ -1,7 +1,7 @@
 /**
  * @file src/components/CadastrarFazendaSection.tsx
  * @description Componente React isolado e expansível para cadastro de novas fazendas/produtores.
- * Integração com POST /api/produtores e validação Zod client-side.
+ * Integração com POST /api/produtores, validação Zod client-side e parsing centralizado de erros.
  * Ref: Obsidian note [[sdd-cadastrar-fazenda.md]]
  */
 
@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, PlusCircle, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { cadastrarFazendaSchema, CadastrarFazendaFormData } from '@/lib/schemas';
 import { SistemaProducaoItem, RegiaoSebraeItem } from '@/types/formulario';
+import { parseApiError } from '@/lib/apiUtils';
 
 interface CadastrarFazendaSectionProps {
   sistemasDisponiveis?: SistemaProducaoItem[];
@@ -77,7 +78,7 @@ const FormInput: React.FC<FormInputProps> = ({
       max={max}
       step={step}
       className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
-        error ? 'border-red-500' : 'border-gray-300'
+        error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
       }`}
     />
     {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
@@ -118,7 +119,7 @@ const FormSelect: React.FC<FormSelectProps> = ({
       value={value}
       onChange={onChange}
       className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white ${
-        error ? 'border-red-500' : 'border-gray-300'
+        error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
       }`}
     >
       <option value="">{placeholder}</option>
@@ -206,20 +207,17 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
         body: JSON.stringify(validacao.data),
       });
 
-      const responseData = await response.json().catch(() => ({}));
-
       if (response.ok) {
         setSuccessMessage('Fazenda cadastrada com sucesso!');
         setFormData(INITIAL_STATE);
         setIsExpanded(false);
         onSuccess?.();
-      } else if (response.status === 409) {
-        const errorMsg = responseData.message || responseData.error || `O e-mail ${formData.email} já está cadastrado no sistema.`;
-        setSubmitError(errorMsg);
-        setFieldErrors((prev) => ({ ...prev, email: errorMsg }));
       } else {
-        const fallbackMsg = response.status === 400 ? 'Erro nas informações prestadas do cadastro.' : 'Falha ao realizar cadastro da fazenda.';
-        setSubmitError(responseData.message || responseData.error || fallbackMsg);
+        const parsedError = await parseApiError(response);
+        setSubmitError(parsedError.userMessage);
+        if (Object.keys(parsedError.fieldErrors).length > 0) {
+          setFieldErrors(parsedError.fieldErrors);
+        }
       }
     } catch (error) {
       console.error('Erro na submissão de cadastro:', error);

@@ -5,13 +5,7 @@
  * 1. Recuperar os dados da fazenda salvos no Zustand.
  * 2. Enviar os dados para as APIs internas (BFF) de Diagnóstico e Simulação em paralelo.
  * 3. Gerenciar o estado de espera visual do usuário com feedback elegante.
- * 4. Salvar os resultados retornados no estado global e redirecionar para a Tela de Seleção.
- * 
- * IMPORTANTE — Arquitetura de Verificação Centralizada:
- * A verificação de saúde da API (Ping → Health Check) é feita integralmente na tela de Login.
- * Esta página consome o flag `apiHealthy` do Zustand e pula direto para o processamento.
- * Se a API adormecer entre o login e esta tela, o `fetchComResiliencia` já possui retry
- * com Exponential Backoff para erros 502/503/504, servindo como fallback natural.
+ * 4. Salvar os resultados e a telemetria de IA no estado global e redirecionar para a Tela de Seleção.
  */
 
 "use client";
@@ -24,7 +18,7 @@ import { fetchComResiliencia } from "@/lib/apiUtils";
 
 export default function CarregandoPage() {
   const router = useRouter();
-  const { dadosFazenda, setDiagnosticoIA, setResultadoSimulacao, apiHealthy } = useFazendaStore();
+  const { dadosFazenda, setDiagnosticoIA, setResultadoSimulacao, setTelemetry, apiHealthy } = useFazendaStore();
   const [mensagem, setMensagem] = useState("Preparando análise");
   const [dots, setDots] = useState("");
   const processamentoIniciado = useRef(false);
@@ -46,18 +40,8 @@ export default function CarregandoPage() {
     if (processamentoIniciado.current) return;
     processamentoIniciado.current = true;
 
-    /**
-     * @description Processa as 3 requisições de análise em paralelo.
-     * 
-     * REGRA DE NEGÓCIO: A verificação de saúde da API foi realizada na tela de Login.
-     * O flag `apiHealthy` do Zustand indica se a API estava saudável naquele momento.
-     * Se a API adormecer entre o login e esta tela (cenário improvável em uso normal),
-     * o `fetchComResiliencia` já faz retry automático com Exponential Backoff para
-     * erros transitórios (502/503/504), servindo como fallback natural.
-     */
     const processarAnalise = async () => {
       try {
-        // Log de depuração: indica se a API foi pré-verificada na tela de login
         console.info(
           `%c[Carregando] API pré-verificada no login: ${apiHealthy ? '✅ SIM' : '⚠️ NÃO (fallback via retry)'}`,
           `color: ${apiHealthy ? '#10b981' : '#f59e0b'}; font-weight: bold; padding: 2px 4px; border-radius: 4px;`
@@ -65,7 +49,6 @@ export default function CarregandoPage() {
 
         setMensagem("A Inteligência Artificial está projetando seus cenários");
 
-        // Prepara os payloads para as duas requisições
         const payloadSimulacao = {
           dados_originais: {
             area_atividade: dadosFazenda.area_atividade,
@@ -91,7 +74,6 @@ export default function CarregandoPage() {
           }
         };
 
-        // Prepara payload de extração dos limites do slider
         const payloadParametros = {
           producao_vaca: dadosFazenda.producao_vaca,
           sistema_producao: dadosFazenda.sistema_producao,
@@ -99,14 +81,12 @@ export default function CarregandoPage() {
           total_vacas: dadosFazenda.total_vacas
         };
 
-        // Função auxiliar para orquestrar o Long Polling do diagnóstico
         const fetchDiagnosticoPolling = async () => {
-          // 1. Dispara o gatilho inicial
           const initResponse = await fetchComResiliencia("/api/diagnostico", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dadosFazenda),
-          }, 3, 2000, 10000, 15000); // Timeout rápido, pois o backend apenas enfileira
+          }, 3, 2000, 10000, 15000);
           
           if (!initResponse.ok) throw new Error("Falha ao iniciar o processamento do diagnóstico.");
           
@@ -117,48 +97,47 @@ export default function CarregandoPage() {
              throw new Error("A API não retornou um task_id válido para acompanhamento.");
           }
           
-          const maxTempoPolling = 180000; // 3 minutos acordados
+          const maxTempoPolling = 180000;
           const tempoInicio = Date.now();
           
-          // 2. Loop de polling (Checagem Iterativa)
           while (true) {
             if (Date.now() - tempoInicio > maxTempoPolling) {
               throw new Error("Tempo limite de processamento da IA (3 minutos) excedido.");
             }
             
-            // Aguarda 3 segundos entre checagens para não sobrecarregar a rede
             await new Promise(resolve => setTimeout(resolve, 3000));
             
             const statusResponse = await fetchComResiliencia(`/api/diagnostico/status/${taskId}`, {
               method: "GET"
-            }, 3, 2000, 10000, 10000); // 10s de timeout para checagem
+            }, 3, 2000, 10000, 10000);
             
             if (!statusResponse.ok) throw new Error("Falha ao consultar status do processamento.");
             
             const statusData = await statusResponse.json();
             
             if (statusData.status === "completed") {
-              return statusData; // Retorna o objeto { status, result, ia_metrics }
+              if (statusData.telemetry) {
+                setTelemetry(statusData.telemetry);
+              }
+              return statusData;
             } else if (statusData.status === "failed") {
               throw new Error("O motor de Inteligência Artificial falhou ao processar o diagnóstico.");
             }
-            // Caso seja "processing", o loop continua naturalmente
           }
         };
 
-        // Dispara as requisições em paralelo. O diagnóstico agora roda no fluxo assíncrono interno (Long Polling).
         const [diagDataCompleto, simResponse, paramResponse] = await Promise.all([
           fetchDiagnosticoPolling(),
           fetchComResiliencia("/api/simulacao", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payloadSimulacao),
-          }, 3, 2000, 10000, 10000), // Timeout de 10s para leitura rápida
+          }, 3, 2000, 10000, 10000),
           fetchComResiliencia("/api/parametros-painel", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payloadParametros),
-          }, 3, 2000, 10000, 10000), // Timeout de 10s para extração de limites
+          }, 3, 2000, 10000, 10000),
         ]);
 
         if (!simResponse.ok || !paramResponse.ok) {
@@ -168,14 +147,11 @@ export default function CarregandoPage() {
         const simData = await simResponse.json();
         const paramData = await paramResponse.json();
 
-        // Injeta os resultados no estado global.
-        // O diagnóstico real agora está em diagDataCompleto.result
         setDiagnosticoIA(diagDataCompleto.result);
         setResultadoSimulacao({ ...simData, ...paramData });
 
         setMensagem("Análise concluída! Montando seu Diagnóstico");
 
-        // Pequeno delay para garantir que o usuário veja a conclusão antes da troca de tela para a seleção de módulos
         setTimeout(() => router.push("/selecao"), 1500);
       } catch (error) {
         console.error("[Carregando] Falha no processamento:", error);
@@ -184,16 +160,12 @@ export default function CarregandoPage() {
       }
     };
 
-    // FLUXO SIMPLIFICADO: Vai direto para o processamento.
-    // A verificação de saúde já foi feita na tela de Login.
-    // O fetchComResiliencia serve como fallback natural com retry automático.
     processarAnalise();
-  }, [dadosFazenda, router, setDiagnosticoIA, setResultadoSimulacao, apiHealthy]);
+  }, [dadosFazenda, router, setDiagnosticoIA, setResultadoSimulacao, setTelemetry, apiHealthy]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-fundo p-6">
       <div className="w-full max-w-md text-center space-y-8 animate-pulse">
-        {/* Logo Educampo para reforço de marca */}
         <div className="relative mx-auto flex justify-center">
           <Image
             src="/logo_educampo.png"
@@ -206,7 +178,6 @@ export default function CarregandoPage() {
           />
         </div>
 
-        {/* Spinner Visual */}
         <div className="flex justify-center">
           <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
