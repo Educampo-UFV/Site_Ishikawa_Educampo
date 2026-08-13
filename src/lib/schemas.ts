@@ -98,3 +98,33 @@ export const benchmarkingSchema = z.object({
  * Tipo TypeScript extraído automaticamente do Schema do Zod.
  */
 export type FazendaFormData = z.infer<typeof fazendaSchema>;
+
+/**
+ * Schema para o cadastro expansível de novos produtores rurais/fazenda (POST /api/produtores).
+ */
+export const cadastrarFazendaSchema = z.object({
+  email: z.string().min(1, 'O e-mail é obrigatório').email('Insira um e-mail válido'),
+  senha: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+  nome_fazenda: z.string().min(1, 'O nome da fazenda é obrigatório'),
+  sistema_producao: z.string().min(1, 'Selecione um sistema de produção'),
+  regiao_sebrae: z.string().min(1, 'Selecione uma região SEBRAE'),
+  total_vacas: z.coerce.number().min(0, 'Total de vacas não pode ser negativo'),
+  percentual_lactacao: z.coerce.number().min(0, 'Percentual não pode ser negativo').max(100, 'Percentual máximo é 100%'),
+  total_rebanho: z.coerce.number().min(0, 'Total do rebanho não pode ser negativo'),
+  area_atividade: z.coerce.number().min(0.1, 'Área mínima de 0.1 ha'),
+  numero_trabalhadores: z.coerce.number().min(1, 'Mínimo 1 trabalhador'),
+  producao_vaca: z.coerce.number().min(0, 'Produção por vaca não pode ser negativa'),
+  preco_recebido: z.coerce.number().min(0, 'Preço recebido não pode ser negativo'),
+  preco_referencia: z.coerce.number().min(0, 'Preço de referência não pode ser negativo'),
+  ccs: z.coerce.number().min(0, 'CCS não pode ser negativa'),
+}).superRefine((data, ctx) => {
+  if (data.total_rebanho < data.total_vacas) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'O total do rebanho não pode ser menor que o total de vacas',
+      path: ['total_rebanho'],
+    });
+  }
+});
+
+export type CadastrarFazendaFormData = z.infer<typeof cadastrarFazendaSchema>;

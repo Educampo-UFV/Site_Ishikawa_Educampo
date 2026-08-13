@@ -6,3 +6,5 @@
 export * from './auth';
 export * from './formulario';
 export * from './diagnostico';
+export * from './produtores';
+

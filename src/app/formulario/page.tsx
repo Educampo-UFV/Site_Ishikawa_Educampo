@@ -11,7 +11,9 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useFazendaStore } from '@/store/useFazendaStore';
 import { fazendaSchema } from '@/lib/schemas';
+import { CadastrarFazendaSection } from '@/components/CadastrarFazendaSection';
 import { Info, AlertCircle, RefreshCw } from 'lucide-react';
+
 import { NumericFormat } from 'react-number-format';
 import { 
   FormularioOpcoesResponse, 
@@ -429,6 +431,14 @@ export default function FormularioPage() {
             </ul>
           </div>
         )}
+
+        {/* Componente Expansível: Cadastrar Fazenda / Produtor */}
+        <CadastrarFazendaSection
+          sistemasDisponiveis={sistemasDisponiveis}
+          regioesDisponiveis={regioesDisponiveis}
+          onSuccess={fetchOpcoes}
+        />
+
 
         <form onSubmit={handleSubmit} className="space-y-8 relative">
 
