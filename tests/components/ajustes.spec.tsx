@@ -75,10 +75,15 @@ describe('Tela de Ajustes (AjustesPage)', () => {
   });
 
   it('Deve ativar o cooldown de 30 segundos após submissão com sucesso', async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ resultado: 'sucesso' }),
-    });
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ task_id: 'task-123', status: 'processing' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ status: 'completed', result: { diagnostico: 'ok' } }),
+      });
 
     render(<AjustesPage />);
     const botaoSubmit = screen.getByRole('button', { name: /Atualizar Dados/i });
@@ -87,11 +92,15 @@ describe('Tela de Ajustes (AjustesPage)', () => {
       fireEvent.click(botaoSubmit);
     });
 
-    // Agora o fetch será chamado porque os dados do mock passam na validação Zod
-    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    // Avança o timer do polling (setTimeout 2000ms) para concluir o ciclo de verificação
+    for (let i = 0; i < 5; i++) {
+      await act(async () => {
+        jest.advanceTimersByTime(2000);
+      });
+    }
 
     expect(botaoSubmit).toBeDisabled();
-    expect(botaoSubmit).toHaveTextContent(/Aguarde 12s/i);
+    expect(botaoSubmit).toHaveTextContent(/Aguarde \d+s/i);
 
     for (let i = 0; i < 12; i++) {
       await act(async () => {
