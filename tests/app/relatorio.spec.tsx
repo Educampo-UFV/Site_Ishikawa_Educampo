@@ -94,8 +94,27 @@ describe('Página de Customização de Relatório PDF (/relatorio)', () => {
 
     fireEvent.click(btnSelectAll);
 
-    // Assert
-    expect(screen.getByTestId('selected-count')).not.toHaveTextContent('0');
+    // Assert - Verifica que todos os itens foram selecionados
+    const countText = screen.getByText(/itens ativos/i).textContent;
+    expect(countText).toMatch(/(\d+)\s+de\s+\1\s+itens ativos/);
+  });
+
+  it('deve restaurar a seleção padrão ao clicar em "Padrão"', async () => {
+    // Arrange
+    render(<RelatorioPage />);
+    const btnSelectAll = screen.getByRole('button', { name: /Selecionar Tudo/i });
+    const btnReset = screen.getByRole('button', { name: /Padrão/i });
+
+    // Act: seleciona tudo primeiro
+    fireEvent.click(btnSelectAll);
+    const countSelectAll = screen.getByTestId('selected-count').textContent;
+
+    // Clica em Restaurar Padrão
+    fireEvent.click(btnReset);
+    const countDefault = screen.getByTestId('selected-count').textContent;
+
+    // Assert: padrão possui menos itens selecionados que o total selecionado
+    expect(Number(countDefault)).toBeLessThan(Number(countSelectAll));
   });
 
   it('deve disparar download via POST com filtros corretos ao clicar em "Baixar Relatório em PDF"', async () => {

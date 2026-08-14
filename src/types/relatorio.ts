@@ -127,6 +127,59 @@ export function getDefaultReportFilterPayload(): Required<ReportFilterPayload> {
   return {
     secao_resumo: {
       visao_geral: true,
+      evidencias_raciocinios: false,
+    },
+    secao_benchmarking: {
+      sistema_producao: true,
+      faixa_producao: true,
+      ccs: true,
+      producao_vaca: true,
+      producao_area: true,
+      producao_trabalhador: true,
+      preco_leite: true,
+      percentual_vacas_lactacao: true,
+      lotacao_animal: true,
+    },
+    secao_simulacoes: {
+      financeiras: {
+        custo_leite: true,
+        margem_litro: true,
+        margem_ano: true,
+      },
+      estaticas: {
+        ccs: true,
+        producao_vaca: true,
+      },
+      operacionais: {
+        producao_trabalhador: true,
+        producao_area: true,
+      },
+    },
+    secao_ishikawa: {
+      incluir_analise_causa: false,
+      severidades: {
+        critica: true,
+        atencao: true,
+        monitorar: false,
+        neutra: false,
+      },
+      indicadores: defaultIndicadores,
+    },
+  };
+}
+
+export function getAllReportFilterPayload(): Required<ReportFilterPayload> {
+  const allIndicadores: Record<string, IndicadorIshikawaFilter> = {};
+  INDICADORES_ISHIKAWA_DEFAULT_LIST.forEach(({ slug }) => {
+    allIndicadores[slug] = {
+      incluir: true,
+      pilares: getDefaultPilares(),
+    };
+  });
+
+  return {
+    secao_resumo: {
+      visao_geral: true,
       evidencias_raciocinios: true,
     },
     secao_benchmarking: {
@@ -163,7 +216,8 @@ export function getDefaultReportFilterPayload(): Required<ReportFilterPayload> {
         monitorar: true,
         neutra: true,
       },
-      indicadores: defaultIndicadores,
+      indicadores: allIndicadores,
     },
   };
 }
+

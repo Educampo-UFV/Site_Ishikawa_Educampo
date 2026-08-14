@@ -34,6 +34,7 @@ import {
 import {
   ReportFilterPayload,
   getDefaultReportFilterPayload,
+  getAllReportFilterPayload,
   PILARES_ISHIKAWA_LABELS,
   SEVERIDADES_ISHIKAWA_LABELS,
   INDICADORES_ISHIKAWA_DEFAULT_LIST,
@@ -112,7 +113,7 @@ export default function RelatorioPage() {
 
   // Ações em Lote
   const handleSelectAll = () => {
-    const next = getDefaultReportFilterPayload();
+    const next = getAllReportFilterPayload();
     setFilters(next);
   };
 
