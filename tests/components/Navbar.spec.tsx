@@ -1,7 +1,7 @@
 /**
  * @file tests/components/Navbar.spec.tsx
  * @description Suíte de testes unitários para a barra de navegação global (Navbar).
- * Valida a renderização dos menus, incluindo o novo menu "Gerar Relatório" entre "Atualizar Dados" e "Sair".
+ * Valida a renderização dos links de navegação para a nova página de relatório customizado (/relatorio).
  * Ref: Obsidian note [[sdd-relatorio-produtor-pdf.md]]
  */
 
@@ -11,18 +11,18 @@ import { Navbar } from '@/components/ui/Navbar';
 import { useFazendaStore } from '@/store/useFazendaStore';
 import '@testing-library/jest-dom';
 
+const mockPush = jest.fn();
+
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: jest.fn(),
+    push: mockPush,
     replace: jest.fn(),
     prefetch: jest.fn(),
   }),
+  usePathname: () => '/diagnostico',
 }));
 
 global.fetch = jest.fn();
-window.alert = jest.fn();
-window.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
-window.URL.revokeObjectURL = jest.fn();
 
 describe('Navbar Component Tests', () => {
   beforeEach(() => {
@@ -47,74 +47,46 @@ describe('Navbar Component Tests', () => {
     });
   });
 
-  it('deve renderizar o menu "Gerar Relatório" na barra de navegação', () => {
+  it('deve renderizar os links principais de navegação incluindo "Gerar Relatório"', () => {
     // Arrange & Act
     render(<Navbar />);
 
     // Assert
-    const botoesGerarRelatorio = screen.getAllByRole('button', { name: /Gerar Relatório/i });
-    expect(botoesGerarRelatorio.length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Diagnóstico').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Simulador de Cenários').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Atualizar Dados').length).toBeGreaterThan(0);
+    const linkRelatorio = screen.getAllByRole('link', { name: /Gerar Relatório/i });
+    expect(linkRelatorio.length).toBeGreaterThan(0);
+    expect(linkRelatorio[0]).toHaveAttribute('href', '/relatorio');
+
+    expect(screen.getAllByRole('link', { name: /Diagnóstico/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /Simulador de Cenários/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: /Atualizar Dados/i }).length).toBeGreaterThan(0);
   });
 
-  it('deve disparar download de PDF com sucesso ao clicar em "Gerar Relatório"', async () => {
+  it('deve alternar a visibilidade do menu mobile ao clicar no botão hamburger', () => {
     // Arrange
-    const mockBlob = new Blob(['pdf-mock-data'], { type: 'application/pdf' });
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      blob: async () => mockBlob,
-    });
+    render(<Navbar />);
+    const hamburgerBtn = screen.getByRole('button', { name: /Abrir menu/i });
 
+    // Act
+    fireEvent.click(hamburgerBtn);
+
+    // Assert
+    expect(screen.getByRole('button', { name: /Fechar menu/i })).toBeInTheDocument();
+  });
+
+  it('deve acionar o logout ao clicar no botão Sair e redirecionar para /login', async () => {
+    // Arrange
+    (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
     render(<Navbar />);
 
     // Act
-    const botoesGerarRelatorio = screen.getAllByRole('button', { name: /Gerar Relatório/i });
-    fireEvent.click(botoesGerarRelatorio[0]);
+    const botoesSair = screen.getAllByRole('button', { name: /Sair/i });
+    fireEvent.click(botoesSair[0]);
 
     // Assert
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/produtores/fazenda_123/relatorio/pdf');
-      expect(window.URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-      expect(window.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+      expect(global.fetch).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' });
+      expect(useFazendaStore.getState().dadosFazenda).toBeNull();
+      expect(mockPush).toHaveBeenCalledWith('/login');
     });
-  });
-
-  it('deve alertar usuário caso a API retorne 404', async () => {
-    // Arrange
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      json: async () => ({ error: 'Não encontrado' }),
-    });
-
-    render(<Navbar />);
-
-    // Act
-    const botoesGerarRelatorio = screen.getAllByRole('button', { name: /Gerar Relatório/i });
-    fireEvent.click(botoesGerarRelatorio[0]);
-
-    // Assert
-    await waitFor(() => {
-      expect(window.alert).toHaveBeenCalledWith(
-        'Esta fazenda ainda não possui dados de diagnóstico salvos para gerar o relatório.'
-      );
-    });
-  });
-
-  it('deve alertar se nenhuma fazenda estiver selecionada na store', async () => {
-    // Arrange
-    useFazendaStore.setState({ dadosFazenda: null });
-    render(<Navbar />);
-
-    // Act
-    const botoesGerarRelatorio = screen.getAllByRole('button', { name: /Gerar Relatório/i });
-    fireEvent.click(botoesGerarRelatorio[0]);
-
-    // Assert
-    expect(window.alert).toHaveBeenCalledWith('Nenhuma fazenda selecionada para emissão do relatório.');
-    expect(global.fetch).not.toHaveBeenCalled();
   });
 });

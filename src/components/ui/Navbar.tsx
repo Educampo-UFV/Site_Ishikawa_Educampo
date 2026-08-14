@@ -1,6 +1,7 @@
 /**
  * @file src/components/ui/Navbar.tsx
  * @description Lógica do Menu de Navegação Global (App Router Header).
+ * Fornece links de navegação para Diagnóstico, Simulador, Atualização de Dados e a página de Relatório Customizado.
  */
 
 "use client";
@@ -8,24 +9,23 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { BarChart2, Lightbulb, Settings, LogOut, FileText } from 'lucide-react';
 import { useFazendaStore } from '../../store/useFazendaStore';
 
 /**
  * @description Inicia refs do DOM (menuRef, buttonRef) para verificar coordenadas no handler global `handleClickOutside`.
  * Executa mutações de classe usando `isMenuOpen` injetando escalas em spans para simular animação CSS (Hamburger -> X) 
- * evitando bibliotecas de animação de terceiros para perfomance máxima.
+ * evitando bibliotecas de animação de terceiros para performance máxima.
  * @returns {React.JSX.Element} Cabeçalho injetado com interatividade isolada de cliente ('use client').
  */
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const router = useRouter();
+  const pathname = typeof usePathname === 'function' ? (usePathname() || '') : '';
+  const router = typeof useRouter === 'function' ? useRouter() : { push: () => {} };
   const limparDados = useFazendaStore((state) => state.limparDados);
-  const dadosFazenda = useFazendaStore((state) => state.dadosFazenda);
 
   const handleLogout = async () => {
     try {
@@ -34,46 +34,7 @@ export function Navbar() {
       console.error('Erro ao realizar o logout', e);
     }
     limparDados();
-    window.location.href = '/login';
-  };
-
-  const handleGerarRelatorio = async () => {
-    const produtorId = dadosFazenda?.id_fazenda || dadosFazenda?.nome_fazenda;
-
-    if (!produtorId) {
-      alert('Nenhuma fazenda selecionada para emissão do relatório.');
-      return;
-    }
-
-    setIsGeneratingPdf(true);
-    try {
-      const response = await fetch(`/api/produtores/${encodeURIComponent(produtorId)}/relatorio/pdf`);
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          alert('Esta fazenda ainda não possui dados de diagnóstico salvos para gerar o relatório.');
-          return;
-        }
-        const errJson = await response.json().catch(() => ({}));
-        alert(errJson.error || 'Ocorreu um erro ao gerar o arquivo PDF.');
-        return;
-      }
-
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', `relatorio_produtor_${produtorId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.error('Erro ao baixar relatório em PDF:', error);
-      alert('Ocorreu um erro de conexão ao tentar baixar o relatório.');
-    } finally {
-      setIsGeneratingPdf(false);
-    }
+    router.push('/login');
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -115,31 +76,55 @@ export function Navbar() {
           
           {/* LADO DIREITO (MODO DESKTOP): Links Pill com Ícones */}
           <div className="hidden md:flex items-center gap-1 lg:gap-4 font-bold text-sm lg:text-base text-gray-600">
-            <Link href="/diagnostico" className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-blue-50 hover:text-[#1973d3] transition-colors">
+            <Link
+              href="/diagnostico"
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                pathname === '/diagnostico'
+                  ? 'bg-blue-50 text-[#1973d3]'
+                  : 'hover:bg-blue-50 hover:text-[#1973d3]'
+              }`}
+            >
               <BarChart2 size={18} />
               Diagnóstico
             </Link>
-            <Link href="/simulacao" prefetch={false} className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-amber-50 hover:text-amber-600 transition-colors">
+            <Link
+              href="/simulacao"
+              prefetch={false}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                pathname === '/simulacao'
+                  ? 'bg-amber-50 text-amber-600'
+                  : 'hover:bg-amber-50 hover:text-amber-600'
+              }`}
+            >
               <Lightbulb size={18} />
               Simulador de Cenários
             </Link>
-            <Link href="/ajustes" className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-slate-100 hover:text-slate-700 transition-colors">
+            <Link
+              href="/ajustes"
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                pathname === '/ajustes'
+                  ? 'bg-slate-100 text-slate-700'
+                  : 'hover:bg-slate-100 hover:text-slate-700'
+              }`}
+            >
               <Settings size={18} />
               Atualizar Dados
             </Link>
-            <button
-              onClick={handleGerarRelatorio}
-              disabled={isGeneratingPdf}
-              className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-emerald-50 hover:text-emerald-600 transition-colors disabled:opacity-50 cursor-pointer"
+            <Link
+              href="/relatorio"
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                pathname === '/relatorio'
+                  ? 'bg-emerald-50 text-emerald-600'
+                  : 'hover:bg-emerald-50 hover:text-emerald-600'
+              }`}
             >
-              {isGeneratingPdf ? (
-                <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <FileText size={18} />
-              )}
+              <FileText size={18} />
               Gerar Relatório
-            </button>
-            <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors">
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-full hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+            >
               <LogOut size={18} />
               Sair
             </button>
@@ -167,7 +152,6 @@ export function Navbar() {
               : 'opacity-0 -translate-y-12 invisible pointer-events-none'
           }`}
         >
-            
             <Link 
               href="/diagnostico" 
               onClick={() => setIsMenuOpen(false)}
@@ -201,7 +185,7 @@ export function Navbar() {
                       <Lightbulb size={20} />
                     </div>
                     <h3 className="text-base font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
-                    Simulador de Cenários
+                      Simulador de Cenários
                     </h3>
                   </div>
                   <p className="text-xs text-gray-500 leading-relaxed">
@@ -222,7 +206,7 @@ export function Navbar() {
                       <Settings size={20} />
                     </div>
                     <h3 className="text-base font-bold text-gray-900 group-hover:text-slate-600 transition-colors">
-                    Atualizar Dados
+                      Atualizar Dados
                     </h3>
                   </div>
                   <p className="text-xs text-gray-500 leading-relaxed">
@@ -232,35 +216,27 @@ export function Navbar() {
               </Link>
 
               {/* Linha Inteira: Gerar Relatório */}
-              <button 
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handleGerarRelatorio();
-                }}
-                disabled={isGeneratingPdf}
-                className="col-span-2 block p-6 hover:bg-emerald-50 transition-colors text-left border-b border-gray-100 group disabled:opacity-50"
+              <Link 
+                href="/relatorio"
+                onClick={() => setIsMenuOpen(false)}
+                className="col-span-2 block p-6 hover:bg-emerald-50 transition-colors text-left border-b border-gray-100 group"
               >
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                      {isGeneratingPdf ? (
-                        <div className="w-5 h-5 border-2 border-emerald-600 group-hover:border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <FileText size={20} />
-                      )}
+                      <FileText size={20} />
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">
                         Gerar Relatório
                       </h3>
-                      {isGeneratingPdf && <span className="text-xs text-emerald-600 font-medium">Baixando arquivo PDF...</span>}
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 leading-relaxed">
-                    Baixar relatório executivo consolidado em PDF com diagnósticos e simulações.
+                    Customizar e emitir relatório executivo em PDF com diagnósticos e simulações.
                   </p>
                 </div>
-              </button>
+              </Link>
 
               {/* Linha Inteira: Sair */}
               <button 
@@ -268,7 +244,7 @@ export function Navbar() {
                   setIsMenuOpen(false);
                   handleLogout();
                 }}
-                className="col-span-2 block p-6 hover:bg-red-50 transition-colors text-left group"
+                className="col-span-2 block p-6 hover:bg-red-50 transition-colors text-left group cursor-pointer"
               >
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-3">

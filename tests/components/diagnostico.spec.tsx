@@ -14,6 +14,7 @@ jest.mock('@/store/useFazendaStore', () => ({
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
+  usePathname: () => '/diagnostico',
 }));
 
 describe('Feature: Hub Central de Diagnóstico', () => {
