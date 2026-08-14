@@ -15,8 +15,10 @@ A API comunica-se via JSON (`application/json`) sobre HTTP/HTTPS.
 
 #### Consultor Padrão para Desenvolvimento / Homologação (Dev Mock Seed)
 No startup da API, o repositório em memória é automaticamente alimentado com o seguinte consultor de testes:
+* **Nome:** `Consultor Educampo`
 * **E-mail:** `consultor@educampo.com`
 * **Senha:** `admin123`
+* **UUID do Consultor:** `consultant-default-uuid`
 
 ---
 
@@ -30,6 +32,8 @@ No startup da API, o repositório em memória é automaticamente alimentado com 
 | **Produtores** | `POST` | `/api/produtores` | Cadastra um novo produtor vinculado ao consultor | `X-API-KEY` + Contexto |
 | **Formulários** | `GET` | `/api/formularios` | Retorna opções de select e fazendas gerenciadas | `X-API-KEY` |
 | **Formulários** | `GET` | `/api/formularios/farms/{nome}` | Retorna dados completos de uma fazenda cadastrada | `X-API-KEY` |
+| **Relatórios** | `POST` | `/api/produtores/{produtor_id}/relatorio/pdf` | Gera relatório customizado em PDF com base nos filtros JSON de seções/indicadores | `X-API-KEY` |
+| **Relatórios** | `GET` | `/api/produtores/{produtor_id}/relatorio/pdf` | Gera relatório completo em PDF com 100% dos dados habilitados (fallback) | `X-API-KEY` |
 | **Diagnóstico** | `POST` | `/api/diagnostico` | Gatilho assíncrono (ou incremental) de diagnóstico | `X-API-KEY` |
 | **Diagnóstico** | `GET` | `/api/diagnostico/status/{task_id}` | Consulta status/resultado da análise em background | `X-API-KEY` |
 | **Simulação** | `POST` | `/api/simulacao` | Recálculo síncrono de cenários e projeção de custos (ML) | `X-API-KEY` |
@@ -59,18 +63,13 @@ No startup da API, o repositório em memória é automaticamente alimentado com 
 * **Exemplo de Resposta de Sucesso (`HTTP 200 OK`):**
 ```json
 {
-  "message": "Login realizado com sucesso",
-  "consultant": {
-    "id": "consultant-default-uuid",
-    "email": "consultor@educampo.com",
-    "producers_managed": [
-      "producer-seed-uuid-1",
-      "producer-seed-uuid-2"
-    ]
-  }
+  "message": "Login bem-sucedido",
+  "consultant_id": "consultant-default-uuid",
+  "nome": "Consultor Educampo",
+  "email": "consultor@educampo.com"
 }
 ```
-* **Cookie gerado:** `session_token=<token_jwt_ou_uuid>; HttpOnly; SameSite=Strict`
+* **Cookie gerado:** `session_token=<token_jwt>; HttpOnly; SameSite=Strict`
 
 ---
 
@@ -95,6 +94,7 @@ No startup da API, o repositório em memória é automaticamente alimentado com 
 ```json
 {
   "id": "consultant-default-uuid",
+  "nome": "Consultor Educampo",
   "email": "consultor@educampo.com",
   "producers_managed": [
     "producer-seed-uuid-1",
@@ -210,6 +210,186 @@ No startup da API, o repositório em memória é automaticamente alimentado com 
 
 ---
 
+### 📄 Módulo de Geração de Relatórios Executivos em PDF
+
+#### `POST /api/produtores/{produtor_id}/relatorio/pdf`
+* **Propósito:** Gera o relatório executivo customizado em PDF consolidando diagnósticos zootécnicos, parecer técnico, benchmarks regionais, matriz Ishikawa e gráficos de simulação de acordo com os filtros granulares enviados no corpo da requisição.
+* **Headers:** `X-API-KEY: 42`, `Content-Type: application/json`
+* **Parâmetros de Rota:** `produtor_id` (UUID primário ou ID da fazenda).
+* **Tipo de Resposta:** Binário (`Content-Type: application/pdf`).
+* **Header de Download:** `Content-Disposition: attachment; filename="relatorio_produtor_{produtor_id}.pdf"`.
+
+##### 📋 Estrutura do Payload de Filtros (`ReportFilterPayload`)
+Todos os campos são booleanos e possuem valor padrão `true`. O frontend pode enviar um objeto vazio `{}` (para gerar 100% do relatório) ou passar apenas as seções/indicadores que deseja alterar.
+
+| Seção / Campo | Tipo | Default | Descrição |
+| :--- | :--- | :--- | :--- |
+| **`secao_resumo.visao_geral`** | `boolean` | `true` | Exibe o texto de Visão Geral Consolidada da fazenda. |
+| **`secao_resumo.evidencias_raciocinios`** | `boolean` | `true` | Exibe os cards de Evidências Técnicas & Citações da LLM. |
+| **`secao_benchmarking.sistema_producao`** | `boolean` | `true` | Linha de Sistema de Produção na tabela. |
+| **`secao_benchmarking.faixa_producao`** | `boolean` | `true` | Linha de Faixa de Produção (Volume). |
+| **`secao_benchmarking.ccs`** | `boolean` | `true` | Indicador de Contagem de Células Somáticas. |
+| **`secao_benchmarking.producao_vaca`** | `boolean` | `true` | Indicador de Produção Média Diária por Vaca. |
+| **`secao_benchmarking.producao_area`** | `boolean` | `true` | Indicador de Produção por Área (L/ha/ano). |
+| **`secao_benchmarking.producao_trabalhador`** | `boolean` | `true` | Indicador de Produção por Trabalhador (L/func/dia). |
+| **`secao_benchmarking.preco_leite`** | `boolean` | `true` | Indicador de Preço do Leite (R$/L). |
+| **`secao_benchmarking.percentual_vacas_lactacao`** | `boolean` | `true` | Indicador de Percentual de Vacas em Lactação. |
+| **`secao_benchmarking.lotacao_animal`** | `boolean` | `true` | Indicador de Lotação Animal (cab/ha). |
+| **`secao_simulacoes.financeiras`** | `object` | `{...}` | Flags: `custo_leite`, `margem_litro`, `margem_ano`. |
+| **`secao_simulacoes.estaticas`** | `object` | `{...}` | Flags: `ccs`, `producao_vaca`. |
+| **`secao_simulacoes.operacionais`** | `object` | `{...}` | Flags: `producao_trabalhador`, `producao_area`. |
+| **`secao_ishikawa.incluir_analise_causa`** | `boolean` | `true` | Exibe/oculta a caixa de texto itálico de análise profunda da causa. |
+| **`secao_ishikawa.severidades`** | `object` | `{...}` | Flags de severidade permitidas: `critica`, `atencao`, `monitorar`, `neutra`. |
+| **`secao_ishikawa.indicadores.{slug}`** | `object` | `{...}` | Contém `incluir: boolean` e o objeto `pilares` com flags: `mao_de_obra`, `metodos`, `maquinas`, `meio_ambiente`, `medicao`, `materia_prima`. |
+
+##### 💡 Exemplo de Requisição Customizada (`POST`):
+```json
+{
+  "secao_resumo": {
+    "visao_geral": true,
+    "evidencias_raciocinios": false
+  },
+  "secao_benchmarking": {
+    "sistema_producao": true,
+    "faixa_producao": true,
+    "ccs": true,
+    "producao_vaca": true,
+    "producao_area": false,
+    "producao_trabalhador": true,
+    "preco_leite": true,
+    "percentual_vacas_lactacao": true,
+    "lotacao_animal": false
+  },
+  "secao_simulacoes": {
+    "financeiras": {
+      "custo_leite": true,
+      "margem_litro": true,
+      "margem_ano": false
+    },
+    "estaticas": {
+      "ccs": true,
+      "producao_vaca": true
+    },
+    "operacionais": {
+      "producao_trabalhador": true,
+      "producao_area": false
+    }
+  },
+  "secao_ishikawa": {
+    "incluir_analise_causa": true,
+    "severidades": {
+      "critica": true,
+      "atencao": true,
+      "monitorar": true,
+      "neutra": false
+    },
+    "indicadores": {
+      "ccs": {
+        "incluir": true,
+        "pilares": {
+          "mao_de_obra": true,
+          "metodos": true,
+          "maquinas": false,
+          "meio_ambiente": false,
+          "medicao": false,
+          "materia_prima": false
+        }
+      },
+      "preco_leite": {
+        "incluir": true,
+        "pilares": {
+          "mao_de_obra": false,
+          "metodos": false,
+          "maquinas": true,
+          "meio_ambiente": false,
+          "medicao": true,
+          "materia_prima": false
+        }
+      }
+    }
+  }
+}
+```
+
+##### 🛡️ Comportamento de Fallback em Pilares sem Recomendações
+Se um indicador e pilar forem selecionados (`true`), mas o diagnóstico daquele produtor não gerou nenhuma recomendação para aquele pilar, o relatório exibirá uma mensagem amigável:
+> ℹ️ *Não houve práticas recomendadas para o(s) pilar(es): Medição no diagnóstico avaliado.*
+
+---
+
+#### `GET /api/produtores/{produtor_id}/relatorio/pdf`
+* **Propósito:** Gera o relatório executivo completo em PDF (com 100% dos dados habilitados). Mantido para retrocompatibilidade direta.
+* **Headers:** `X-API-KEY: 42`
+* **Parâmetros de Rota:** `produtor_id` (UUID ou ID da fazenda).
+* **Tipo de Resposta:** Binário (`Content-Type: application/pdf`).
+
+##### 💡 Como Consumir no Frontend (Exemplos Práticos com POST)
+
+**Exemplo: Download com Filtros via Axios (React / Vue / Angular)**
+```javascript
+import axios from 'axios';
+
+async function gerarRelatorioCustomizadoPDF(produtorId, filtrosSelecionados) {
+  try {
+    const response = await axios.post(
+      `http://localhost:8000/api/produtores/${produtorId}/relatorio/pdf`,
+      filtrosSelecionados, // Objeto com as flags booleanas dos checkboxes
+      {
+        headers: {
+          'X-API-KEY': '42',
+          'Content-Type': 'application/json'
+        },
+        responseType: 'blob' // OBRIGATÓRIO: indica que a resposta é binária
+      }
+    );
+
+    // Dispara o download automático do PDF gerado
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `relatorio_produtor_${produtorId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      alert('Produtor ou diagnósticos não encontrados para gerar o relatório.');
+    } else {
+      alert('Erro ao processar o relatório PDF customizado.');
+    }
+  }
+}
+```
+
+**Exemplo: Abertura em Nova Aba / Preview com Fetch**
+```javascript
+async function abrirPreviewRelatorioPDF(produtorId, filtrosSelecionados = {}) {
+  const response = await fetch(
+    `http://localhost:8000/api/produtores/${produtorId}/relatorio/pdf`,
+    {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': '42',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(filtrosSelecionados)
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Falha ao compilar relatório PDF customizado');
+  }
+
+  const blob = await response.blob();
+  const pdfUrl = URL.createObjectURL(blob);
+  window.open(pdfUrl, '_blank');
+}
+```
+
+---
+
 ### 🧬 Módulo de Diagnóstico Incremental
 
 #### `POST /api/diagnostico`
@@ -251,6 +431,19 @@ No startup da API, o repositório em memória é automaticamente alimentado com 
 #### `GET /api/diagnostico/status/{task_id}`
 * **Propósito:** Long-polling para acompanhar a execução do diagnóstico.
 * **Headers de Telemetria:** No status `completed`, a API inclui nos headers HTTP as métricas de uso de IA (`X-IA-Tokens`, `X-IA-Reasoning-Tokens`, `X-IA-Custo-Dolar`, `X-IA-Provider`).
+
+* **Exemplo de Resposta (`HTTP 200 OK` - Em Andamento):**
+```json
+{
+  "task_id": "84a3c18b-590f-48d1-9f93-0182414704fc",
+  "status": "processing",
+  "message": "Analises em andamento [2/3]",
+  "progress": {
+    "done": 2,
+    "total": 3
+  }
+}
+```
 
 * **Exemplo de Resposta (`HTTP 200 OK` - Concluído):**
 ```json
