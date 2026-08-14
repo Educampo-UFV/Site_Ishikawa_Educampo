@@ -58,6 +58,7 @@ export default function CarregandoPage() {
         setMensagem("A Inteligência Artificial está projetando seus cenários");
 
         const payloadSimulacao = {
+          email: dadosFazenda.email || 'produtor@fazenda.com.br',
           dados_originais: {
             area_atividade: dadosFazenda.area_atividade,
             ccs: dadosFazenda.ccs,

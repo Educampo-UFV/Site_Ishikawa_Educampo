@@ -340,6 +340,7 @@ export default function SimulacaoPage() {
 
     setIsSimulando(true);
     const payloadSimulacao = {
+      email: dadosFazenda.email || 'produtor@fazenda.com.br',
       dados_originais: {
         area_atividade: sanitizar(dadosFazenda.area_atividade, 0.1),
         ccs: sanitizar(dadosFazenda.ccs, 0.1),
