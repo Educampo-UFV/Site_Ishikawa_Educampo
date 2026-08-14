@@ -218,18 +218,51 @@ export default function SimulacaoPage() {
    */
   useEffect(() => {
     if (dadosFazenda) {
-      setSimulacao({
-        total_vacas: dadosFazenda.total_vacas || 100,
-        percentual_lactacao: dadosFazenda.percentual_lactacao || 85,
-        producao_vaca: dadosFazenda.producao_vaca || 30.0,
-        preco_recebido: dadosFazenda.preco_leite || 3.00,
-        area_atividade: dadosFazenda.area_atividade || 10.0,
-        ccs: dadosFazenda.ccs || 150,
-        numero_trabalhadores: dadosFazenda.mao_obra_total || 2,
-        custo_concentrado: dadosFazenda.preco_concentrado || 2.00,
+      setSimulacao((prev) => {
+        const novoTotalVacas = dadosFazenda.total_vacas || 100;
+        const novoPercentualLactacao = dadosFazenda.percentual_lactacao || 85;
+        const novaProducaoVaca = dadosFazenda.producao_vaca || 30.0;
+        const novoPrecoRecebido = dadosFazenda.preco_leite || 3.00;
+        const novaAreaAtividade = dadosFazenda.area_atividade || 10.0;
+        const novoCcs = dadosFazenda.ccs || 150;
+        const novoNumeroTrabalhadores = dadosFazenda.mao_obra_total || 2;
+        const novoCustoConcentrado = dadosFazenda.preco_concentrado || 2.00;
+
+        if (
+          prev.total_vacas === novoTotalVacas &&
+          prev.percentual_lactacao === novoPercentualLactacao &&
+          prev.producao_vaca === novaProducaoVaca &&
+          prev.preco_recebido === novoPrecoRecebido &&
+          prev.area_atividade === novaAreaAtividade &&
+          prev.ccs === novoCcs &&
+          prev.numero_trabalhadores === novoNumeroTrabalhadores &&
+          prev.custo_concentrado === novoCustoConcentrado
+        ) {
+          return prev;
+        }
+
+        return {
+          total_vacas: novoTotalVacas,
+          percentual_lactacao: novoPercentualLactacao,
+          producao_vaca: novaProducaoVaca,
+          preco_recebido: novoPrecoRecebido,
+          area_atividade: novaAreaAtividade,
+          ccs: novoCcs,
+          numero_trabalhadores: novoNumeroTrabalhadores,
+          custo_concentrado: novoCustoConcentrado,
+        };
       });
     }
-  }, [dadosFazenda]);
+  }, [
+    dadosFazenda?.total_vacas,
+    dadosFazenda?.percentual_lactacao,
+    dadosFazenda?.producao_vaca,
+    dadosFazenda?.preco_leite,
+    dadosFazenda?.area_atividade,
+    dadosFazenda?.ccs,
+    dadosFazenda?.mao_obra_total,
+    dadosFazenda?.preco_concentrado,
+  ]);
 
   /**
    * @description Restaura os valores da simulação para os originais do produtor.

@@ -82,8 +82,10 @@ describe('Tela de Ajustes (AjustesPage)', () => {
     jest.useRealTimers();
   });
 
-  it('Deve renderizar o formulário pré-preenchido com os dados do Zustand', () => {
-    render(<AjustesPage />);
+  it('Deve renderizar o formulário pré-preenchido com os dados do Zustand', async () => {
+    await act(async () => {
+      render(<AjustesPage />);
+    });
     expect(screen.getByLabelText(/Nome da Fazenda/i)).toHaveValue('Fazenda Teste');
     expect(screen.getByLabelText(/Total de Vacas/i)).toHaveValue('100');
   });
