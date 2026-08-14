@@ -121,8 +121,6 @@ export default function RelatorioPage() {
     const next: Required<ReportFilterPayload> = {
       secao_resumo: { visao_geral: false, evidencias_raciocinios: false },
       secao_benchmarking: {
-        sistema_producao: false,
-        faixa_producao: false,
         ccs: false,
         producao_vaca: false,
         producao_area: false,
@@ -556,8 +554,6 @@ export default function RelatorioPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {[
-                { key: 'sistema_producao', label: 'Sistema de Produção' },
-                { key: 'faixa_producao', label: 'Faixa de Produção (Volume)' },
                 { key: 'ccs', label: 'Contagem Células Somáticas (CCS)' },
                 { key: 'producao_vaca', label: 'Produção Média/Vaca/Dia' },
                 { key: 'producao_area', label: 'Produção por Área (L/ha/ano)' },

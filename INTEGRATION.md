@@ -220,14 +220,14 @@ No startup da API, o repositório em memória é automaticamente alimentado com 
 * **Header de Download:** `Content-Disposition: attachment; filename="relatorio_produtor_{produtor_id}.pdf"`.
 
 ##### 📋 Estrutura do Payload de Filtros (`ReportFilterPayload`)
-Todos os campos são booleanos e possuem valor padrão `true`. O frontend pode enviar um objeto vazio `{}` (para gerar 100% do relatório) ou passar apenas as seções/indicadores que deseja alterar.
+> [!NOTE]
+> **Metadados Demográficos vs Seção 2:**
+> O **Sistema de Produção** e a **Faixa de Volume** são renderizados **diretamente no cabeçalho** do relatório (cards e metadados superiores). A **Seção 2** é reservada estritamente para os indicadores técnicos comparativos (CCS, Produção por Vaca, Preço, etc.).
 
 | Seção / Campo | Tipo | Default | Descrição |
 | :--- | :--- | :--- | :--- |
 | **`secao_resumo.visao_geral`** | `boolean` | `true` | Exibe o texto de Visão Geral Consolidada da fazenda. |
 | **`secao_resumo.evidencias_raciocinios`** | `boolean` | `true` | Exibe os cards de Evidências Técnicas & Citações da LLM. |
-| **`secao_benchmarking.sistema_producao`** | `boolean` | `true` | Linha de Sistema de Produção na tabela. |
-| **`secao_benchmarking.faixa_producao`** | `boolean` | `true` | Linha de Faixa de Produção (Volume). |
 | **`secao_benchmarking.ccs`** | `boolean` | `true` | Indicador de Contagem de Células Somáticas. |
 | **`secao_benchmarking.producao_vaca`** | `boolean` | `true` | Indicador de Produção Média Diária por Vaca. |
 | **`secao_benchmarking.producao_area`** | `boolean` | `true` | Indicador de Produção por Área (L/ha/ano). |

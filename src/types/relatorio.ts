@@ -11,8 +11,6 @@ export interface SecaoResumoFilter {
 }
 
 export interface SecaoBenchmarkingFilter {
-  sistema_producao: boolean;
-  faixa_producao: boolean;
   ccs: boolean;
   producao_vaca: boolean;
   producao_area: boolean;
@@ -130,8 +128,6 @@ export function getDefaultReportFilterPayload(): Required<ReportFilterPayload> {
       evidencias_raciocinios: false,
     },
     secao_benchmarking: {
-      sistema_producao: true,
-      faixa_producao: true,
       ccs: true,
       producao_vaca: true,
       producao_area: true,
@@ -183,8 +179,6 @@ export function getAllReportFilterPayload(): Required<ReportFilterPayload> {
       evidencias_raciocinios: true,
     },
     secao_benchmarking: {
-      sistema_producao: true,
-      faixa_producao: true,
       ccs: true,
       producao_vaca: true,
       producao_area: true,
