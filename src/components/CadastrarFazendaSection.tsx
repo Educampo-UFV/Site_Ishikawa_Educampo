@@ -7,8 +7,8 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, PlusCircle, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, ChevronUp, PlusCircle, CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { cadastrarFazendaSchema, CadastrarFazendaFormData } from '@/lib/schemas';
 import { SistemaProducaoItem, RegiaoSebraeItem } from '@/types/formulario';
 import { parseApiError } from '@/lib/apiUtils';
@@ -36,7 +36,7 @@ function getOptionLabel(item: SistemaProducaoItem | RegiaoSebraeItem): string {
 
 interface FormInputProps {
   id: string;
-  name: keyof CadastrarFazendaFormData;
+  name: keyof CadastrarFazendaFormData | string;
   label: string;
   type?: string;
   required?: boolean;
@@ -62,29 +62,166 @@ const FormInput: React.FC<FormInputProps> = ({
   max,
   step,
   onChange,
-}) => (
-  <div>
-    <label htmlFor={id} className="block text-xs font-semibold text-gray-700 mb-1">
-      {label}
-    </label>
-    <input
-      id={id}
-      name={name}
-      type={type}
-      required={required}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      min={min}
-      max={max}
-      step={step}
-      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
-        error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
-      }`}
-    />
-    {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
-  </div>
-);
+}) => {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (type === 'number') {
+      e.target.select();
+    }
+  };
+
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-semibold text-gray-700 mb-1">
+        {label}
+      </label>
+      <input
+        id={id}
+        name={name}
+        type={type}
+        required={required}
+        value={value}
+        onChange={onChange}
+        onFocus={handleFocus}
+        placeholder={placeholder}
+        min={min}
+        max={max}
+        step={step}
+        className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
+          error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
+        }`}
+      />
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+    </div>
+  );
+};
+
+interface PasswordInputProps {
+  id: string;
+  name: string;
+  label: string;
+  required?: boolean;
+  value: string;
+  error?: string;
+  placeholder?: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  toggleTestId?: string;
+}
+
+const PasswordInput: React.FC<PasswordInputProps> = ({
+  id,
+  name,
+  label,
+  required = true,
+  value,
+  error,
+  placeholder,
+  onChange,
+  toggleTestId,
+}) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [peekChar, setPeekChar] = useState<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawVal = e.target.value;
+    let newRealValue = rawVal;
+
+    if (!showPassword) {
+      if (rawVal.includes('•')) {
+        if (rawVal.length > value.length) {
+          const addedChar = rawVal.slice(rawVal.length - 1);
+          newRealValue = value + addedChar;
+          setPeekChar(addedChar);
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            setPeekChar(null);
+          }, 800);
+        } else if (rawVal.length < value.length) {
+          newRealValue = value.slice(0, rawVal.length);
+          setPeekChar(null);
+        }
+      } else {
+        newRealValue = rawVal;
+        if (rawVal.length > value.length && rawVal.length === value.length + 1) {
+          const lastChar = rawVal.slice(-1);
+          setPeekChar(lastChar);
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            setPeekChar(null);
+          }, 800);
+        } else {
+          setPeekChar(null);
+        }
+      }
+    } else {
+      setPeekChar(null);
+    }
+
+    const syntheticEvent = {
+      ...e,
+      target: {
+        ...e.target,
+        name,
+        value: newRealValue,
+      },
+    } as React.ChangeEvent<HTMLInputElement>;
+
+    onChange(syntheticEvent);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const getMaskedDisplay = () => {
+    if (showPassword) return value;
+    if (!value) return '';
+    if (peekChar !== null && value.length > 0) {
+      return '•'.repeat(Math.max(0, value.length - 1)) + peekChar;
+    }
+    return '•'.repeat(value.length);
+  };
+
+  const toggleVisibility = () => {
+    setShowPassword((prev) => !prev);
+    setPeekChar(null);
+  };
+
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-semibold text-gray-700 mb-1">
+        {label}
+      </label>
+      <div className="relative flex items-center">
+        <input
+          id={id}
+          name={name}
+          type={showPassword ? 'text' : (peekChar ? 'text' : 'password')}
+          required={required}
+          value={showPassword ? value : (peekChar ? getMaskedDisplay() : value)}
+          onChange={handleInputChange}
+          placeholder={placeholder}
+          autoComplete="new-password"
+          className={`w-full px-3 py-2 pr-10 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
+            error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
+          }`}
+        />
+        <button
+          type="button"
+          onClick={toggleVisibility}
+          data-testid={toggleTestId}
+          aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+          className="absolute right-2.5 p-1 text-gray-500 hover:text-emerald-700 transition-colors focus:outline-none"
+        >
+          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+    </div>
+  );
+};
 
 interface FormSelectProps {
   id: string;
@@ -159,6 +296,7 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [formData, setFormData] = useState<CadastrarFazendaFormData>(INITIAL_STATE);
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -174,10 +312,20 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
     setFieldErrors((prev) => ({ ...prev, [name]: '' }));
     setSubmitError(null);
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'number' ? (value === '' ? 0 : Number(value)) : value,
-    }));
+    setFormData((prev) => {
+      let parsedValue: any = value;
+      if (type === 'number') {
+        if (value === '') {
+          parsedValue = '';
+        } else {
+          parsedValue = Number(value);
+        }
+      }
+      return {
+        ...prev,
+        [name]: parsedValue,
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,6 +333,17 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
     setFieldErrors({});
     setSubmitError(null);
     setSuccessMessage(null);
+
+    // Validação client-side da confirmação de senha
+    if (!confirmarSenha) {
+      setFieldErrors({ confirmar_senha: 'A confirmação de senha é obrigatória' });
+      return;
+    }
+
+    if (formData.senha !== confirmarSenha) {
+      setFieldErrors({ confirmar_senha: 'As senhas não conferem' });
+      return;
+    }
 
     const validacao = cadastrarFazendaSchema.safeParse(formData);
 
@@ -218,6 +377,7 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
           onCadastrarEDiagnosticar(validacao.data, producerId);
         } else {
           setFormData(INITIAL_STATE);
+          setConfirmarSenha('');
           setIsExpanded(false);
         }
       } else {
@@ -294,17 +454,6 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
               />
 
               <FormInput
-                id="cad_senha"
-                name="senha"
-                type="password"
-                label="Senha (mínimo 6 caracteres) *"
-                value={formData.senha}
-                error={fieldErrors.senha}
-                placeholder="******"
-                onChange={handleChange}
-              />
-
-              <FormInput
                 id="cad_nome_fazenda"
                 name="nome_fazenda"
                 type="text"
@@ -313,6 +462,31 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 error={fieldErrors.nome_fazenda}
                 placeholder="ex: Fazenda Santa Maria"
                 onChange={handleChange}
+              />
+
+              <PasswordInput
+                id="cad_senha"
+                name="senha"
+                label="Senha (mínimo 6 caracteres) *"
+                value={formData.senha}
+                error={fieldErrors.senha}
+                placeholder="******"
+                onChange={handleChange}
+                toggleTestId="toggle-senha-btn"
+              />
+
+              <PasswordInput
+                id="cad_confirmar_senha"
+                name="confirmar_senha"
+                label="Confirmar Senha *"
+                value={confirmarSenha}
+                error={fieldErrors.confirmar_senha}
+                placeholder="******"
+                onChange={(e) => {
+                  setConfirmarSenha(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, confirmar_senha: '' }));
+                }}
+                toggleTestId="toggle-confirmar-senha-btn"
               />
 
               <FormSelect
@@ -326,18 +500,16 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 onChange={handleChange}
               />
 
-              <div className="md:col-span-2">
-                <FormSelect
-                  id="cad_regiao_sebrae"
-                  name="regiao_sebrae"
-                  label="Região SEBRAE *"
-                  value={formData.regiao_sebrae}
-                  error={fieldErrors.regiao_sebrae}
-                  placeholder="Selecione a região"
-                  options={regioesDisponiveis}
-                  onChange={handleChange}
-                />
-              </div>
+              <FormSelect
+                id="cad_regiao_sebrae"
+                name="regiao_sebrae"
+                label="Região SEBRAE *"
+                value={formData.regiao_sebrae}
+                error={fieldErrors.regiao_sebrae}
+                placeholder="Selecione a região"
+                options={regioesDisponiveis}
+                onChange={handleChange}
+              />
             </div>
           </div>
 

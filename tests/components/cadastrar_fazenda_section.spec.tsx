@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { CadastrarFazendaSection } from '@/components/CadastrarFazendaSection';
 import '@testing-library/jest-dom';
 
@@ -69,8 +69,9 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
     fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
 
     // Act - Preenche campos com senha fraca (menos de 6 chars)
-    fireEvent.change(screen.getByLabelText(/E-mail do Produtor/i), { target: { value: 'teste@fazenda.com' } });
-    fireEvent.change(screen.getByLabelText(/Senha/i), { target: { value: '123' } });
+    fireEvent.change(screen.getByLabelText(/^E-mail do Produtor/i), { target: { value: 'teste@fazenda.com' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: '123' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar Senha/i), { target: { value: '123' } });
     fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Teste' } });
     fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
     fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
@@ -93,6 +94,71 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
+  it('deve exibir mensagem de erro quando a confirmação de senha não coincidir', async () => {
+    // Arrange
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+
+    // Act
+    fireEvent.change(screen.getByLabelText(/^E-mail do Produtor/i), { target: { value: 'teste@fazenda.com' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: 'senha123' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar Senha/i), { target: { value: 'senhaDiferente' } });
+    fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Teste' } });
+    fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
+    fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
+    fireEvent.change(screen.getByLabelText(/Total de Vacas/i), { target: { value: '50' } });
+    fireEvent.change(screen.getByLabelText(/Perc. em Lactação/i), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText(/Total do Rebanho/i), { target: { value: '60' } });
+    fireEvent.change(screen.getByLabelText(/Área da Atividade/i), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/Mão de Obra/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/Produção por Vaca/i), { target: { value: '25' } });
+    fireEvent.change(screen.getByLabelText(/Preço Recebido/i), { target: { value: '2.80' } });
+    fireEvent.change(screen.getByLabelText(/Preço Referência/i), { target: { value: '2.50' } });
+    fireEvent.change(screen.getByLabelText(/Qualidade CCS/i), { target: { value: '150' } });
+
+    fireEvent.click(screen.getByTestId('cadastrar-fazenda-submit-btn'));
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByText('As senhas não conferem')).toBeInTheDocument();
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('deve alternar a visibilidade da senha ao clicar no botão de olho', () => {
+    // Arrange
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+
+    const senhaInput = screen.getByLabelText(/^Senha/i);
+    const toggleSenhaBtn = screen.getByTestId('toggle-senha-btn');
+
+    // Inicialmente tipo password
+    expect(senhaInput).toHaveAttribute('type', 'password');
+
+    // Ao clicar para mostrar senha
+    fireEvent.click(toggleSenhaBtn);
+    expect(senhaInput).toHaveAttribute('type', 'text');
+
+    // Ao clicar novamente para ocultar
+    fireEvent.click(toggleSenhaBtn);
+    expect(senhaInput).toHaveAttribute('type', 'password');
+  });
+
   it('deve realizar submit com sucesso, colapsar o card e invocar onSuccess (201 Created)', async () => {
     // Arrange
     (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -112,8 +178,9 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
     fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
 
     // Act
-    fireEvent.change(screen.getByLabelText(/E-mail do Produtor/i), { target: { value: 'novo.produtor@fazenda.com.br' } });
-    fireEvent.change(screen.getByLabelText(/Senha/i), { target: { value: 'senhaSegura123' } });
+    fireEvent.change(screen.getByLabelText(/^E-mail do Produtor/i), { target: { value: 'novo.produtor@fazenda.com.br' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: 'senhaSegura123' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar Senha/i), { target: { value: 'senhaSegura123' } });
     fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Santa Maria' } });
     fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
     fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
@@ -166,8 +233,9 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
     fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
 
     // Act
-    fireEvent.change(screen.getByLabelText(/E-mail do Produtor/i), { target: { value: 'consultor@educampo.com' } });
-    fireEvent.change(screen.getByLabelText(/Senha/i), { target: { value: 'senhaSegura123' } });
+    fireEvent.change(screen.getByLabelText(/^E-mail do Produtor/i), { target: { value: 'consultor@educampo.com' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: 'senhaSegura123' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar Senha/i), { target: { value: 'senhaSegura123' } });
     fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Duplicada' } });
     fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
     fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
@@ -189,6 +257,84 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
       expect(errorElements.length).toBeGreaterThan(0);
     });
     expect(screen.getByTestId('cadastrar-fazenda-form')).toBeInTheDocument();
+  });
+
+  it('deve selecionar o conteúdo do campo numérico no evento de foco (onFocus)', () => {
+    // Arrange
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+
+    const vacasInput = screen.getByLabelText(/Total de Vacas/i) as HTMLInputElement;
+    const selectSpy = jest.spyOn(vacasInput, 'select');
+
+    // Act
+    fireEvent.focus(vacasInput);
+
+    // Assert
+    expect(selectSpy).toHaveBeenCalledTimes(1);
+    selectSpy.mockRestore();
+  });
+
+  it('deve permitir limpar e substituir o valor zero em campos numéricos sem concatenar como "02"', () => {
+    // Arrange
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+
+    const vacasInput = screen.getByLabelText(/Total de Vacas/i) as HTMLInputElement;
+
+    // Act - Usuário apaga o campo
+    fireEvent.change(vacasInput, { target: { value: '' } });
+    expect(vacasInput.value).toBe('');
+
+    // Act - Usuário digita '2'
+    fireEvent.change(vacasInput, { target: { value: '2' } });
+    expect(vacasInput.value).toBe('2');
+  });
+
+  it('deve exibir o último caractere digitado temporariamente (peek) no campo de senha', () => {
+    jest.useFakeTimers();
+
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+
+    const senhaInput = screen.getByLabelText(/^Senha/i) as HTMLInputElement;
+
+    // Act - Digita primeira letra 'a'
+    fireEvent.change(senhaInput, { target: { value: 'a' } });
+
+    // Assert - No peek deve estar visível como texto com o caractere
+    expect(senhaInput.value).toBe('a');
+
+    // Avança timer de 800ms
+    act(() => {
+      jest.advanceTimersByTime(850);
+    });
+
+    // Assert - Mascarado como password
+    expect(senhaInput).toHaveAttribute('type', 'password');
+
+    jest.useRealTimers();
   });
 });
 
