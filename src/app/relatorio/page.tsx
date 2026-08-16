@@ -335,6 +335,58 @@ export default function RelatorioPage() {
       return;
     }
 
+    // Pré-abertura da aba no clique do usuário para evitar bloqueio por Popup Blocker do navegador
+    let previewWindow: Window | null = null;
+    if (mode === 'preview') {
+      try {
+        previewWindow = window.open('', '_blank');
+        if (previewWindow && previewWindow.document) {
+          previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+              <head>
+                <meta charset="utf-8">
+                <title>Compilando Relatório Executivo...</title>
+                <style>
+                  body {
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                    background: #f8fafc;
+                    color: #1e293b;
+                  }
+                  .loader {
+                    width: 48px;
+                    height: 48px;
+                    border: 4px solid #e2e8f0;
+                    border-top: 4px solid #059669;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    margin-bottom: 20px;
+                  }
+                  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                  h2 { margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #0f172a; }
+                  p { margin: 0; font-size: 14px; color: #64748b; }
+                </style>
+              </head>
+              <body>
+                <div class="loader"></div>
+                <h2>Compilando Relatório Executivo PDF</h2>
+                <p>Aguarde enquanto os diagnósticos e gráficos são gerados...</p>
+              </body>
+            </html>
+          `);
+        }
+      } catch (e) {
+        console.warn('Não foi possível pré-abrir a aba:', e);
+      }
+    }
+
     setErrorMessage(null);
     setIsGeneratingPdf(true);
     setActionType(mode);
@@ -349,6 +401,9 @@ export default function RelatorioPage() {
       });
 
       if (!response.ok) {
+        if (previewWindow && !previewWindow.closed) {
+          previewWindow.close();
+        }
         if (response.status === 404) {
           setErrorMessage('Esta fazenda ainda não possui dados de diagnóstico salvos para gerar o relatório.');
           return;
@@ -359,20 +414,157 @@ export default function RelatorioPage() {
       }
 
       const blob = await response.blob();
-      const pdfUrl = window.URL.createObjectURL(blob);
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const pdfUrl = window.URL.createObjectURL(pdfBlob);
+      const nomeFazenda = dadosFazenda?.nome_fazenda || 'Fazenda';
+      const fileName = `relatorio_produtor_${produtorId}.pdf`;
 
       if (mode === 'preview') {
-        window.open(pdfUrl, '_blank');
+        if (previewWindow && !previewWindow.closed && previewWindow.document) {
+          previewWindow.document.open();
+          previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Relatório Executivo - ${nomeFazenda}</title>
+                <style>
+                  * { box-sizing: border-box; margin: 0; padding: 0; }
+                  body {
+                    display: flex;
+                    flex-direction: column;
+                    height: 100vh;
+                    overflow: hidden;
+                    background-color: #0f172a;
+                    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                  }
+                  .header-bar {
+                    height: 56px;
+                    background-color: #1e293b;
+                    border-bottom: 1px solid #334155;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 20px;
+                    color: #ffffff;
+                    z-index: 10;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+                  }
+                  .brand-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                  }
+                  .brand-badge {
+                    background-color: #059669;
+                    color: #ffffff;
+                    font-size: 11px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    padding: 4px 10px;
+                    border-radius: 9999px;
+                    letter-spacing: 0.05em;
+                  }
+                  .report-title {
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: #f1f5f9;
+                  }
+                  .farm-name {
+                    font-size: 13px;
+                    color: #94a3b8;
+                  }
+                  .actions-bar {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                  }
+                  .btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 18px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    text-decoration: none;
+                    transition: all 0.2s ease;
+                    border: none;
+                  }
+                  .btn-download {
+                    background-color: #059669;
+                    color: #ffffff;
+                  }
+                  .btn-download:hover {
+                    background-color: #047857;
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
+                  }
+                  .btn-print {
+                    background-color: #334155;
+                    color: #e2e8f0;
+                    border: 1px solid #475569;
+                  }
+                  .btn-print:hover {
+                    background-color: #475569;
+                    color: #ffffff;
+                  }
+                  .pdf-container {
+                    flex: 1;
+                    width: 100%;
+                    height: calc(100vh - 56px);
+                    background-color: #334155;
+                  }
+                  iframe {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                  }
+                </style>
+              </head>
+              <body>
+                <header class="header-bar">
+                  <div class="brand-info">
+                    <span class="brand-badge">Educampo</span>
+                    <span class="report-title">Relatório Executivo</span>
+                    <span class="farm-name">• ${nomeFazenda}</span>
+                  </div>
+                  <div class="actions-bar">
+                    <button class="btn btn-print" onclick="document.getElementById('pdf-frame').contentWindow.print()">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/></svg>
+                      Imprimir
+                    </button>
+                    <a id="download-btn" class="btn btn-download" href="${pdfUrl}" download="${fileName}">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                      Baixar Relatório (PDF)
+                    </a>
+                  </div>
+                </header>
+                <main class="pdf-container">
+                  <iframe id="pdf-frame" src="${pdfUrl}#toolbar=1" type="application/pdf"></iframe>
+                </main>
+              </body>
+            </html>
+          `);
+          previewWindow.document.close();
+        } else {
+          window.open(pdfUrl, '_blank');
+        }
       } else {
         const link = document.createElement('a');
         link.href = pdfUrl;
-        link.setAttribute('download', `relatorio_produtor_${produtorId}.pdf`);
+        link.setAttribute('download', fileName);
         document.body.appendChild(link);
         link.click();
         link.remove();
         setTimeout(() => window.URL.revokeObjectURL(pdfUrl), 10000);
       }
     } catch (error) {
+      if (previewWindow && !previewWindow.closed) {
+        previewWindow.close();
+      }
       console.error('Erro ao emitir relatório em PDF customizado:', error);
       setErrorMessage('Ocorreu um erro de conexão ao tentar gerar o relatório.');
     } finally {
