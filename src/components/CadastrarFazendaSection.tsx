@@ -17,7 +17,7 @@ interface CadastrarFazendaSectionProps {
   sistemasDisponiveis?: SistemaProducaoItem[];
   regioesDisponiveis?: RegiaoSebraeItem[];
   onSuccess?: () => void;
-  onCadastrarEDiagnosticar?: (formData: CadastrarFazendaFormData) => void;
+  onCadastrarEDiagnosticar?: (formData: CadastrarFazendaFormData, producerId?: string) => void;
 }
 
 function getOptionValue(item: SistemaProducaoItem | RegiaoSebraeItem): string {
@@ -210,10 +210,12 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
       });
 
       if (response.ok) {
+        const responseData = await response.json().catch(() => ({}));
+        const producerId = responseData?.id || responseData?.id_fazenda;
         setSuccessMessage('Fazenda cadastrada com sucesso!');
         onSuccess?.();
         if (onCadastrarEDiagnosticar) {
-          onCadastrarEDiagnosticar(validacao.data);
+          onCadastrarEDiagnosticar(validacao.data, producerId);
         } else {
           setFormData(INITIAL_STATE);
           setIsExpanded(false);
