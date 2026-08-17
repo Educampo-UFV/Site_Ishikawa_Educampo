@@ -98,8 +98,6 @@ export const INDICADORES_ISHIKAWA_DEFAULT_LIST = [
   { slug: 'producao_area', label: 'Produção por Área (L/ha/ano)' },
   { slug: 'producao_trabalhador', label: 'Produção por Trabalhador (L/func/dia)' },
   { slug: 'preco_leite', label: 'Preço do Leite (R$/L)' },
-  { slug: 'percentual_vacas_lactacao', label: 'Percentual de Vacas em Lactação' },
-  { slug: 'lotacao_animal', label: 'Lotação Animal (cab/ha)' },
 ];
 
 export function getDefaultPilares(): PilaresIshikawaFilter {
