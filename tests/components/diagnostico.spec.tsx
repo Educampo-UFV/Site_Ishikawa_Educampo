@@ -135,4 +135,14 @@ describe('Feature: Hub Central de Diagnóstico', () => {
     expect(screen.getByTestId('ishikawa-mobile-accordion')).toBeInTheDocument();
     expect(screen.getByTestId('ishikawa-desktop-grid')).toBeInTheDocument();
   });
+
+  it('deve renderizar o botão Ver mais / Ver menos no Resumo Geral e alternar expansão ao clicar', async () => {
+    render(<DiagnosticoPage />);
+    
+    const botaoVerMais = screen.getByRole('button', { name: /Ver mais\.\.\./i });
+    expect(botaoVerMais).toBeInTheDocument();
+    
+    fireEvent.click(botaoVerMais);
+    expect(screen.getByRole('button', { name: /Ver menos/i })).toBeInTheDocument();
+  });
 });

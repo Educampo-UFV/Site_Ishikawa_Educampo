@@ -344,9 +344,14 @@ export default function DiagnosticoPage() {
                   texto={diagnosticoIA.resumo_geral.visao_geral} 
                   raciocinios={diagnosticoIA.resumo_geral.raciocinios} 
                 />
+              ) : diagnosticoIA?.resumo ? (
+                <TextoComCitacoes 
+                  texto={diagnosticoIA.resumo} 
+                  raciocinios={[]} 
+                />
               ) : (
                 <p className="text-sm sm:text-base md:text-lg leading-relaxed text-blue-50">
-                  {diagnosticoIA?.resumo || "Carregando análise técnica..."}
+                  Carregando análise técnica...
                 </p>
               )}
             </div>

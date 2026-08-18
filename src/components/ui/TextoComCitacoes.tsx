@@ -38,6 +38,7 @@ interface TextoComCitacoesProps {
 export const TextoComCitacoes: React.FC<TextoComCitacoesProps> = ({ texto, raciocinios = [] }) => {
   const [citacoesAtivas, setCitacoesAtivas] = useState<Raciocinio[] | null>(null);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [isExpandedText, setIsExpandedText] = useState(false);
 
   // Regex para encontrar padrões de blocos como [1], [1, 2], [1, 2, 3]
   const regex = /(\[[\d,\s]+\])/g;
@@ -47,7 +48,7 @@ export const TextoComCitacoes: React.FC<TextoComCitacoesProps> = ({ texto, racio
 
   return (
     <>
-      <div className="text-lg leading-relaxed text-blue-50">
+      <div className={`text-sm sm:text-base md:text-lg leading-relaxed text-blue-50 transition-all ${!isExpandedText ? 'line-clamp-6' : ''}`}>
         {partes.map((parte, index) => {
           // Verifica se a parte atual é um bloco de marcação (ex: "[1, 2]")
           const match = parte.match(/\[([\d,\s]+)\]/);
@@ -76,26 +77,38 @@ export const TextoComCitacoes: React.FC<TextoComCitacoesProps> = ({ texto, racio
         })}
       </div>
 
+      {/* Botão de expansão "Ver mais" / "Ver menos" */}
+      <div className="mt-2">
+        <button
+          type="button"
+          onClick={() => setIsExpandedText(!isExpandedText)}
+          className="text-xs sm:text-sm font-bold text-blue-200 hover:text-white underline underline-offset-4 transition-colors cursor-pointer inline-flex items-center gap-1 focus:outline-none"
+          aria-expanded={isExpandedText}
+        >
+          {isExpandedText ? 'Ver menos' : 'Ver mais...'}
+        </button>
+      </div>
+
       {/* Accordion Retrátil do Embasamento Técnico */}
       {raciocinios.length > 0 && (
-        <div className="mt-8 border-t border-[#1973d3]/30 pt-4">
+        <div className="mt-6 sm:mt-8 border-t border-[#1973d3]/30 pt-4">
           <button 
             onClick={() => setIsAccordionOpen(!isAccordionOpen)}
-            className="flex items-center gap-2 text-sm font-bold text-blue-200 hover:text-white transition-colors w-full outline-none focus-visible:ring-2 focus-visible:ring-[#1973d3] rounded"
+            className="flex items-center gap-2 text-xs sm:text-sm font-bold text-blue-200 hover:text-white transition-colors w-full outline-none focus-visible:ring-2 focus-visible:ring-[#1973d3] rounded"
           >
             <span className={`transition-transform duration-300 ${isAccordionOpen ? 'rotate-180' : ''}`}>▼</span>
             Ver Embasamento Técnico
           </button>
           
           {isAccordionOpen && (
-            <div className="mt-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="mt-4 sm:mt-5 space-y-3 sm:space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
               {raciocinios.map((raciocinio, index) => (
-                <div key={raciocinio.id} className={`flex flex-col gap-1.5 ${index > 0 ? 'border-t border-[#1973d3]/20 pt-4' : ''}`}>
-                  <p className="text-sm text-blue-50 leading-relaxed">
+                <div key={raciocinio.id} className={`flex flex-col gap-1.5 ${index > 0 ? 'border-t border-[#1973d3]/20 pt-3 sm:pt-4' : ''}`}>
+                  <p className="text-xs sm:text-sm text-blue-50 leading-relaxed">
                     {raciocinio.analise_tecnica}
                   </p>
                   {raciocinio.fontes && raciocinio.fontes.length > 0 && (
-                    <span className="text-xs text-blue-200/70 italic font-medium">
+                    <span className="text-[11px] sm:text-xs text-blue-200/70 italic font-medium">
                       Baseado em: {raciocinio.fontes.join(', ')}
                     </span>
                   )}
