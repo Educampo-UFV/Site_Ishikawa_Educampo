@@ -147,6 +147,18 @@ describe('Página de Customização de Relatório PDF (/relatorio)', () => {
 
   it('deve abrir em nova aba via POST ao clicar em "Visualizar em Nova Aba"', async () => {
     // Arrange
+    const mockWindow = {
+      document: {
+        open: jest.fn(),
+        write: jest.fn(),
+        close: jest.fn(),
+      },
+      location: { href: '' },
+      close: jest.fn(),
+      closed: false,
+    };
+    (window.open as jest.Mock).mockReturnValue(mockWindow);
+
     const mockBlob = new Blob(['%PDF-1.4 preview'], { type: 'application/pdf' });
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
@@ -162,6 +174,7 @@ describe('Página de Customização de Relatório PDF (/relatorio)', () => {
 
     // Assert
     await waitFor(() => {
+      expect(window.open).toHaveBeenCalledWith('', '_blank');
       expect(global.fetch).toHaveBeenCalledWith(
         '/api/produtores/fazenda_teste_001/relatorio/pdf',
         expect.objectContaining({
@@ -169,7 +182,8 @@ describe('Página de Customização de Relatório PDF (/relatorio)', () => {
           headers: { 'Content-Type': 'application/json' },
         })
       );
-      expect(window.open).toHaveBeenCalledWith('blob:http://localhost/mock-pdf', '_blank');
+      expect(mockWindow.document.write).toHaveBeenCalledWith(expect.stringContaining('Baixar Relatório (PDF)'));
+      expect(mockWindow.document.write).toHaveBeenCalledWith(expect.stringContaining('blob:http://localhost/mock-pdf'));
     });
   });
 

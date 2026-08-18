@@ -134,7 +134,7 @@ describe('Responsividade Mobile e Tablet: /formulario', () => {
       const toggleBtn = screen.getByTestId('toggle-cadastrar-fazenda-btn');
       await user.click(toggleBtn);
 
-      const inputSenha = screen.getByLabelText(/^Senha \*/i);
+      const inputSenha = screen.getByLabelText(/^Senha/i);
       const inputConfirmar = screen.getByLabelText(/Confirmar Senha/i);
 
       expect(inputSenha).toBeInTheDocument();

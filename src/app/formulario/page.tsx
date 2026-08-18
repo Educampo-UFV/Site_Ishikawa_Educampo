@@ -202,9 +202,10 @@ export default function FormularioPage() {
     fetchOpcoes();
   }, []);
 
-  const handleCadastrarEDiagnosticar = (cadFormData: CadastrarFazendaFormData) => {
+  const handleCadastrarEDiagnosticar = (cadFormData: CadastrarFazendaFormData, producerId?: string) => {
     setErros([]);
     const payloadParaMl = {
+      id_fazenda: producerId || undefined,
       nome_fazenda: cadFormData.nome_fazenda,
       email: cadFormData.email,
       sistema_producao: mapToMlSystem(cadFormData.sistema_producao),
