@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, BookOpen } from 'lucide-react';
+import { X, BookOpen, Lightbulb } from 'lucide-react';
 
 /**
  * @description Contrato para mapear o id da String de Citação.
@@ -58,16 +58,18 @@ export const TextoComCitacoes: React.FC<TextoComCitacoesProps> = ({ texto, racio
             const ids = match[1].split(',').map(id => id.trim());
             const raciociniosEncontrados = raciocinios.filter(r => ids.includes(String(r.id)));
 
-            // Se achou os raciocínios correspondentes, renderiza como botão interativo com ícone
+            // Se achou os raciocínios correspondentes, renderiza como botão interativo compacto com ícone
             if (raciociniosEncontrados.length > 0) {
               return (
                 <button
                   key={index}
+                  type="button"
                   onClick={() => setCitacoesAtivas(raciociniosEncontrados)}
-                  className="inline-flex items-center justify-center mx-1 px-1.5 py-0.5 text-sm bg-yellow-100/10 hover:bg-yellow-400 text-yellow-200 hover:text-yellow-900 rounded-md cursor-pointer transition-all shadow-sm align-super border border-yellow-200/30"
+                  className="inline-flex items-center justify-center mx-1 px-1 py-0.5 bg-yellow-400/20 hover:bg-yellow-400 text-yellow-200 hover:text-yellow-950 rounded cursor-pointer transition-colors border border-yellow-300/40 align-middle -translate-y-0.5"
                   title="Ver embasamento deste trecho"
+                  aria-label={`Ver embasamento técnico ${match[1]}`}
                 >
-                  💡
+                  <Lightbulb className="w-3 h-3 text-yellow-300 hover:text-yellow-950 transition-colors" />
                 </button>
               );
             }
