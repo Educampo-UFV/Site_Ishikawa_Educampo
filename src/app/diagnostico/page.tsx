@@ -49,11 +49,11 @@ export interface FatorImpacto {
  * Mapeia o id (utilizado como chave de acesso nos objetos de resposta da IA) para o seu rótulo de exibição.
  */
 const TABS = [
-  { id: 'ccs', label: 'CCS' },
-  { id: 'producao_vaca', label: 'Produção Média Diária' },
-  { id: 'producao_area', label: 'Produção por Área' },
-  { id: 'producao_funcionario', label: 'Produção por Funcionário' },
-  { id: 'preco_leite', label: 'Preço do Leite' },
+  { id: 'ccs', label: 'CCS', shortLabel: '1. CCS' },
+  { id: 'producao_vaca', label: 'Produção Média Diária', shortLabel: '2. Prod. Diária' },
+  { id: 'producao_area', label: 'Produção por Área', shortLabel: '3. Prod. Área' },
+  { id: 'producao_funcionario', label: 'Produção por Funcionário', shortLabel: '4. Prod. Func.' },
+  { id: 'preco_leite', label: 'Preço do Leite', shortLabel: '5. Preço Leite' },
 ];
 
 /**
@@ -89,8 +89,6 @@ const getStatusUI = (status?: StatusComparacao | string) => {
   }
 };
 
-
-
 /**
  * @description Subcomponente para renderizar um card de benchmarking interativo.
  * Aplica um efeito de "flip" 3D para revelar a análise detalhada e o valor de referência,
@@ -109,6 +107,7 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
       style={{ perspective: '1000px' }}
       aria-expanded={isFlipped}
       aria-label={`Ver detalhes de ${card.titulo}`}
+      data-testid="benchmarking-card"
     >
       <div 
         className="relative w-full transition-transform duration-500 ease-out shadow-sm rounded-xl"
@@ -117,31 +116,35 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
           transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' 
         }}
       >
-        {/* Frente do Card (dita a altura mínima do container) */}
+        {/* Frente do Card */}
         <div 
-          className="bg-white p-6 rounded-xl border border-gray-100 flex flex-col justify-between w-full min-h-[140px]"
+          className="bg-white p-4 sm:p-6 rounded-xl border border-gray-100 flex flex-col justify-between w-full min-h-[135px] sm:min-h-[140px]"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-gray-500 font-medium uppercase tracking-wider">{card.titulo}</p>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <p className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider line-clamp-1">{card.titulo}</p>
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               {isComparativo && ui.icon}
-              <Info size={18} className="text-gray-400 group-hover:text-[#1973d3] transition-colors" />
+              <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded md:hidden">
+                <span>Toque</span>
+                <Info size={12} className="text-[#1973d3]" />
+              </div>
+              <Info size={18} className="text-gray-400 group-hover:text-[#1973d3] transition-colors hidden md:block" />
             </div>
           </div>
           <div className="mt-auto">
             <span className="sr-only">{card.valor_produtor} {card.unidade_medida || ''}</span>
             <div aria-hidden="true" className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-gray-800">
+              <div className="flex items-baseline gap-1.5 sm:gap-2">
+                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
                   {formatValor(card.valor_produtor)}
                 </span>
                 {card.unidade_medida && (
-                  <span className="text-sm font-normal text-gray-500">{card.unidade_medida}</span>
+                  <span className="text-xs sm:text-sm font-normal text-gray-500">{card.unidade_medida}</span>
                 )}
               </div>
               {isComparativo && card.mensagem_curta && (
-                <span className={`shrink-0 inline-block px-3 py-1 rounded-full text-[11px] font-bold border ${ui.bg} ${ui.text} ${ui.border}`}>
+                <span className={`shrink-0 inline-block px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold border ${ui.bg} ${ui.text} ${ui.border}`}>
                   {card.mensagem_curta}
                 </span>
               )}
@@ -151,22 +154,22 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
 
         {/* Verso do Card */}
         <div 
-          className="absolute inset-0 bg-white p-6 rounded-xl border-2 border-[#1973d3] flex flex-col justify-center shadow-md"
+          className="absolute inset-0 bg-white p-4 sm:p-6 rounded-xl border-2 border-[#1973d3] flex flex-col justify-center shadow-md"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <div className="flex items-baseline gap-1.5 mb-3 border-b border-gray-100 pb-2">
-            <span className="text-xl font-bold text-gray-800">
+          <div className="flex items-baseline gap-1.5 mb-2 sm:mb-3 border-b border-gray-100 pb-1.5 sm:pb-2">
+            <span className="text-lg sm:text-xl font-bold text-gray-800">
               {formatValor(card.valor_produtor)}
             </span>
             {card.unidade_medida && (
               <span className="text-xs font-normal text-gray-500">{card.unidade_medida}</span>
             )}
           </div>
-          <p className="text-xs text-gray-600 leading-relaxed font-medium">
+          <p className="text-xs text-gray-600 leading-relaxed font-medium line-clamp-3 sm:line-clamp-none">
             {card.mensagem_detalhada}
           </p>
           {isComparativo && (
-            <span className="block mt-3 font-bold text-gray-400 text-[11px] uppercase tracking-wider">
+            <span className="block mt-2 sm:mt-3 font-bold text-gray-400 text-[10px] sm:text-[11px] uppercase tracking-wider">
               Ref: {formatValor(card.valor_referencia)} {card.unidade_medida || ''}
             </span>
           )}
@@ -292,18 +295,28 @@ export default function DiagnosticoPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 flex flex-col gap-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-8 flex flex-col gap-6 sm:gap-8">
         
         {/* SEÇÃO 1: BENCHMARKING (TOP) */}
-        <section aria-labelledby="benchmark-title">
-          <h2 id="benchmark-title" className="text-xl font-bold text-[#003e7d] mb-4 flex items-center gap-2">
-            <TrendingUp size={24} /> Benchmarkings
-          </h2>
+        <section aria-labelledby="benchmark-title" className="w-full">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 id="benchmark-title" className="text-lg sm:text-xl font-bold text-[#003e7d] flex items-center gap-2">
+              <TrendingUp size={22} /> Benchmarkings
+            </h2>
+            <span className="text-xs text-gray-400 md:hidden flex items-center gap-1 font-medium">
+              Deslize para ver mais ➔
+            </span>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div 
+            className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 pt-1 -mx-4 px-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0 scrollbar-none"
+            data-testid="benchmarks-carousel"
+          >
             {benchmarks.length > 0 ? (
               benchmarks.map((card, index) => (
-                <BenchmarkingCard key={index} card={card} />
+                <div key={index} className="w-[78vw] sm:w-[48vw] md:w-auto shrink-0 md:shrink snap-start">
+                  <BenchmarkingCard card={card} />
+                </div>
               ))
             ) : (
               <p className="text-gray-500 italic md:col-span-3">Carregando dados de benchmarking...</p>
@@ -313,15 +326,14 @@ export default function DiagnosticoPage() {
 
         {/* SEÇÃO 2: RESUMO ESTRATÉGICO IA (LARGURA TOTAL) */}
         <div className="w-full">
-          
-          <div className="bg-[#003e7d] text-white p-8 rounded-2xl shadow-lg flex flex-col justify-between">
+          <div className="bg-[#003e7d] text-white p-5 sm:p-7 md:p-8 rounded-xl sm:rounded-2xl shadow-lg flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
+              <div className="flex justify-between items-start mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
                   <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide">IA</span>
                   Resumo Estratégico
                 </h2>
-                <Activity className="text-[#1973d3]" size={32} />
+                <Activity className="text-[#1973d3]" size={28} />
               </div>
               {diagnosticoIA?.resumo_geral ? (
                 <TextoComCitacoes 
@@ -329,19 +341,43 @@ export default function DiagnosticoPage() {
                   raciocinios={diagnosticoIA.resumo_geral.raciocinios} 
                 />
               ) : (
-                <p className="text-lg leading-relaxed text-blue-50">
+                <p className="text-sm sm:text-base md:text-lg leading-relaxed text-blue-50">
                   {diagnosticoIA?.resumo || "Carregando análise técnica..."}
                 </p>
               )}
             </div>
           </div>
-
         </div>
 
         {/* SEÇÃO 3: DIAGNÓSTICO DETALHADO (ISHIKAWA) */}
-        <section id="diagnostico" className="mt-4 flex flex-col gap-6">
-          {/* Navegação de Indicadores - Estilo Stepper (Círculos e Linhas) */}
-          <div className="flex flex-wrap md:flex-nowrap justify-center md:justify-between w-full max-w-5xl mx-auto gap-6 md:gap-0 border-b border-gray-300 pb-8 mb-4">
+        <section id="diagnostico" className="mt-2 sm:mt-4 flex flex-col gap-4 sm:gap-6">
+          {/* Navegação Mobile: Chips / Tabs Deslizáveis */}
+          <div className="md:hidden w-full overflow-x-auto -mx-4 px-4 sm:-mx-6 sm:px-6 pb-2 scrollbar-none">
+            <div className="flex items-center gap-2 min-w-max" role="tablist">
+              {TABS.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap min-h-[38px] flex items-center gap-1.5 shadow-sm active:scale-95 ${
+                      isActive
+                        ? 'bg-[#1973d3] text-white border border-[#003e7d]'
+                        : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
+                    }`}
+                    aria-label={`Ver indicador ${tab.label}`}
+                  >
+                    <span>{tab.shortLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Navegação Desktop: Stepper Tradicional */}
+          <div className="hidden md:flex flex-nowrap justify-between w-full max-w-5xl mx-auto border-b border-gray-300 pb-8 mb-4">
             {TABS.map((tab, index) => {
               const isActive = activeTab === tab.id;
               const isNextActive = index < TABS.length - 1 && activeTab === TABS[index + 1].id;
@@ -373,11 +409,11 @@ export default function DiagnosticoPage() {
                     </span>
                   </div>
 
-                  {/* Linha Conectora (Oculta no Mobile) */}
+                  {/* Linha Conectora */}
                   {index < TABS.length - 1 && (
                     <div 
                       className={`
-                        hidden md:block flex-grow h-[2px] mt-8 -mx-6 z-0 transition-colors duration-300
+                        flex-grow h-[2px] mt-8 -mx-6 z-0 transition-colors duration-300
                         ${isActive ? 'bg-gradient-to-r from-[#1973d3] to-gray-200' : ''}
                         ${isNextActive ? 'bg-gradient-to-r from-gray-200 to-[#1973d3]' : ''}
                         ${!isActive && !isNextActive ? 'bg-gray-200' : ''}
@@ -391,12 +427,12 @@ export default function DiagnosticoPage() {
           </div>
 
           {processedData ? (
-            <div className="animate-in fade-in duration-500 space-y-8">
+            <div className="animate-in fade-in duration-500 space-y-6 sm:space-y-8">
               {/* Linha 1: Status Atual e Fatores de Impacto */}
-              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-4 sm:gap-6">
                 {/* Coluna Esquerda: Acelerômetro */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[200px] md:min-w-[360px]">
-                  <span className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-4">Status Atual</span>
+                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[170px] md:min-w-[360px]">
+                  <span className="text-xs text-gray-500 uppercase tracking-widest font-bold mb-3 sm:mb-4">Status Atual</span>
                   <Acelerometro 
                     valor={processedData.valor_atual} 
                     unidade={processedData.unidade_medida || ''} 
@@ -409,8 +445,8 @@ export default function DiagnosticoPage() {
                 </div>
 
                 {/* Coluna Direita: Fatores de Impacto */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center min-h-[200px] min-w-0">
-                  <h3 className="font-bold text-gray-800 mb-5 border-b border-gray-100 pb-2">Fatores de Impacto</h3>
+                <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center min-h-[170px] min-w-0">
+                  <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2 text-sm sm:text-base">Fatores de Impacto</h3>
                   <div className="flex-1 flex flex-col justify-center w-full lg:px-4">
                     {(() => {
                       const fatores = processedData.fatores_impacto || {};
@@ -419,18 +455,18 @@ export default function DiagnosticoPage() {
                       if (fatoresKeys.length === 0) {
                         if (activeTab === 'ccs') {
                           return (
-                            <div className="flex flex-col items-center justify-center text-center space-y-4 px-2 py-4 h-full animate-in fade-in duration-300">
-                              <div className="p-3 bg-blue-50 text-[#1973d3] rounded-full flex-shrink-0 shadow-sm border border-blue-100">
-                                <Info size={28} />
+                            <div className="flex flex-col items-center justify-center text-center space-y-3 px-2 py-3 h-full animate-in fade-in duration-300">
+                              <div className="p-2.5 bg-blue-50 text-[#1973d3] rounded-full flex-shrink-0 shadow-sm border border-blue-100">
+                                <Info size={24} />
                               </div>
-                              <p className="text-sm text-gray-600 leading-relaxed">
+                              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed max-w-md">
                                 O <strong>CCS</strong> (Contagem de Células Somáticas) é um indicador direto de sanidade do rebanho e qualidade do leite. Ao contrário de outros indicadores, ele não possui ramificações de impacto, sendo tratado como uma métrica de causa raiz.
                               </p>
                             </div>
                           );
                         }
                         return (
-                          <p className="text-sm text-gray-500 italic text-center my-auto">
+                          <p className="text-xs sm:text-sm text-gray-500 italic text-center my-auto">
                             Nenhum fator de impacto detalhado para este indicador.
                           </p>
                         );
@@ -458,18 +494,18 @@ export default function DiagnosticoPage() {
               </div>
 
               {/* Linha 2: Análise Estratégica */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center">
-                <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <div className="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center">
+                <h3 className="font-bold text-gray-800 mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
                   Análise Estratégica
                 </h3>
-                <p className="text-gray-700 leading-relaxed text-sm md:text-base">
+                <p className="text-gray-700 leading-relaxed text-xs sm:text-sm md:text-base">
                   {processedData.textos_analise || "Análise estratégica em processamento."}
                 </p>
               </div>
 
               {/* Cards do Diagrama Ishikawa (Inferior) */}
               <div>
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
                   Mapeamento de Causas (Ishikawa)
                 </h2>
                 <IshikawaDiagram data={processedData.ishikawa} impactoPilares={processedData.impacto_pilares} />
@@ -483,21 +519,21 @@ export default function DiagnosticoPage() {
         </section>
 
         {/* SEÇÃO 4: CTA SIMULAÇÃO (FULL-WIDTH) */}
-        <section aria-labelledby="cta-simulacao" className="w-full mt-4">
+        <section aria-labelledby="cta-simulacao" className="w-full mt-2 sm:mt-4">
           <Link 
             href="/simulacao"
-            className="group w-full flex items-center justify-between bg-[#1973d3] hover:bg-[#003e7d] transition-colors duration-300 text-white p-6 md:p-8 rounded-xl shadow-lg border border-[#003e7d]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1973d3]"
+            className="group w-full flex items-center justify-between bg-[#1973d3] hover:bg-[#003e7d] transition-colors duration-300 text-white p-4 sm:p-6 md:p-8 rounded-xl shadow-lg border border-[#003e7d]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1973d3]"
           >
             <div className="flex flex-col text-left">
-              <h2 id="cta-simulacao" className="text-xl md:text-2xl font-bold mb-2">
+              <h2 id="cta-simulacao" className="text-base sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2">
                 Simular Cenários e Avaliar Projeções de Desempenho
               </h2>
-              <p className="text-blue-100 text-sm md:text-base">
+              <p className="text-blue-100 text-xs sm:text-sm md:text-base">
                 Acesse a ferramenta de projeção para alterar parâmetros da sua fazenda e visualizar os impactos estratégicos.
               </p>
             </div>
-            <div className="shrink-0 ml-4 bg-white/20 p-3 rounded-full group-hover:translate-x-1 transition-transform duration-300">
-              <ArrowRight size={28} className="text-white" />
+            <div className="shrink-0 ml-3 sm:ml-4 bg-white/20 p-2.5 sm:p-3 rounded-full group-hover:translate-x-1 transition-transform duration-300">
+              <ArrowRight size={22} className="text-white sm:w-7 sm:h-7" />
             </div>
           </Link>
         </section>

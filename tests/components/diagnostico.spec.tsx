@@ -115,4 +115,24 @@ describe('Feature: Hub Central de Diagnóstico', () => {
     expect(screen.getAllByText('Compost Barn').length).toBeGreaterThan(0);
     expect(screen.getByText('19.7% das fazendas da região utilizam este sistema.')).toBeInTheDocument();
   });
+
+  it('deve renderizar o carrossel de benchmarks com classes de snap e navegação por abas', async () => {
+    render(<DiagnosticoPage />);
+    
+    // Verifica presença do carrossel
+    const carousel = screen.getByTestId('benchmarks-carousel');
+    expect(carousel).toHaveClass('snap-x');
+    expect(carousel).toHaveClass('overflow-x-auto');
+
+    // Verifica abas/chips no mobile e botões do stepper
+    expect(screen.getByRole('tab', { name: /Ver indicador CCS/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Ver indicador Produção Média Diária/i })).toBeInTheDocument();
+  });
+
+  it('deve renderizar a estrutura de Accordion mobile e Grid desktop no diagrama de Ishikawa', async () => {
+    render(<DiagnosticoPage />);
+    
+    expect(screen.getByTestId('ishikawa-mobile-accordion')).toBeInTheDocument();
+    expect(screen.getByTestId('ishikawa-desktop-grid')).toBeInTheDocument();
+  });
 });

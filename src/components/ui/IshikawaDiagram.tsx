@@ -1,11 +1,7 @@
-/**
- * @file src/components/ui/IshikawaDiagram.tsx
- * @description Lógica de distribuição das categorias em layout de Grid com sistema de Modais.
- */
-
 import React, { useState } from 'react';
 import { IshikawaItem, IshikawaCategorias } from '../../types/diagnostico';
 import { CausaItem } from './CausaItem';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 /**
  * @description Objeto tipado utilizado para injetar a visão em blocos do método Ishikawa.
@@ -61,9 +57,96 @@ export const IshikawaDiagram: React.FC<IshikawaProps> = ({ data, impactoPilares 
     { id: 'material', title: 'Material', items: data?.material || [], impacto: getImpacto('material') },
   ];
 
+  // Abertura inteligente no mobile: categoria com maior impacto ou com causas críticas
+  const getInitialOpenCategory = () => {
+    let topCatId = 'mao_de_obra';
+    let maxImpact = -1;
+    for (const cat of categories) {
+      const hasCritical = cat.items.some((it: any) => {
+        const sev = (it.severidade || '').toLowerCase();
+        return sev.includes('crit') || sev.includes('alta') || sev.includes('alerta');
+      });
+      if (hasCritical) return cat.id;
+      if (cat.impacto !== undefined && cat.impacto > maxImpact) {
+        maxImpact = cat.impacto;
+        topCatId = cat.id;
+      }
+    }
+    return topCatId;
+  };
+
+  const [expandedMobileCategories, setExpandedMobileCategories] = useState<Record<string, boolean>>(() => {
+    const initial = getInitialOpenCategory();
+    return { [initial]: true };
+  });
+
+  const toggleMobileCategory = (catId: string) => {
+    setExpandedMobileCategories((prev) => ({
+      ...prev,
+      [catId]: !prev[catId],
+    }));
+  };
+
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Versão Mobile: Accordion por Pilar */}
+      <div className="block md:hidden space-y-2.5" data-testid="ishikawa-mobile-accordion">
+        {categories.map((cat) => {
+          const isExpanded = !!expandedMobileCategories[cat.id];
+          return (
+            <div key={cat.id} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
+              <button
+                type="button"
+                onClick={() => toggleMobileCategory(cat.id)}
+                className="w-full p-3.5 flex items-center justify-between bg-white hover:bg-gray-50 active:bg-gray-100 transition text-left"
+                aria-expanded={isExpanded}
+              >
+                <div className="flex items-center gap-2">
+                  {isExpanded ? (
+                    <ChevronDown size={18} className="text-primary shrink-0" />
+                  ) : (
+                    <ChevronRight size={18} className="text-gray-400 shrink-0" />
+                  )}
+                  <span className="font-bold text-sm text-primary">{cat.title}</span>
+                  {cat.impacto !== undefined && (
+                    <span className="font-bold text-primary bg-blue-50 px-1.5 py-0.5 rounded text-xs">
+                      {Number(cat.impacto).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-gray-500 font-medium shrink-0">
+                  {cat.items.length} {cat.items.length === 1 ? 'prática' : 'práticas'}
+                </span>
+              </button>
+
+              {isExpanded && (
+                <div className="p-3 bg-gray-50/50 border-t border-gray-100 space-y-1.5 animate-in fade-in duration-200">
+                  {cat.items.length > 0 ? (
+                    cat.items.map((item, idx) => (
+                      <CausaItem 
+                        key={idx} 
+                        resumo_pratica={(item as any).resumo_pratica || (item as any).causa} 
+                        pratica={item.pratica} 
+                        severidade={(item as any).severidade} 
+                        analise={(item as any).analise} 
+                        onClickCausa={(e) => {
+                          e.stopPropagation();
+                          setSelectedCategory({ category: cat, initialCauseIndex: idx });
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-gray-400 text-xs italic py-2 text-center">Nenhuma prática a ser recomendada</p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Versão Desktop: Grid 3 Colunas */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="ishikawa-desktop-grid">
         {categories.map((cat) => (
           <div 
             key={cat.id} 
