@@ -351,9 +351,9 @@ export default function DiagnosticoPage() {
 
         {/* SEÇÃO 3: DIAGNÓSTICO DETALHADO (ISHIKAWA) */}
         <section id="diagnostico" className="mt-2 sm:mt-4 flex flex-col gap-4 sm:gap-6">
-          {/* Navegação Mobile: Chips / Tabs Deslizáveis */}
-          <div className="md:hidden w-full overflow-x-auto -mx-4 px-4 sm:-mx-6 sm:px-6 pb-2 scrollbar-none">
-            <div className="flex items-center gap-2 min-w-max" role="tablist">
+          {/* Navegação Mobile: Chips / Tabs Deslizáveis Centralizadas */}
+          <div className="md:hidden w-full overflow-x-auto pb-2 scrollbar-none flex justify-center">
+            <div className="flex items-center justify-center gap-2 min-w-max mx-auto px-1" role="tablist">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
