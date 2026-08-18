@@ -7,7 +7,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useFazendaStore } from '@/store/useFazendaStore';
@@ -192,6 +192,20 @@ export default function DiagnosticoPage() {
   const { dadosFazenda, diagnosticoIA } = useFazendaStore();
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState(TABS[0].id);
+  const activeTabRef = useRef<HTMLButtonElement | null>(null);
+
+  /**
+   * @description Auto-scroll suave para manter o indicador ativo centralizado no mobile.
+   */
+  useEffect(() => {
+    if (activeTabRef.current) {
+      activeTabRef.current.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+    }
+  }, [activeTab]);
 
   /**
    * @description Efeito colateral disparado na montagem do componente no cliente.
@@ -361,17 +375,18 @@ export default function DiagnosticoPage() {
         {/* SEÇÃO 3: DIAGNÓSTICO DETALHADO (ISHIKAWA) */}
         <section id="diagnostico" className="mt-2 sm:mt-4 flex flex-col gap-4 sm:gap-6">
           {/* Navegação Mobile: Chips / Tabs Deslizáveis */}
-          <div className="md:hidden w-full overflow-x-auto pb-2 scrollbar-none">
-            <div className="flex items-center gap-2 min-w-max px-4" role="tablist">
+          <div className="md:hidden -mx-4 px-4 overflow-x-auto pb-2 scrollbar-none snap-x snap-proximity">
+            <div className="flex items-center gap-2 min-w-max pr-4" role="tablist">
               {TABS.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
+                    ref={isActive ? activeTabRef : null}
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap min-h-[38px] flex items-center gap-1.5 shadow-sm active:scale-95 shrink-0 ${
+                    className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap min-h-[38px] flex items-center gap-1.5 shadow-sm active:scale-95 shrink-0 snap-center ${
                       isActive
                         ? 'bg-[#1973d3] text-white border border-[#003e7d]'
                         : 'bg-white text-gray-700 border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
