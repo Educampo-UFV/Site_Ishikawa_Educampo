@@ -67,24 +67,24 @@ const getStatusUI = (status?: StatusComparacao | string) => {
     case 'positivo':
       return {
         bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200',
-        icon: <TrendingUp size={24} className="text-green-600" />
+        icon: <TrendingUp className="w-4 h-4 text-green-600 shrink-0" />
       };
     case 'negativo':
       return {
         bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200',
-        icon: <TrendingDown size={24} className="text-red-600" />
+        icon: <TrendingDown className="w-4 h-4 text-red-600 shrink-0" />
       };
     case 'alerta':
     case 'critico':
       return {
         bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200',
-        icon: <AlertTriangle size={24} className="text-amber-600" />
+        icon: <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
       };
     case 'neutro':
     default:
       return {
         bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200',
-        icon: <Minus size={24} className="text-gray-600" />
+        icon: <Minus className="w-4 h-4 text-gray-600 shrink-0" />
       };
   }
 };
@@ -121,8 +121,8 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
           className="bg-white p-3.5 sm:p-5 rounded-xl border border-gray-100 flex flex-col justify-between w-full min-h-[120px] sm:min-h-[135px]"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <div className="flex items-center justify-between gap-1.5 mb-2.5 sm:mb-3">
-            <p className="text-[11px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wider whitespace-nowrap">{card.titulo}</p>
+          <div className="flex items-center justify-between gap-2 mb-2.5 sm:mb-3 min-w-0">
+            <p className="text-[11px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wider truncate min-w-0">{card.titulo}</p>
             <div className="flex items-center gap-1.5 shrink-0">
               {isComparativo && ui.icon}
               <div className="flex items-center gap-0.5 text-[10px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 md:hidden">
@@ -315,7 +315,7 @@ export default function DiagnosticoPage() {
             {benchmarks.length > 0 ? (
               <>
                 {benchmarks.map((card, index) => (
-                  <div key={index} className="w-[260px] sm:w-[270px] md:w-auto shrink-0 md:shrink snap-start">
+                  <div key={index} className="w-[290px] sm:w-[305px] md:w-auto shrink-0 md:shrink snap-start">
                     <BenchmarkingCard card={card} />
                   </div>
                 ))}
