@@ -70,7 +70,7 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
 
     // Act - Preenche campos com senha fraca (menos de 6 chars)
     fireEvent.change(screen.getByLabelText(/E-mail do Produtor/i), { target: { value: 'teste@fazenda.com' } });
-    fireEvent.change(screen.getByLabelText(/Senha/i), { target: { value: '123' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: '123' } });
     fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Teste' } });
     fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
     fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
@@ -113,7 +113,7 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
 
     // Act
     fireEvent.change(screen.getByLabelText(/E-mail do Produtor/i), { target: { value: 'novo.produtor@fazenda.com.br' } });
-    fireEvent.change(screen.getByLabelText(/Senha/i), { target: { value: 'senhaSegura123' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: 'senhaSegura123' } });
     fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Santa Maria' } });
     fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
     fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
@@ -167,7 +167,7 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
 
     // Act
     fireEvent.change(screen.getByLabelText(/E-mail do Produtor/i), { target: { value: 'consultor@educampo.com' } });
-    fireEvent.change(screen.getByLabelText(/Senha/i), { target: { value: 'senhaSegura123' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: 'senhaSegura123' } });
     fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Duplicada' } });
     fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
     fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });

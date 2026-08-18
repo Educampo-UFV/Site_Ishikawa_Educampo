@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { FazendasCadastradasGrid } from '@/components/FazendasCadastradasGrid';
 import { CadastrarFazendaSection } from '@/components/CadastrarFazendaSection';
 import userEvent from '@testing-library/user-event';
@@ -118,6 +118,37 @@ describe('Responsividade Mobile e Tablet: /formulario', () => {
 
       expect(btnSubmit.className).toContain('min-h-[42px]');
       expect(btnCancelar.className).toContain('min-h-[42px]');
+    });
+
+    it('deve renderizar os campos de Senha e Confirmar Senha em duplas e validar correspondência', async () => {
+      // Arrange
+      const user = userEvent.setup();
+      render(
+        <CadastrarFazendaSection
+          sistemasDisponiveis={[{ value: 'compost_barn', label: 'Compost Barn' }]}
+          regioesDisponiveis={[{ value: 'triangulo', label: 'Triângulo Mineiro' }]}
+        />
+      );
+
+      // Act
+      const toggleBtn = screen.getByTestId('toggle-cadastrar-fazenda-btn');
+      await user.click(toggleBtn);
+
+      const inputSenha = screen.getByLabelText(/^Senha \*/i);
+      const inputConfirmar = screen.getByLabelText(/Confirmar Senha/i);
+
+      expect(inputSenha).toBeInTheDocument();
+      expect(inputConfirmar).toBeInTheDocument();
+
+      // Preenche senhas divergentes
+      await user.type(inputSenha, 'senha123');
+      await user.type(inputConfirmar, 'senhaDiferente');
+
+      const form = screen.getByTestId('cadastrar-fazenda-form');
+      fireEvent.submit(form);
+
+      // Assert
+      expect(screen.getByText('As senhas não conferem')).toBeInTheDocument();
     });
   });
 });

@@ -36,7 +36,7 @@ function getOptionLabel(item: SistemaProducaoItem | RegiaoSebraeItem): string {
 
 interface FormInputProps {
   id: string;
-  name: keyof CadastrarFazendaFormData;
+  name: string;
   label: string;
   type?: string;
   inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
@@ -166,6 +166,7 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [formData, setFormData] = useState<CadastrarFazendaFormData>(INITIAL_STATE);
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -192,6 +193,11 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
     setFieldErrors({});
     setSubmitError(null);
     setSuccessMessage(null);
+
+    if (confirmarSenha && formData.senha && confirmarSenha !== formData.senha) {
+      setFieldErrors({ confirmar_senha: 'As senhas não conferem' });
+      return;
+    }
 
     const validacao = cadastrarFazendaSchema.safeParse(formData);
 
@@ -223,6 +229,7 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
           onCadastrarEDiagnosticar(validacao.data);
         } else {
           setFormData(INITIAL_STATE);
+          setConfirmarSenha('');
           setIsExpanded(false);
         }
       } else {
@@ -301,18 +308,6 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
               />
 
               <FormInput
-                id="cad_senha"
-                name="senha"
-                type="password"
-                label="Senha (mínimo 6 caracteres) *"
-                value={formData.senha}
-                error={fieldErrors.senha}
-                placeholder="******"
-                className="col-span-2"
-                onChange={handleChange}
-              />
-
-              <FormInput
                 id="cad_nome_fazenda"
                 name="nome_fazenda"
                 type="text"
@@ -322,6 +317,34 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 placeholder="ex: Fazenda Santa Maria"
                 className="col-span-2"
                 onChange={handleChange}
+              />
+
+              <FormInput
+                id="cad_senha"
+                name="senha"
+                type="password"
+                label="Senha *"
+                value={formData.senha}
+                error={fieldErrors.senha}
+                placeholder="******"
+                className="col-span-1"
+                onChange={handleChange}
+              />
+
+              <FormInput
+                id="cad_confirmar_senha"
+                name="confirmar_senha"
+                type="password"
+                label="Confirmar Senha"
+                value={confirmarSenha}
+                error={fieldErrors.confirmar_senha}
+                placeholder="******"
+                required={false}
+                className="col-span-1"
+                onChange={(e) => {
+                  setConfirmarSenha(e.target.value);
+                  setFieldErrors((prev) => ({ ...prev, confirmar_senha: '' }));
+                }}
               />
 
               <FormSelect

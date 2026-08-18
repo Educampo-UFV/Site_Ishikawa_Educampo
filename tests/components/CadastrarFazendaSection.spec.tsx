@@ -41,7 +41,7 @@ describe('CadastrarFazendaSection Component - Error Handling', () => {
 
     // Preencher formulário válido
     fireEvent.change(screen.getByLabelText(/E-mail do Produtor/i), { target: { value: 'produtor.existente@fazenda.com.br' } });
-    fireEvent.change(screen.getByLabelText(/Senha/i), { target: { value: '123456' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: '123456' } });
     fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Teste' } });
     fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost_barn' } });
     fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
@@ -93,7 +93,7 @@ describe('CadastrarFazendaSection Component - Error Handling', () => {
 
     // Preencher dados
     fireEvent.change(screen.getByLabelText(/E-mail do Produtor/i), { target: { value: 'novo.produtor@fazenda.com.br' } });
-    fireEvent.change(screen.getByLabelText(/Senha/i), { target: { value: '123456' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: '123456' } });
     fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Teste' } });
     fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost_barn' } });
     fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
