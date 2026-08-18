@@ -12,16 +12,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '@/components/ui/Navbar';
 import { useFazendaStore } from '@/store/useFazendaStore';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Minus, 
-  Loader2, 
-  RotateCcw, 
-  ChevronDown, 
-  Lightbulb, 
-  SlidersHorizontal, 
-  X 
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Loader2,
+  RotateCcw,
+  ChevronDown,
+  Lightbulb,
+  SlidersHorizontal,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { formatSidebarNumber } from '@/lib/formatters';
@@ -885,14 +885,14 @@ export default function SimulacaoPage() {
       {isMobileDrawerOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end" data-testid="mobile-drawer-modal">
           {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMobileDrawerOpen(false)}
             aria-hidden="true"
           />
 
           {/* Container do Drawer */}
-          <div 
+          <div
             className="relative z-50 bg-white rounded-t-2xl shadow-2xl max-h-[88vh] flex flex-col w-full border-t border-gray-200 animate-in slide-in-from-bottom duration-300"
             role="dialog"
             aria-modal="true"
@@ -940,7 +940,7 @@ export default function SimulacaoPage() {
                 onClick={() => setIsMobileDrawerOpen(false)}
                 className="w-full py-3 bg-primary hover:bg-[#003e7d] text-white font-bold text-sm rounded-xl shadow-md transition-all active:scale-[0.99] text-center"
               >
-                Aplicar e Ver Gráficos
+                Concluir
               </button>
             </div>
           </div>
