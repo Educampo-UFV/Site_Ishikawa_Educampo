@@ -309,7 +309,7 @@ export default function DiagnosticoPage() {
           </div>
           
           <div 
-            className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 pt-1 -mx-4 px-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0 scrollbar-none"
+            className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 pt-1 scrollbar-none"
             data-testid="benchmarks-carousel"
           >
             {benchmarks.length > 0 ? (
@@ -320,7 +320,7 @@ export default function DiagnosticoPage() {
                   </div>
                 ))}
                 {/* Espaçador para margem à direita no mobile ao final do scroll */}
-                <div className="w-1.5 shrink-0 md:hidden" aria-hidden="true" />
+                <div className="w-2 shrink-0 md:hidden" aria-hidden="true" />
               </>
             ) : (
               <p className="text-gray-500 italic md:col-span-3">Carregando dados de benchmarking...</p>
