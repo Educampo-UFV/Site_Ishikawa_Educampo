@@ -327,11 +327,11 @@ export default function AjustesPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
 
-            {/* Bloco 1: Estrutura e Rebanho */}
+            {/* Bloco 1: Informações Gerais */}
             <section className="bg-gray-50 p-3.5 sm:p-5 md:p-6 rounded-xl border border-gray-200">
               <h2 className="text-base sm:text-lg font-bold text-primary mb-3 sm:mb-4 flex items-center gap-2">
                 <span className="bg-primary text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">1</span>
-                Estrutura e Rebanho
+                Informações Gerais
               </h2>
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div className="col-span-2">
@@ -389,6 +389,16 @@ export default function AjustesPage() {
                     })}
                   </select>
                 </div>
+              </div>
+            </section>
+
+            {/* Bloco 2: Estrutura e Rebanho */}
+            <section className="bg-gray-50 p-3.5 sm:p-5 md:p-6 rounded-xl border border-gray-200">
+              <h2 className="text-base sm:text-lg font-bold text-primary mb-3 sm:mb-4 flex items-center gap-2">
+                <span className="bg-primary text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">2</span>
+                Estrutura e Rebanho
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <CampoNumericoAjuste id="total_vacas" label="Total de Vacas" dica="Todo o rebanho leiteiro" value={formData.total_vacas || ''} onChange={handleChange} className="col-span-1" />
                 <CampoNumericoAjuste id="percentual_lactacao" label="Perc. em Lactação" unidade="%" dica="Percentual do rebanho de vacas que estão em lactação atualmente." value={formData.percentual_lactacao || ''} onChange={handleChange} className="col-span-1" />
                 <CampoNumericoAjuste id="animais_rebanho" label="Total no Rebanho" dica="Inclui vacas secas, novilhas, bezerras, etc." value={formData.animais_rebanho || ''} onChange={handleChange} className="col-span-1" />
@@ -397,11 +407,11 @@ export default function AjustesPage() {
               </div>
             </section>
 
-            {/* Bloco 2: Produção e Mercado */}
+            {/* Bloco 3: Produção e Qualidade */}
             <section className="bg-gray-50 p-3.5 sm:p-5 md:p-6 rounded-xl border border-gray-200">
               <h2 className="text-base sm:text-lg font-bold text-primary mb-3 sm:mb-4 flex items-center gap-2">
-                <span className="bg-primary text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">2</span>
-                Produção e Mercado
+                <span className="bg-primary text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">3</span>
+                Produção e Qualidade
               </h2>
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <CampoNumericoAjuste id="producao_vaca" label="Prod. por Vaca" unidade="L/dia" value={formData.producao_vaca || ''} onChange={handleChange} className="col-span-1" />
