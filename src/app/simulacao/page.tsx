@@ -794,7 +794,7 @@ export default function SimulacaoPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col relative">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 md:px-6 py-5 sm:py-8 flex flex-col lg:flex-row gap-6 sm:gap-8">
+      <main className="flex-1 w-full px-3 sm:px-4 md:px-5 lg:px-6 py-4 sm:py-6 flex flex-col lg:flex-row gap-5 sm:gap-6">
 
         {/* PAINEL ESQUERDO: CONTROLES (EXCLUSIVO DESKTOP) */}
         <aside className="hidden lg:flex lg:w-96 flex-shrink-0 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex-col h-[85vh] sticky top-8 z-10">
@@ -845,7 +845,7 @@ export default function SimulacaoPage() {
           </div>
 
           {isSimulando && !resultadoSimulacao?.simulacao ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5 animate-in fade-in duration-500">
               {Array.from({ length: 9 }).map((_, index) => (
                 <div key={index} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col h-28 items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 bg-gray-50 opacity-50"></div>
@@ -855,7 +855,7 @@ export default function SimulacaoPage() {
               ))}
             </div>
           ) : resultadoSimulacao?.simulacao ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-5 animate-in fade-in duration-500">
               {renderMetricCards([
                 ...resultadoSimulacao.simulacao.estaticas,
                 ...resultadoSimulacao.simulacao.operacionais,

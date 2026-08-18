@@ -58,7 +58,7 @@ export function Navbar() {
 
   return (
     <header className="relative z-50 bg-transparent w-full">
-      <div className="max-w-7xl mx-auto px-6 relative">
+      <div className={`mx-auto relative ${pathname === '/simulacao' ? 'w-full max-w-none px-4 sm:px-6' : 'max-w-7xl px-6'}`}>
         
         {/* Barra Superior */}
         <div className="flex items-center justify-between py-4">
