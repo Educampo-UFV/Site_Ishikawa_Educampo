@@ -12,7 +12,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '@/components/ui/Navbar';
 import { useFazendaStore } from '@/store/useFazendaStore';
-import { TrendingUp, TrendingDown, Minus, Loader2, RotateCcw, ChevronDown, Lightbulb } from 'lucide-react';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Minus, 
+  Loader2, 
+  RotateCcw, 
+  ChevronDown, 
+  Lightbulb, 
+  SlidersHorizontal, 
+  X 
+} from 'lucide-react';
 import Link from 'next/link';
 import { formatSidebarNumber } from '@/lib/formatters';
 import { TooltipContextual } from '@/components/ui/TooltipContextual';
@@ -189,6 +199,7 @@ export default function SimulacaoPage() {
    */
   const [isMercadoOpen, setIsMercadoOpen] = useState(true);
   const [isTecnicoOpen, setIsTecnicoOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -659,6 +670,74 @@ export default function SimulacaoPage() {
 
 
   /**
+   * @description Renderiza o conteúdo do painel de variáveis (grupos expansíveis e sliders),
+   * compartilhado entre o painel lateral desktop e o bottom sheet mobile.
+   */
+  const renderControlesContent = () => (
+    <div className="space-y-3 sm:space-y-4 flex-1 overflow-y-auto pr-1 sm:pr-2 custom-scrollbar pb-4">
+      {/* GRUPO 1: Mercado & Escala */}
+      <div className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm">
+        <button
+          type="button"
+          onClick={() => setIsMercadoOpen(!isMercadoOpen)}
+          className="w-full flex justify-between items-center p-3.5 bg-gray-50/80 hover:bg-gray-100 transition-colors text-sm font-bold text-gray-800"
+          aria-expanded={isMercadoOpen}
+        >
+          <span>Mercado &amp; Escala</span>
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isMercadoOpen ? 'rotate-180' : ''}`} />
+        </button>
+        <div className={`grid transition-all duration-300 ease-in-out ${isMercadoOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+          <div className="overflow-hidden">
+            <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
+              {/* Controle: Quantidade de Vacas */}
+              {renderControl('total_vacas', 'Quantidade de Vacas', (v) => `${formatSidebarNumber(v)} vacas`)}
+
+              {/* Controle: Preço do Leite */}
+              {renderControl('preco_recebido', 'Preço do Leite', (v) => `R$ ${formatSidebarNumber(v, 2, 2)}`)}
+
+              {/* Controle: Custo do Concentrado */}
+              {renderControl('custo_concentrado', 'Preço Concentrado', (v) => `R$ ${formatSidebarNumber(v, 2, 2)}`)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* GRUPO 2: Ajustes Técnicos Finos */}
+      <div className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm mt-3 sm:mt-4">
+        <button
+          type="button"
+          onClick={() => setIsTecnicoOpen(!isTecnicoOpen)}
+          className="w-full flex justify-between items-center p-3.5 bg-gray-50/80 hover:bg-gray-100 transition-colors text-sm font-bold text-gray-800"
+          aria-expanded={isTecnicoOpen}
+        >
+          <span>Ajustes Técnicos Finos</span>
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isTecnicoOpen ? 'rotate-180' : ''}`} />
+        </button>
+        <div className={`grid transition-all duration-300 ease-in-out ${isTecnicoOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+          <div className="overflow-hidden">
+            <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
+              {/* Controle: Percentual de Lactação */}
+              {renderControl('percentual_lactacao', 'Percentual em Lactação', (v) => `${formatSidebarNumber(v)} %`)}
+
+              {/* Controle: Produção por Vaca */}
+              {renderControl('producao_vaca', 'Produção por vaca', (v) => `${formatSidebarNumber(v)} L/dia`)}
+
+              {/* Controle: Número de Trabalhadores */}
+              {renderControl('numero_trabalhadores', 'Total de Trabalhadores', (v) => `${formatSidebarNumber(v)} pessoas`)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {tempoBloqueio > 0 && (
+        <div className="w-full py-3 mt-4 rounded-xl font-bold text-center text-white bg-gray-400 transition-all shadow-sm text-sm">
+          Limitar taxa: Aguarde {tempoBloqueio}s
+        </div>
+      )}
+    </div>
+  );
+
+  /**
    * @description Função genérica para renderizar as sessões de gráficos.
    * Alimenta os gráficos comparativos diretamente da resposta do BFF.
    */
@@ -672,7 +751,7 @@ export default function SimulacaoPage() {
       const inverter = item.direcao_otimizacao === 'menor_melhor';
 
       return (
-        <div key={item.metrica} className="relative h-full">
+        <div key={item.metrica} className="relative h-full w-full">
           {isSimulando && (
             <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center">
               <Loader2 className="w-10 h-10 text-primary animate-spin" />
@@ -701,10 +780,10 @@ export default function SimulacaoPage() {
 
   if (!dadosFazenda) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-8">
-        <div className="text-center text-red-500 font-bold text-2xl mb-4">Nenhum dado encontrado.</div>
-        <p className="text-gray-600 mb-8 text-center max-w-md">Por favor, preencha o formulário inicial para gerar um diagnóstico antes de tentar simular cenários.</p>
-        <Link href="/formulario" className="bg-primary hover:bg-[#003e7d] text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-200">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6 sm:p-8 text-center">
+        <div className="text-red-500 font-bold text-xl sm:text-2xl mb-3 sm:mb-4">Nenhum dado encontrado.</div>
+        <p className="text-gray-600 mb-6 sm:mb-8 max-w-md text-sm sm:text-base">Por favor, preencha o formulário inicial para gerar um diagnóstico antes de tentar simular cenários.</p>
+        <Link href="/formulario" className="bg-primary hover:bg-[#003e7d] text-white font-bold py-3 px-6 sm:px-8 rounded-lg shadow-md transition duration-200 text-sm sm:text-base">
           Ir para Coleta de Dados
         </Link>
       </div>
@@ -712,14 +791,13 @@ export default function SimulacaoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col relative">
       <Navbar />
 
-      <main className="flex-1 max-w-[95%] w-full mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 md:px-6 py-5 sm:py-8 flex flex-col lg:flex-row gap-6 sm:gap-8">
 
-        {/* PAINEL ESQUERDO: CONTROLES (Inputs & Sliders) */}
-        {/* Fix: h-[calc(100vh-6rem)] trava a altura do painel para habilitar o scroll interno do flex-1 */}
-        <aside className="w-full lg:w-96 flex-shrink-0 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex flex-col h-[85vh] sticky top-8">
+        {/* PAINEL ESQUERDO: CONTROLES (EXCLUSIVO DESKTOP) */}
+        <aside className="hidden lg:flex lg:w-96 flex-shrink-0 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 flex-col h-[85vh] sticky top-8 z-10">
           <div className="mb-6 flex justify-between items-start">
             <div>
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -728,100 +806,34 @@ export default function SimulacaoPage() {
               <p className="text-xs text-gray-500 mt-1">Ajustes de Mercado &amp; Eficiência</p>
             </div>
             <button
+              type="button"
               onClick={restaurarValoresOriginais}
               className="p-2 text-gray-400 hover:text-primary hover:bg-blue-50 rounded-full transition-colors"
               title="Restaurar valores originais"
+              aria-label="Restaurar valores originais"
             >
               <RotateCcw size={20} />
             </button>
           </div>
 
-          <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar pb-4">
-
-            {/* GRUPO 1: Mercado & Escala */}
-            <div className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm">
-              <button
-                onClick={() => setIsMercadoOpen(!isMercadoOpen)}
-                className="w-full flex justify-between items-center p-3.5 bg-gray-50/80 hover:bg-gray-100 transition-colors text-sm font-bold text-gray-800"
-                aria-expanded={isMercadoOpen}
-              >
-                <span>Mercado &amp; Escala</span>
-                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isMercadoOpen ? 'rotate-180' : ''}`} />
-              </button>
-              <div className={`grid transition-all duration-300 ease-in-out ${isMercadoOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                <div className="overflow-hidden">
-                  <div className="p-4 space-y-6">
-
-                    {/* Controle: Quantidade de Vacas */}
-                    {renderControl('total_vacas', 'Quantidade de Vacas', (v) => `${formatSidebarNumber(v)} vacas`)}
-
-                    {/* Controle: Preço do Leite */}
-                    {renderControl('preco_recebido', 'Preço do Leite', (v) => `R$ ${formatSidebarNumber(v, 2, 2)}`)}
-
-                    {/* Controle: Custo do Concentrado */}
-                    {renderControl('custo_concentrado', 'Preço Concentrado', (v) => `R$ ${formatSidebarNumber(v, 2, 2)}`)}
-
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* GRUPO 2: Ajustes Técnicos Finos */}
-            <div className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-sm mt-4">
-              <button
-                onClick={() => setIsTecnicoOpen(!isTecnicoOpen)}
-                className="w-full flex justify-between items-center p-3.5 bg-gray-50/80 hover:bg-gray-100 transition-colors text-sm font-bold text-gray-800"
-                aria-expanded={isTecnicoOpen}
-              >
-                <span>Ajustes Técnicos Finos</span>
-                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isTecnicoOpen ? 'rotate-180' : ''}`} />
-              </button>
-              <div className={`grid transition-all duration-300 ease-in-out ${isTecnicoOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                <div className="overflow-hidden">
-                  <div className="p-4 space-y-6">
-
-                    {/* Controle: Percentual de Lactação */}
-                    {renderControl('percentual_lactacao', 'Percentual em Lactação', (v) => `${formatSidebarNumber(v)} %`)}
-
-                    {/* Controle: CCS (Ocultado temporariamente) */}
-                    {/* {renderControl('ccs', 'CCS', (v) => `${formatSidebarNumber(v)} mil céls/mL`, true)} */}
-
-                    {/* Controle: Produção por Vaca */}
-                    {renderControl('producao_vaca', 'Produção por vaca', (v) => `${formatSidebarNumber(v)} L/dia`)}
-
-                    {/* Controle: Área de Atividade (Ocultado temporariamente) */}
-                    {/* {renderControl('area_atividade', 'Área de atividade', (v) => `${formatSidebarNumber(v)} hectares`)} */}
-
-                    {/* Controle: Número de Trabalhadores */}
-                    {renderControl('numero_trabalhadores', 'Total de Trabalhadores', (v) => `${formatSidebarNumber(v)} pessoas`)}
-
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {tempoBloqueio > 0 && (
-              <div className="w-full py-3 mt-4 rounded-xl font-bold text-center text-white bg-gray-400 transition-all shadow-sm">
-                Limitar taxa: Aguarde {tempoBloqueio}s
-              </div>
-            )}
-          </div>
+          {renderControlesContent()}
         </aside>
 
         {/* PAINEL DIREITO: TABS E GRÁFICOS */}
-        <section className="flex-1 flex flex-col">
+        <section className="flex-1 flex flex-col min-w-0">
 
           {/* Topo: Bloco de Controle de Cenário (Card Unificado) */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6 flex flex-col items-center w-full">
-            <h3 className="text-gray-800 font-bold text-lg text-center">Perfil de desempenho</h3>
-            <p className="text-gray-500 text-sm text-center mb-4">Selecione o perfil de desempenho que deseja alcançar</p>
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5 mb-4 sm:mb-6 flex flex-col items-center w-full">
+            <h3 className="text-gray-800 font-bold text-base sm:text-lg text-center">Perfil de desempenho</h3>
+            <p className="text-gray-500 text-xs sm:text-sm text-center mb-3 sm:mb-4">Selecione o perfil de desempenho que deseja alcançar</p>
 
-            <div className="bg-gray-50 border border-gray-100/50 rounded-2xl p-1.5 flex gap-1">
+            <div className="bg-gray-50 border border-gray-100/50 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 flex gap-1 w-full max-w-sm sm:max-w-md justify-center">
               {(['inferior', 'intermediario', 'superior'] as const).map(cenario => (
                 <button
                   key={cenario}
+                  type="button"
                   onClick={() => setCenarioAtivo(cenario)}
-                  className={`px-6 py-2 rounded-xl text-sm font-bold capitalize transition-all duration-300 ${cenarioAtivo === cenario
+                  className={`flex-1 min-h-[38px] px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold capitalize transition-all duration-300 ${cenarioAtivo === cenario
                     ? 'bg-primary text-white shadow-md'
                     : 'text-gray-500 hover:bg-gray-200'
                     }`}
@@ -833,17 +845,17 @@ export default function SimulacaoPage() {
           </div>
 
           {isSimulando && !resultadoSimulacao?.simulacao ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 animate-in fade-in duration-500">
               {Array.from({ length: 9 }).map((_, index) => (
-                <div key={index} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col h-20 items-center justify-center relative overflow-hidden">
+                <div key={index} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col h-28 items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 bg-gray-50 opacity-50"></div>
-                  <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                  <span className="text-sm font-bold text-gray-400">Projetando cenários...</span>
+                  <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+                  <span className="text-xs font-bold text-gray-400">Projetando cenários...</span>
                 </div>
               ))}
             </div>
           ) : resultadoSimulacao?.simulacao ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 animate-in fade-in duration-500">
               {renderMetricCards([
                 ...resultadoSimulacao.simulacao.estaticas,
                 ...resultadoSimulacao.simulacao.operacionais,
@@ -851,11 +863,89 @@ export default function SimulacaoPage() {
               ])}
             </div>
           ) : (
-            <div className="flex justify-center items-center h-56 text-gray-400">Aguardando dados...</div>
+            <div className="flex justify-center items-center h-56 text-gray-400 text-sm">Aguardando dados...</div>
           )}
         </section>
 
       </main>
+
+      {/* Botão Flutuante (FAB) Mobile / Tablet */}
+      <button
+        type="button"
+        onClick={() => setIsMobileDrawerOpen(true)}
+        className="fixed bottom-5 right-5 z-40 lg:hidden flex items-center gap-2 bg-primary hover:bg-[#003e7d] text-white px-4 py-3 rounded-full shadow-2xl active:scale-95 transition-all duration-200 border border-white/20 font-bold text-xs sm:text-sm"
+        aria-label="Ajustar variáveis de simulação"
+        data-testid="fab-ajustar-variaveis"
+      >
+        <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+        <span>Ajustar Variáveis</span>
+      </button>
+
+      {/* Drawer / Bottom Sheet Mobile */}
+      {isMobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end" data-testid="mobile-drawer-modal">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+            onClick={() => setIsMobileDrawerOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Container do Drawer */}
+          <div 
+            className="relative z-50 bg-white rounded-t-2xl shadow-2xl max-h-[88vh] flex flex-col w-full border-t border-gray-200 animate-in slide-in-from-bottom duration-300"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Variáveis de Simulação"
+          >
+            {/* Cabeçalho do Drawer */}
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white rounded-t-2xl">
+              <div>
+                <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" /> Variáveis de Simulação
+                </h2>
+                <p className="text-xs text-gray-500">Ajustes de Mercado &amp; Eficiência</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={restaurarValoresOriginais}
+                  className="p-2 text-gray-400 hover:text-primary hover:bg-blue-50 rounded-full transition-colors"
+                  title="Restaurar valores originais"
+                  aria-label="Restaurar valores originais"
+                >
+                  <RotateCcw size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(false)}
+                  className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Fechar painel"
+                  aria-label="Fechar painel"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Conteúdo com Scroll */}
+            <div className="p-4 overflow-y-auto flex-1 bg-gray-50/50">
+              {renderControlesContent()}
+            </div>
+
+            {/* Rodapé Fixo */}
+            <div className="p-3.5 sm:p-4 border-t border-gray-200 bg-white">
+              <button
+                type="button"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="w-full py-3 bg-primary hover:bg-[#003e7d] text-white font-bold text-sm rounded-xl shadow-md transition-all active:scale-[0.99] text-center"
+              >
+                Aplicar e Ver Gráficos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

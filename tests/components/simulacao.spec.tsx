@@ -201,4 +201,27 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
 
     abortSpy.mockRestore();
   });
+
+  it('Deve renderizar o botão flutuante (FAB) mobile e abrir o drawer/bottom sheet de variáveis ao clicar', () => {
+    render(<SimulacaoPage />);
+
+    const fabButton = screen.getByTestId('fab-ajustar-variaveis');
+    expect(fabButton).toBeInTheDocument();
+    expect(fabButton).toHaveTextContent(/Ajustar Variáveis/i);
+
+    // O Drawer inicia fechado
+    expect(screen.queryByTestId('mobile-drawer-modal')).not.toBeInTheDocument();
+
+    // Clica no FAB para abrir o Drawer
+    fireEvent.click(fabButton);
+
+    const drawer = screen.getByTestId('mobile-drawer-modal');
+    expect(drawer).toBeInTheDocument();
+
+    // Fecha o Drawer ao clicar em "Aplicar e Ver Gráficos"
+    const btnAplicar = screen.getByRole('button', { name: /Aplicar e Ver Gráficos/i });
+    fireEvent.click(btnAplicar);
+
+    expect(screen.queryByTestId('mobile-drawer-modal')).not.toBeInTheDocument();
+  });
 });
