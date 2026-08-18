@@ -289,25 +289,26 @@ export default function FormularioPage() {
   const fazendasCadastradas = opcoes?.fazendas_cadastradas ?? [];
 
   return (
-    <div className="min-h-screen bg-fundo-alt pb-12">
+    <div className="min-h-screen bg-fundo-alt pb-8 sm:pb-12">
       {/* Cabeçalho */}
-      <header>
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-gray-100 bg-white/50 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
           <Image
             src="/banner_educampo.png"
             alt="Educampo Logo"
-            width={180}
-            height={50}
-            className="object-contain"
+            width={160}
+            height={45}
+            className="object-contain w-32 sm:w-44 h-auto"
             priority
-            style={{ width: '180px', height: 'auto' }}
           />
-          <h1 className="text-xl font-semibold text-primary">Diagnóstico de Fazenda</h1>
+          <h1 className="text-base sm:text-xl font-semibold text-primary text-right">
+            Diagnóstico de Fazenda
+          </h1>
         </div>
       </header>
 
       {/* Container Principal */}
-      <main className="max-w-4xl mx-auto px-4 mt-8">
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 mt-5 sm:mt-8">
 
         {/* Banner de Erro de Conexão com a API */}
         {isErrorApi && (

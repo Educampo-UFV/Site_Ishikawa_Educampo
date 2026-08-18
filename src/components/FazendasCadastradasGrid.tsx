@@ -38,30 +38,35 @@ const FazendaCard: React.FC<FazendaCardProps> = ({
   const isDisabled = isLoadingThis || isLoadingGlobal;
 
   return (
-    <div className="bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between">
+    <div
+      className="bg-white rounded-xl p-3.5 sm:p-4 md:p-5 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all flex flex-col justify-between"
+      data-testid="fazenda-card"
+    >
       <div>
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-bold text-gray-800 text-base line-clamp-2">{nome}</h3>
-          <span className="text-xs font-semibold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full shrink-0">
+        <div className="flex items-center justify-between gap-2 mb-1.5">
+          <h3 className="font-bold text-gray-800 text-sm sm:text-base line-clamp-1 sm:line-clamp-2" title={nome}>
+            {nome}
+          </h3>
+          <span className="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full shrink-0">
             Cadastrada
           </span>
         </div>
-        {email && <p className="text-xs text-gray-500 mb-3 truncate">{email}</p>}
+        {email && <p className="text-xs text-gray-500 mb-2 sm:mb-3 truncate">{email}</p>}
 
         {erro && (
-          <div className="my-3 p-2 bg-red-50 text-red-600 text-xs rounded border border-red-200 flex items-center gap-1.5">
+          <div className="my-2 sm:my-3 p-2 bg-red-50 text-red-600 text-xs rounded border border-red-200 flex items-center gap-1.5">
             <AlertCircle size={14} className="shrink-0" />
             <span>{erro}</span>
           </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-gray-100">
+      <div className="flex flex-col gap-2 mt-3 pt-2.5 sm:mt-4 sm:pt-3 border-t border-gray-100">
         <button
           type="button"
           onClick={() => onDiagnostico(nome)}
           disabled={isDisabled}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold text-sm py-2 px-3 rounded-lg shadow-sm transition-colors"
+          className="w-full min-h-[42px] sm:min-h-[44px] flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold text-sm py-2.5 px-3 rounded-lg shadow-sm transition-colors active:scale-[0.99]"
           aria-label={`Iniciar Diagnóstico para ${nome}`}
         >
           {isLoadingThis ? (
@@ -116,15 +121,15 @@ export const FazendasCadastradasGrid: React.FC<FazendasCadastradasGridProps> = (
   };
 
   return (
-    <section className="bg-blue-50/70 p-6 md:p-8 rounded-xl border border-blue-100 shadow-sm mb-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <section className="bg-blue-50/70 p-4 sm:p-6 md:p-8 rounded-xl border border-blue-100 shadow-sm mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-600 text-white rounded-lg shadow-sm">
+          <div className="p-2 bg-blue-600 text-white rounded-lg shadow-sm shrink-0">
             <Home size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800">Fazendas Cadastradas</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">Fazendas Cadastradas</h2>
+            <p className="text-xs sm:text-sm text-gray-600">
               Selecione uma fazenda cadastrada para iniciar o diagnóstico diretamente.
             </p>
           </div>
@@ -140,7 +145,7 @@ export const FazendasCadastradasGrid: React.FC<FazendasCadastradasGridProps> = (
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Pesquisar por nome ou e-mail..."
-            className="w-full pl-9 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400 shadow-sm"
+            className="w-full pl-9 pr-4 py-2 min-h-[40px] bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400 shadow-sm"
             aria-label="Pesquisar fazendas cadastradas"
             data-testid="busca-fazenda-input"
           />
@@ -152,7 +157,7 @@ export const FazendasCadastradasGrid: React.FC<FazendasCadastradasGridProps> = (
           Nenhuma fazenda encontrada com os termos digitados.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" data-testid="fazendas-grid-container">
           {fazendasFiltradas.map((item, idx) => {
             const nome = getFazendaNome(item);
             const email = getFazendaEmail(item);

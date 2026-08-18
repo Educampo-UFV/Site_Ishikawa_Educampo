@@ -39,6 +39,7 @@ interface FormInputProps {
   name: keyof CadastrarFazendaFormData;
   label: string;
   type?: string;
+  inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
   required?: boolean;
   value: string | number;
   error?: string;
@@ -46,6 +47,7 @@ interface FormInputProps {
   min?: number | string;
   max?: number | string;
   step?: number | string;
+  className?: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -54,6 +56,7 @@ const FormInput: React.FC<FormInputProps> = ({
   name,
   label,
   type = 'text',
+  inputMode,
   required = true,
   value,
   error,
@@ -61,9 +64,10 @@ const FormInput: React.FC<FormInputProps> = ({
   min,
   max,
   step,
+  className = '',
   onChange,
 }) => (
-  <div>
+  <div className={className}>
     <label htmlFor={id} className="block text-xs font-semibold text-gray-700 mb-1">
       {label}
     </label>
@@ -71,6 +75,7 @@ const FormInput: React.FC<FormInputProps> = ({
       id={id}
       name={name}
       type={type}
+      inputMode={inputMode}
       required={required}
       value={value}
       onChange={onChange}
@@ -78,7 +83,7 @@ const FormInput: React.FC<FormInputProps> = ({
       min={min}
       max={max}
       step={step}
-      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
+      className={`w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
         error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
       }`}
     />
@@ -95,6 +100,7 @@ interface FormSelectProps {
   error?: string;
   placeholder: string;
   options: (SistemaProducaoItem | RegiaoSebraeItem)[];
+  className?: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
@@ -107,9 +113,10 @@ const FormSelect: React.FC<FormSelectProps> = ({
   error,
   placeholder,
   options,
+  className = '',
   onChange,
 }) => (
-  <div>
+  <div className={className}>
     <label htmlFor={id} className="block text-xs font-semibold text-gray-700 mb-1">
       {label}
     </label>
@@ -119,7 +126,7 @@ const FormSelect: React.FC<FormSelectProps> = ({
       required={required}
       value={value}
       onChange={onChange}
-      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white ${
+      className={`w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white ${
         error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
       }`}
     >
@@ -266,28 +273,30 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
 
       {/* Conteúdo Expandido do Formulário */}
       {isExpanded && (
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 bg-white" data-testid="cadastrar-fazenda-form">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6 bg-white" data-testid="cadastrar-fazenda-form">
           {submitError && (
-            <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md text-sm flex items-center gap-2">
+            <div className="p-3.5 sm:p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md text-xs sm:text-sm flex items-center gap-2">
               <AlertCircle size={18} className="flex-shrink-0 text-red-600" />
               <span>{submitError}</span>
             </div>
           )}
 
           {/* Seção 1: Informações Gerais */}
-          <div className="bg-gray-50/70 p-5 rounded-lg border border-gray-200 space-y-4">
-            <h3 className="text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
+          <div className="bg-gray-50/70 p-3.5 sm:p-5 rounded-lg border border-gray-200 space-y-3 sm:space-y-4">
+            <h3 className="text-xs sm:text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
               Informações Gerais
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <FormInput
                 id="cad_email"
                 name="email"
                 type="email"
+                inputMode="email"
                 label="E-mail do Produtor *"
                 value={formData.email}
                 error={fieldErrors.email}
                 placeholder="ex: produtor@fazenda.com.br"
+                className="col-span-2"
                 onChange={handleChange}
               />
 
@@ -299,6 +308,7 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 value={formData.senha}
                 error={fieldErrors.senha}
                 placeholder="******"
+                className="col-span-2"
                 onChange={handleChange}
               />
 
@@ -310,6 +320,7 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 value={formData.nome_fazenda}
                 error={fieldErrors.nome_fazenda}
                 placeholder="ex: Fazenda Santa Maria"
+                className="col-span-2"
                 onChange={handleChange}
               />
 
@@ -321,38 +332,40 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 error={fieldErrors.sistema_producao}
                 placeholder="Selecione o sistema"
                 options={sistemasDisponiveis}
+                className="col-span-2"
                 onChange={handleChange}
               />
 
-              <div className="md:col-span-2">
-                <FormSelect
-                  id="cad_regiao_sebrae"
-                  name="regiao_sebrae"
-                  label="Região SEBRAE *"
-                  value={formData.regiao_sebrae}
-                  error={fieldErrors.regiao_sebrae}
-                  placeholder="Selecione a região"
-                  options={regioesDisponiveis}
-                  onChange={handleChange}
-                />
-              </div>
+              <FormSelect
+                id="cad_regiao_sebrae"
+                name="regiao_sebrae"
+                label="Região SEBRAE *"
+                value={formData.regiao_sebrae}
+                error={fieldErrors.regiao_sebrae}
+                placeholder="Selecione a região"
+                options={regioesDisponiveis}
+                className="col-span-2"
+                onChange={handleChange}
+              />
             </div>
           </div>
 
           {/* Seção 2: Estrutura e Rebanho */}
-          <div className="bg-gray-50/70 p-5 rounded-lg border border-gray-200 space-y-4">
-            <h3 className="text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
+          <div className="bg-gray-50/70 p-3.5 sm:p-5 rounded-lg border border-gray-200 space-y-3 sm:space-y-4">
+            <h3 className="text-xs sm:text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
               Estrutura e Rebanho
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <FormInput
                 id="cad_total_vacas"
                 name="total_vacas"
                 type="number"
+                inputMode="numeric"
                 label="Total de Vacas (cab.) *"
                 value={formData.total_vacas}
                 error={fieldErrors.total_vacas}
                 min={0}
+                className="col-span-1"
                 onChange={handleChange}
               />
 
@@ -360,12 +373,14 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 id="cad_percentual_lactacao"
                 name="percentual_lactacao"
                 type="number"
+                inputMode="decimal"
                 label="Perc. em Lactação (%) *"
                 value={formData.percentual_lactacao}
                 error={fieldErrors.percentual_lactacao}
                 min={0}
                 max={100}
                 step={0.1}
+                className="col-span-1"
                 onChange={handleChange}
               />
 
@@ -373,10 +388,12 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 id="cad_total_rebanho"
                 name="total_rebanho"
                 type="number"
+                inputMode="numeric"
                 label="Total do Rebanho (cab.) *"
                 value={formData.total_rebanho}
                 error={fieldErrors.total_rebanho}
                 min={0}
+                className="col-span-1"
                 onChange={handleChange}
               />
 
@@ -384,68 +401,48 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 id="cad_area_atividade"
                 name="area_atividade"
                 type="number"
+                inputMode="decimal"
                 label="Área da Atividade (ha) *"
                 value={formData.area_atividade}
                 error={fieldErrors.area_atividade}
                 min={0.1}
                 step={0.1}
+                className="col-span-1"
                 onChange={handleChange}
               />
 
-              <div className="md:col-span-2">
-                <FormInput
-                  id="cad_numero_trabalhadores"
-                  name="numero_trabalhadores"
-                  type="number"
-                  label="Mão de Obra (trabalhadores) *"
-                  value={formData.numero_trabalhadores}
-                  error={fieldErrors.numero_trabalhadores}
-                  min={1}
-                  onChange={handleChange}
-                />
-              </div>
+              <FormInput
+                id="cad_numero_trabalhadores"
+                name="numero_trabalhadores"
+                type="number"
+                inputMode="numeric"
+                label="Mão de Obra (trabalhadores) *"
+                value={formData.numero_trabalhadores}
+                error={fieldErrors.numero_trabalhadores}
+                min={1}
+                className="col-span-2"
+                onChange={handleChange}
+              />
             </div>
           </div>
 
           {/* Seção 3: Produção e Qualidade */}
-          <div className="bg-gray-50/70 p-5 rounded-lg border border-gray-200 space-y-4">
-            <h3 className="text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
+          <div className="bg-gray-50/70 p-3.5 sm:p-5 rounded-lg border border-gray-200 space-y-3 sm:space-y-4">
+            <h3 className="text-xs sm:text-sm font-bold text-emerald-900 border-b border-gray-200 pb-2">
               Produção e Qualidade
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <FormInput
                 id="cad_producao_vaca"
                 name="producao_vaca"
                 type="number"
+                inputMode="decimal"
                 label="Produção por Vaca (L/dia) *"
                 value={formData.producao_vaca}
                 error={fieldErrors.producao_vaca}
                 min={0}
                 step={0.1}
-                onChange={handleChange}
-              />
-
-              <FormInput
-                id="cad_preco_recebido"
-                name="preco_recebido"
-                type="number"
-                label="Preço Recebido (R$/L) *"
-                value={formData.preco_recebido}
-                error={fieldErrors.preco_recebido}
-                min={0}
-                step={0.01}
-                onChange={handleChange}
-              />
-
-              <FormInput
-                id="cad_preco_referencia"
-                name="preco_referencia"
-                type="number"
-                label="Preço Referência (R$/L) *"
-                value={formData.preco_referencia}
-                error={fieldErrors.preco_referencia}
-                min={0}
-                step={0.01}
+                className="col-span-1"
                 onChange={handleChange}
               />
 
@@ -453,20 +450,50 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
                 id="cad_ccs"
                 name="ccs"
                 type="number"
+                inputMode="numeric"
                 label="Qualidade CCS (x1000) *"
                 value={formData.ccs}
                 error={fieldErrors.ccs}
                 min={0}
+                className="col-span-1"
+                onChange={handleChange}
+              />
+
+              <FormInput
+                id="cad_preco_recebido"
+                name="preco_recebido"
+                type="number"
+                inputMode="decimal"
+                label="Preço Recebido (R$/L) *"
+                value={formData.preco_recebido}
+                error={fieldErrors.preco_recebido}
+                min={0}
+                step={0.01}
+                className="col-span-1"
+                onChange={handleChange}
+              />
+
+              <FormInput
+                id="cad_preco_referencia"
+                name="preco_referencia"
+                type="number"
+                inputMode="decimal"
+                label="Preço Referência (R$/L) *"
+                value={formData.preco_referencia}
+                error={fieldErrors.preco_referencia}
+                min={0}
+                step={0.01}
+                className="col-span-1"
                 onChange={handleChange}
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex flex-row items-center justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-100">
             <button
               type="button"
               onClick={toggleExpand}
-              className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              className="w-1/3 sm:w-auto min-h-[42px] px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition active:scale-[0.99]"
               disabled={isSubmitting}
             >
               Cancelar
@@ -474,7 +501,7 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg shadow transition disabled:opacity-50 text-sm"
+              className="w-2/3 sm:w-auto min-h-[42px] flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 sm:px-6 rounded-lg shadow transition disabled:opacity-50 text-xs sm:text-sm active:scale-[0.99]"
               data-testid="cadastrar-fazenda-submit-btn"
             >
               {isSubmitting ? (
