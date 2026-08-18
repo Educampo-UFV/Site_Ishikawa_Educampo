@@ -218,9 +218,9 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
     const drawer = screen.getByTestId('mobile-drawer-modal');
     expect(drawer).toBeInTheDocument();
 
-    // Fecha o Drawer ao clicar em "Aplicar e Ver Gráficos"
-    const btnAplicar = screen.getByRole('button', { name: /Aplicar e Ver Gráficos/i });
-    fireEvent.click(btnAplicar);
+    // Fecha o Drawer ao clicar em "Concluir"
+    const btnConcluir = screen.getByRole('button', { name: /Concluir/i });
+    fireEvent.click(btnConcluir);
 
     expect(screen.queryByTestId('mobile-drawer-modal')).not.toBeInTheDocument();
   });

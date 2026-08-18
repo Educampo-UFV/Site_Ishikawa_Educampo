@@ -552,7 +552,7 @@ export default function RelatorioPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
               {[
                 { key: 'ccs', label: 'Contagem Células Somáticas (CCS)' },
                 { key: 'producao_vaca', label: 'Produção Média/Vaca/Dia' },
@@ -566,15 +566,15 @@ export default function RelatorioPage() {
                 return (
                   <label
                     key={key}
-                    className="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors text-xs"
+                    className="flex items-center gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors text-[11px] sm:text-xs"
                   >
                     <input
                       type="checkbox"
                       checked={filters.secao_benchmarking[k]}
                       onChange={() => toggleBenchmarking(k)}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer shrink-0"
                     />
-                    <span className="font-medium text-slate-700">{label}</span>
+                    <span className="font-medium text-slate-700 leading-tight">{label}</span>
                   </label>
                 );
               })}
@@ -593,35 +593,35 @@ export default function RelatorioPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-3.5 sm:space-y-4">
               {/* Financeiras */}
-              <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Financeiras</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
+              <div className="bg-slate-50/70 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">Financeiras</h3>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
                     <input
                       type="checkbox"
                       checked={filters.secao_simulacoes.financeiras.custo_leite}
                       onChange={() => toggleSimulacaoFinanceira('custo_leite')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
                     />
                     <span className="font-medium">Custo Estimado do Leite</span>
                   </label>
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
+                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
                     <input
                       type="checkbox"
                       checked={filters.secao_simulacoes.financeiras.margem_litro}
                       onChange={() => toggleSimulacaoFinanceira('margem_litro')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
                     />
                     <span className="font-medium">Margem Bruta por Litro</span>
                   </label>
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
+                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
                     <input
                       type="checkbox"
                       checked={filters.secao_simulacoes.financeiras.margem_ano}
                       onChange={() => toggleSimulacaoFinanceira('margem_ano')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
                     />
                     <span className="font-medium">Margem Bruta Anual</span>
                   </label>
@@ -629,24 +629,24 @@ export default function RelatorioPage() {
               </div>
 
               {/* Estáticas */}
-              <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Estáticas</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
+              <div className="bg-slate-50/70 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">Estáticas</h3>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
                     <input
                       type="checkbox"
                       checked={filters.secao_simulacoes.estaticas.ccs}
                       onChange={() => toggleSimulacaoEstatica('ccs')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
                     />
                     <span className="font-medium">Impacto em CCS</span>
                   </label>
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
+                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
                     <input
                       type="checkbox"
                       checked={filters.secao_simulacoes.estaticas.producao_vaca}
                       onChange={() => toggleSimulacaoEstatica('producao_vaca')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
                     />
                     <span className="font-medium">Impacto Produção/Vaca</span>
                   </label>
@@ -654,24 +654,24 @@ export default function RelatorioPage() {
               </div>
 
               {/* Operacionais */}
-              <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Operacionais</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
+              <div className="bg-slate-50/70 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">Operacionais</h3>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
                     <input
                       type="checkbox"
                       checked={filters.secao_simulacoes.operacionais.producao_trabalhador}
                       onChange={() => toggleSimulacaoOperacional('producao_trabalhador')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
                     />
                     <span className="font-medium">Produção por Trabalhador</span>
                   </label>
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer">
+                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
                     <input
                       type="checkbox"
                       checked={filters.secao_simulacoes.operacionais.producao_area}
                       onChange={() => toggleSimulacaoOperacional('producao_area')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
                     />
                     <span className="font-medium">Produção por Área (L/ha)</span>
                   </label>
