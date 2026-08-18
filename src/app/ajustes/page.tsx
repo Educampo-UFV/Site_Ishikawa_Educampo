@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useFazendaStore } from '@/store/useFazendaStore';
 import { fazendaSchema, FazendaFormData } from '@/lib/schemas';
 import { Navbar } from '@/components/ui/Navbar';
+import { TooltipContextual } from '@/components/ui/TooltipContextual';
 import { Info, AlertCircle, CheckCircle, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 import { NumericFormat } from 'react-number-format';
@@ -27,21 +28,23 @@ import {
 } from '@/types/formulario';
 
 /**
- * Componente auxiliar genérico para renderizar um rótulo (label) com uma dica (tooltip) interativa.
+ * Componente auxiliar genérico para renderizar um rótulo (label) com uma dica (tooltip) interativa acessível ao toque.
  */
 const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, label: string, unidade?: string, dica?: string }) => (
-  <div className="flex items-center gap-2 mb-1">
-    <label htmlFor={htmlFor} className="text-sm font-semibold text-gray-700">
+  <div className="flex items-center gap-1.5 mb-1">
+    <label htmlFor={htmlFor} className="text-xs sm:text-sm font-semibold text-gray-700">
       {label} {unidade && <span className="text-gray-500 font-normal">({unidade})</span>}
     </label>
     {dica && (
-      <div className="group relative flex items-center cursor-help">
-        <Info className="w-4 h-4 text-primary" />
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-800 text-white text-xs rounded shadow-lg z-10">
-          {dica}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-        </div>
-      </div>
+      <TooltipContextual content={<span className="text-xs leading-relaxed">{dica}</span>}>
+        <button
+          type="button"
+          aria-label={`Ajuda para ${htmlFor}`}
+          className="inline-flex items-center justify-center p-0.5 text-primary hover:text-primary-dark focus:outline-none focus:ring-1 focus:ring-primary rounded-full cursor-help shrink-0"
+        >
+          <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+        </button>
+      </TooltipContextual>
     )}
   </div>
 );
@@ -52,15 +55,15 @@ const LabelComDica = ({ htmlFor, label, unidade, dica }: { htmlFor: string, labe
  */
 const CASAS_DECIMAIS = 3;
 
-const CampoNumericoAjuste = ({ id, label, unidade, dica, value, onChange }: { id: string, label: string, unidade?: string, dica?: string, value: string | number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-  <>
+const CampoNumericoAjuste = ({ id, label, unidade, dica, value, onChange, className = '' }: { id: string, label: string, unidade?: string, dica?: string, value: string | number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, className?: string }) => (
+  <div className={className}>
     <LabelComDica htmlFor={id} label={label} unidade={unidade} dica={dica} />
     <NumericFormat
       id={id} name={id} type="text" inputMode="decimal" allowNegative={false} decimalScale={CASAS_DECIMAIS} allowedDecimalSeparators={[',', '.']} decimalSeparator="." required
       value={value} onChange={onChange}
-      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
+      className="w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
     />
-  </>
+  </div>
 );
 
 const DEFAULT_SISTEMAS_OPCOES: SistemaProducaoItem[] = [
@@ -317,43 +320,43 @@ export default function AjustesPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-10 border border-gray-100">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Ajuste de Dados da Fazenda</h1>
-          <p className="text-gray-600 mb-8">Modifique os valores abaixo para recalcular o diagnóstico. Limite de uma atualização a cada 30 segundos.</p>
+      <main className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-4 py-5 sm:py-8">
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm sm:shadow-lg p-4 sm:p-6 md:p-10 border border-gray-100">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-1.5 sm:mb-2">Ajuste de Dados da Fazenda</h1>
+          <p className="text-xs sm:text-sm text-gray-600 mb-6 sm:mb-8">Modifique os valores abaixo para recalcular o diagnóstico. Limite de uma atualização a cada 30 segundos.</p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
 
             {/* Bloco 1: Estrutura e Rebanho */}
-            <section className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-              <h2 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
-                <span className="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+            <section className="bg-gray-50 p-3.5 sm:p-5 md:p-6 rounded-xl border border-gray-200">
+              <h2 className="text-base sm:text-lg font-bold text-primary mb-3 sm:mb-4 flex items-center gap-2">
+                <span className="bg-primary text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">1</span>
                 Estrutura e Rebanho
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="col-span-2">
                   <LabelComDica htmlFor="nome_fazenda" label="Nome da Fazenda" />
                   <input
                     id="nome_fazenda" name="nome_fazenda" type="text" required
                     value={formData.nome_fazenda || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
+                    className="w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                   />
                 </div>
-                <div className="md:col-span-2">
+                <div className="col-span-2">
                   <LabelComDica htmlFor="email" label="E-mail do Produtor" />
                   <input
-                    id="email" name="email" type="email"
+                    id="email" name="email" type="email" inputMode="email"
                     value={formData.email || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
+                    className="w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition"
                     placeholder="produtor@email.com"
                   />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <LabelComDica htmlFor="sistema_producao" label="Sistema de Produção" />
                   <select
                     id="sistema_producao" name="sistema_producao" required
                     value={formData.sistema_producao || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition bg-white"
+                    className="w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition bg-white"
                   >
                     <option value="" disabled>Selecione...</option>
                     {opcoesSistemas.map((item, idx) => {
@@ -367,12 +370,12 @@ export default function AjustesPage() {
                     })}
                   </select>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <LabelComDica htmlFor="regiao" label="Região" />
                   <select
                     id="regiao" name="regiao" required
                     value={formData.regiao || ''} onChange={handleChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition bg-white"
+                    className="w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition bg-white"
                   >
                     <option value="" disabled>Selecione...</option>
                     {opcoesRegioes.map((item, idx) => {
@@ -386,46 +389,26 @@ export default function AjustesPage() {
                     })}
                   </select>
                 </div>
-                <div>
-                  <CampoNumericoAjuste id="total_vacas" label="Total de Vacas" dica="Todo o rebanho leiteiro" value={formData.total_vacas || ''} onChange={handleChange} />
-                </div>
-                <div>
-                  <CampoNumericoAjuste id="percentual_lactacao" label="Perc. em Lactação" unidade="%" dica="Percentual do rebanho de vacas que estão em lactação atualmente." value={formData.percentual_lactacao || ''} onChange={handleChange} />
-                </div>
-                <div>
-                  <CampoNumericoAjuste id="animais_rebanho" label="Total no Rebanho" dica="Inclui vacas secas, novilhas, bezerras, etc." value={formData.animais_rebanho || ''} onChange={handleChange} />
-                </div>
-                <div>
-                  <CampoNumericoAjuste id="area_atividade" label="Área da Atividade" unidade="ha" dica="Hectares dedicados à produção de leite." value={formData.area_atividade || ''} onChange={handleChange} />
-                </div>
-                <div className="md:col-span-2">
-                  <CampoNumericoAjuste id="mao_obra_total" label="Mão de Obra Total" dica="Número de funcionários diretos na atividade leiteira." value={formData.mao_obra_total || ''} onChange={handleChange} />
-                </div>
+                <CampoNumericoAjuste id="total_vacas" label="Total de Vacas" dica="Todo o rebanho leiteiro" value={formData.total_vacas || ''} onChange={handleChange} className="col-span-1" />
+                <CampoNumericoAjuste id="percentual_lactacao" label="Perc. em Lactação" unidade="%" dica="Percentual do rebanho de vacas que estão em lactação atualmente." value={formData.percentual_lactacao || ''} onChange={handleChange} className="col-span-1" />
+                <CampoNumericoAjuste id="animais_rebanho" label="Total no Rebanho" dica="Inclui vacas secas, novilhas, bezerras, etc." value={formData.animais_rebanho || ''} onChange={handleChange} className="col-span-1" />
+                <CampoNumericoAjuste id="area_atividade" label="Área da Atividade" unidade="ha" dica="Hectares dedicados à produção de leite." value={formData.area_atividade || ''} onChange={handleChange} className="col-span-1" />
+                <CampoNumericoAjuste id="mao_obra_total" label="Mão de Obra Total" dica="Número de funcionários diretos na atividade leiteira." value={formData.mao_obra_total || ''} onChange={handleChange} className="col-span-2" />
               </div>
             </section>
 
             {/* Bloco 2: Produção e Mercado */}
-            <section className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-              <h2 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
-                <span className="bg-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+            <section className="bg-gray-50 p-3.5 sm:p-5 md:p-6 rounded-xl border border-gray-200">
+              <h2 className="text-base sm:text-lg font-bold text-primary mb-3 sm:mb-4 flex items-center gap-2">
+                <span className="bg-primary text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm">2</span>
                 Produção e Mercado
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <CampoNumericoAjuste id="producao_vaca" label="Prod. por Vaca" unidade="L/dia" value={formData.producao_vaca || ''} onChange={handleChange} />
-                </div>
-                <div>
-                  <CampoNumericoAjuste id="ccs" label="Qualidade (CCS)" unidade="x1000" dica="Contagem de Células Somáticas" value={formData.ccs || ''} onChange={handleChange} />
-                </div>
-                <div>
-                  <CampoNumericoAjuste id="preco_leite" label="Preço Recebido" unidade="R$/L" value={formData.preco_leite || ''} onChange={handleChange} />
-                </div>
-                <div>
-                  <CampoNumericoAjuste id="preco_referencia" label="Preço de Referência" unidade="R$/L" dica="Preço médio de referência para sua região." value={formData.preco_referencia || ''} onChange={handleChange} />
-                </div>
-                <div>
-                  <CampoNumericoAjuste id="preco_concentrado" label="Preço do Concentrado" unidade="R$/kg" dica="Preço médio pago pelo produtor no kg do concentrado." value={formData.preco_concentrado || ''} onChange={handleChange} />
-                </div>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <CampoNumericoAjuste id="producao_vaca" label="Prod. por Vaca" unidade="L/dia" value={formData.producao_vaca || ''} onChange={handleChange} className="col-span-1" />
+                <CampoNumericoAjuste id="ccs" label="Qualidade (CCS)" unidade="x1000" dica="Contagem de Células Somáticas" value={formData.ccs || ''} onChange={handleChange} className="col-span-1" />
+                <CampoNumericoAjuste id="preco_leite" label="Preço Recebido" unidade="R$/L" value={formData.preco_leite || ''} onChange={handleChange} className="col-span-1" />
+                <CampoNumericoAjuste id="preco_referencia" label="Preço de Referência" unidade="R$/L" dica="Preço médio de referência para sua região." value={formData.preco_referencia || ''} onChange={handleChange} className="col-span-1" />
+                <CampoNumericoAjuste id="preco_concentrado" label="Preço do Concentrado" unidade="R$/kg" dica="Preço médio pago pelo produtor no kg do concentrado." value={formData.preco_concentrado || ''} onChange={handleChange} className="col-span-2" />
               </div>
             </section>
 
@@ -434,7 +417,7 @@ export default function AjustesPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || cooldown > 0}
-                className={`w-full flex items-center justify-center font-bold py-3 px-10 rounded-lg shadow-md transition duration-200 ${isSubmitting || cooldown > 0
+                className={`w-full min-h-[44px] flex items-center justify-center font-bold py-3 px-6 sm:px-10 rounded-lg shadow-md transition duration-200 text-sm sm:text-base active:scale-[0.99] ${isSubmitting || cooldown > 0
                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                     : 'bg-primary hover:bg-primary-light text-white'
                   }`}

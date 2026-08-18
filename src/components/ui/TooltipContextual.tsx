@@ -21,20 +21,22 @@ import * as Tooltip from '@radix-ui/react-tooltip';
  */
 export function TooltipContextual({ children, content }: { children: React.ReactNode; content: React.ReactNode }) {
   return (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
-        {children}
-      </Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Content 
-          className="z-50 max-w-xs px-3 py-2.5 text-xs leading-relaxed font-medium text-white bg-slate-900 border border-slate-700 rounded-lg shadow-xl animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95" 
-          sideOffset={6}
-          side="top"
-        >
-          {content}
-          <Tooltip.Arrow className="fill-slate-900" width={12} height={6} />
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    </Tooltip.Root>
+    <Tooltip.Provider delayDuration={150}>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          {children}
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content 
+            className="z-50 max-w-xs px-3 py-2.5 text-xs leading-relaxed font-medium text-white bg-slate-900 border border-slate-700 rounded-lg shadow-xl animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95" 
+            sideOffset={6}
+            side="top"
+          >
+            {content}
+            <Tooltip.Arrow className="fill-slate-900" width={12} height={6} />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   );
 }

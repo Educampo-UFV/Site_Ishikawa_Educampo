@@ -199,4 +199,22 @@ describe('Tela de Ajustes (AjustesPage)', () => {
     expect(screen.getByText(/1 de 4 análises concluídas/i)).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '25');
   });
+
+  it('Deve renderizar os campos numéricos com inputmode decimal e botão com altura ergonômica mínima', async () => {
+    // Arrange & Act
+    await act(async () => {
+      render(<AjustesPage />);
+    });
+
+    // Assert
+    const inputVacas = screen.getByLabelText(/Total de Vacas/i);
+    const inputLactacao = screen.getByLabelText(/Perc. em Lactação/i);
+    const inputPrecoConcentrado = screen.getByLabelText(/Preço do Concentrado/i);
+    const botaoSubmit = screen.getByRole('button', { name: /Atualizar Dados/i });
+
+    expect(inputVacas).toHaveAttribute('inputmode', 'decimal');
+    expect(inputLactacao).toHaveAttribute('inputmode', 'decimal');
+    expect(inputPrecoConcentrado).toHaveAttribute('inputmode', 'decimal');
+    expect(botaoSubmit.className).toContain('min-h-[44px]');
+  });
 });
