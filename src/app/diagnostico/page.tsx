@@ -118,16 +118,16 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
       >
         {/* Frente do Card */}
         <div 
-          className="bg-white p-4 sm:p-6 rounded-xl border border-gray-100 flex flex-col justify-between w-full min-h-[135px] sm:min-h-[140px]"
+          className="bg-white p-3.5 sm:p-5 rounded-xl border border-gray-100 flex flex-col justify-between w-full min-h-[120px] sm:min-h-[135px]"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <p className="text-xs sm:text-sm text-gray-500 font-medium uppercase tracking-wider line-clamp-1">{card.titulo}</p>
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center justify-between gap-1.5 mb-2.5 sm:mb-3">
+            <p className="text-[11px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wider whitespace-nowrap">{card.titulo}</p>
+            <div className="flex items-center gap-1.5 shrink-0">
               {isComparativo && ui.icon}
-              <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded md:hidden">
+              <div className="flex items-center gap-0.5 text-[10px] text-gray-400 font-medium bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 md:hidden">
                 <span>Toque</span>
-                <Info size={12} className="text-[#1973d3]" />
+                <Info size={11} className="text-[#1973d3]" />
               </div>
               <Info size={18} className="text-gray-400 group-hover:text-[#1973d3] transition-colors hidden md:block" />
             </div>
@@ -135,16 +135,16 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
           <div className="mt-auto">
             <span className="sr-only">{card.valor_produtor} {card.unidade_medida || ''}</span>
             <div aria-hidden="true" className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-baseline gap-1.5 sm:gap-2">
-                <span className="text-2xl sm:text-3xl font-bold text-gray-800">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl sm:text-2xl font-bold text-gray-800">
                   {formatValor(card.valor_produtor)}
                 </span>
                 {card.unidade_medida && (
-                  <span className="text-xs sm:text-sm font-normal text-gray-500">{card.unidade_medida}</span>
+                  <span className="text-xs font-normal text-gray-500">{card.unidade_medida}</span>
                 )}
               </div>
               {isComparativo && card.mensagem_curta && (
-                <span className={`shrink-0 inline-block px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold border ${ui.bg} ${ui.text} ${ui.border}`}>
+                <span className={`shrink-0 inline-block px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold border ${ui.bg} ${ui.text} ${ui.border}`}>
                   {card.mensagem_curta}
                 </span>
               )}
@@ -154,11 +154,11 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
 
         {/* Verso do Card */}
         <div 
-          className="absolute inset-0 bg-white p-4 sm:p-6 rounded-xl border-2 border-[#1973d3] flex flex-col justify-center shadow-md"
+          className="absolute inset-0 bg-white p-3.5 sm:p-5 rounded-xl border-2 border-[#1973d3] flex flex-col justify-center shadow-md"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <div className="flex items-baseline gap-1.5 mb-2 sm:mb-3 border-b border-gray-100 pb-1.5 sm:pb-2">
-            <span className="text-lg sm:text-xl font-bold text-gray-800">
+          <div className="flex items-baseline gap-1.5 mb-1.5 sm:mb-2 border-b border-gray-100 pb-1">
+            <span className="text-base sm:text-lg font-bold text-gray-800">
               {formatValor(card.valor_produtor)}
             </span>
             {card.unidade_medida && (
@@ -169,7 +169,7 @@ const BenchmarkingCard = ({ card }: { card: BenchmarkingCardData }) => {
             {card.mensagem_detalhada}
           </p>
           {isComparativo && (
-            <span className="block mt-2 sm:mt-3 font-bold text-gray-400 text-[10px] sm:text-[11px] uppercase tracking-wider">
+            <span className="block mt-1.5 sm:mt-2 font-bold text-gray-400 text-[10px] sm:text-[11px] uppercase tracking-wider">
               Ref: {formatValor(card.valor_referencia)} {card.unidade_medida || ''}
             </span>
           )}
@@ -313,11 +313,15 @@ export default function DiagnosticoPage() {
             data-testid="benchmarks-carousel"
           >
             {benchmarks.length > 0 ? (
-              benchmarks.map((card, index) => (
-                <div key={index} className="w-[78vw] sm:w-[48vw] md:w-auto shrink-0 md:shrink snap-start">
-                  <BenchmarkingCard card={card} />
-                </div>
-              ))
+              <>
+                {benchmarks.map((card, index) => (
+                  <div key={index} className="w-[260px] sm:w-[270px] md:w-auto shrink-0 md:shrink snap-start">
+                    <BenchmarkingCard card={card} />
+                  </div>
+                ))}
+                {/* Espaçador para margem à direita no mobile ao final do scroll */}
+                <div className="w-1.5 shrink-0 md:hidden" aria-hidden="true" />
+              </>
             ) : (
               <p className="text-gray-500 italic md:col-span-3">Carregando dados de benchmarking...</p>
             )}
