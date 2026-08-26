@@ -21,7 +21,6 @@ import {
   RotateCcw,
   Sparkles,
   BarChart3,
-  Lightbulb,
   GitFork,
   Check,
   AlertCircle,
@@ -77,15 +76,6 @@ export default function RelatorioPage() {
     benchKeys.forEach((k) => {
       if (filters.secao_benchmarking[k]) selected++;
     });
-
-    // Simulações
-    const finKeys = Object.keys(filters.secao_simulacoes.financeiras) as Array<keyof typeof filters.secao_simulacoes.financeiras>;
-    const estKeys = Object.keys(filters.secao_simulacoes.estaticas) as Array<keyof typeof filters.secao_simulacoes.estaticas>;
-    const opKeys = Object.keys(filters.secao_simulacoes.operacionais) as Array<keyof typeof filters.secao_simulacoes.operacionais>;
-    total += finKeys.length + estKeys.length + opKeys.length;
-    finKeys.forEach((k) => { if (filters.secao_simulacoes.financeiras[k]) selected++; });
-    estKeys.forEach((k) => { if (filters.secao_simulacoes.estaticas[k]) selected++; });
-    opKeys.forEach((k) => { if (filters.secao_simulacoes.operacionais[k]) selected++; });
 
     // Ishikawa
     total += 1; // incluir_analise_causa
@@ -174,36 +164,6 @@ export default function RelatorioPage() {
     setFilters((prev) => ({
       ...prev,
       secao_benchmarking: { ...prev.secao_benchmarking, [key]: !prev.secao_benchmarking[key] },
-    }));
-  };
-
-  const toggleSimulacaoFinanceira = (key: keyof typeof filters.secao_simulacoes.financeiras) => {
-    setFilters((prev) => ({
-      ...prev,
-      secao_simulacoes: {
-        ...prev.secao_simulacoes,
-        financeiras: { ...prev.secao_simulacoes.financeiras, [key]: !prev.secao_simulacoes.financeiras[key] },
-      },
-    }));
-  };
-
-  const toggleSimulacaoEstatica = (key: keyof typeof filters.secao_simulacoes.estaticas) => {
-    setFilters((prev) => ({
-      ...prev,
-      secao_simulacoes: {
-        ...prev.secao_simulacoes,
-        estaticas: { ...prev.secao_simulacoes.estaticas, [key]: !prev.secao_simulacoes.estaticas[key] },
-      },
-    }));
-  };
-
-  const toggleSimulacaoOperacional = (key: keyof typeof filters.secao_simulacoes.operacionais) => {
-    setFilters((prev) => ({
-      ...prev,
-      secao_simulacoes: {
-        ...prev.secao_simulacoes,
-        operacionais: { ...prev.secao_simulacoes.operacionais, [key]: !prev.secao_simulacoes.operacionais[key] },
-      },
     }));
   };
 
@@ -773,106 +733,7 @@ export default function RelatorioPage() {
             </div>
           </div>
 
-          {/* SEÇÃO 3: SIMULAÇÕES & CENÁRIOS */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs hover:border-emerald-200 transition-colors lg:col-span-2">
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
-              <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
-                <Lightbulb size={20} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">3. Simulações & Otimizações de Cenários</h2>
-                <p className="text-xs text-slate-500">Métricas financeiras, estáticas e operacionais projetadas</p>
-              </div>
-            </div>
-
-            <div className="space-y-3.5 sm:space-y-4">
-              {/* Financeiras */}
-              <div className="bg-slate-50/70 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">Financeiras</h3>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
-                    <input
-                      type="checkbox"
-                      checked={filters.secao_simulacoes.financeiras.custo_leite}
-                      onChange={() => toggleSimulacaoFinanceira('custo_leite')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
-                    />
-                    <span className="font-medium">Custo Estimado do Leite</span>
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
-                    <input
-                      type="checkbox"
-                      checked={filters.secao_simulacoes.financeiras.margem_litro}
-                      onChange={() => toggleSimulacaoFinanceira('margem_litro')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
-                    />
-                    <span className="font-medium">Margem Bruta por Litro</span>
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
-                    <input
-                      type="checkbox"
-                      checked={filters.secao_simulacoes.financeiras.margem_ano}
-                      onChange={() => toggleSimulacaoFinanceira('margem_ano')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
-                    />
-                    <span className="font-medium">Margem Bruta Anual</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Estáticas */}
-              <div className="bg-slate-50/70 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">Estáticas</h3>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
-                    <input
-                      type="checkbox"
-                      checked={filters.secao_simulacoes.estaticas.ccs}
-                      onChange={() => toggleSimulacaoEstatica('ccs')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
-                    />
-                    <span className="font-medium">Impacto em CCS</span>
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
-                    <input
-                      type="checkbox"
-                      checked={filters.secao_simulacoes.estaticas.producao_vaca}
-                      onChange={() => toggleSimulacaoEstatica('producao_vaca')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
-                    />
-                    <span className="font-medium">Impacto Produção/Vaca</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Operacionais */}
-              <div className="bg-slate-50/70 p-3.5 sm:p-4 rounded-2xl border border-slate-100">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">Operacionais</h3>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
-                    <input
-                      type="checkbox"
-                      checked={filters.secao_simulacoes.operacionais.producao_trabalhador}
-                      onChange={() => toggleSimulacaoOperacional('producao_trabalhador')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
-                    />
-                    <span className="font-medium">Produção por Trabalhador</span>
-                  </label>
-                  <label className="flex items-center gap-2.5 text-xs text-slate-700 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors shadow-2xs">
-                    <input
-                      type="checkbox"
-                      checked={filters.secao_simulacoes.operacionais.producao_area}
-                      onChange={() => toggleSimulacaoOperacional('producao_area')}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 shrink-0 cursor-pointer"
-                    />
-                    <span className="font-medium">Produção por Área (L/ha)</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* SEÇÃO 4: ISHIKAWA & RECOMENDAÇÕES */}
+          {/* SEÇÃO 3: ISHIKAWA & RECOMENDAÇÕES */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs hover:border-emerald-200 transition-colors lg:col-span-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
               <div className="flex items-center gap-3">
@@ -880,7 +741,7 @@ export default function RelatorioPage() {
                   <GitFork size={20} />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900">4. Matriz Ishikawa & 6 Pilares de Causa Raiz</h2>
+                  <h2 className="text-lg font-bold text-slate-900">3. Matriz Ishikawa & 6 Pilares de Causa Raiz</h2>
                   <p className="text-xs text-slate-500">Filtragem de indicadores, severidades e práticas recomendadas</p>
                 </div>
               </div>

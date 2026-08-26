@@ -136,17 +136,17 @@ export function getDefaultReportFilterPayload(): Required<ReportFilterPayload> {
     },
     secao_simulacoes: {
       financeiras: {
-        custo_leite: true,
-        margem_litro: true,
-        margem_ano: true,
+        custo_leite: false,
+        margem_litro: false,
+        margem_ano: false,
       },
       estaticas: {
-        ccs: true,
-        producao_vaca: true,
+        ccs: false,
+        producao_vaca: false,
       },
       operacionais: {
-        producao_trabalhador: true,
-        producao_area: true,
+        producao_trabalhador: false,
+        producao_area: false,
       },
     },
     secao_ishikawa: {
@@ -187,17 +187,17 @@ export function getAllReportFilterPayload(): Required<ReportFilterPayload> {
     },
     secao_simulacoes: {
       financeiras: {
-        custo_leite: true,
-        margem_litro: true,
-        margem_ano: true,
+        custo_leite: false,
+        margem_litro: false,
+        margem_ano: false,
       },
       estaticas: {
-        ccs: true,
-        producao_vaca: true,
+        ccs: false,
+        producao_vaca: false,
       },
       operacionais: {
-        producao_trabalhador: true,
-        producao_area: true,
+        producao_trabalhador: false,
+        producao_area: false,
       },
     },
     secao_ishikawa: {
