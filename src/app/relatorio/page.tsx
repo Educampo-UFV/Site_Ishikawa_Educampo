@@ -1,9 +1,9 @@
 /**
  * @file src/app/relatorio/page.tsx
  * @description Página de customização e emissão do Relatório Executivo em PDF.
- * Permite ao usuário filtrar detalhadamente quais blocos, benchmarking, simulações,
- * severidades e pilares de Ishikawa estarão presentes no relatório antes da exportação.
- * Ref: Obsidian note [[sdd-relatorio-produtor-pdf.md]]
+ * Permite ao usuário filtrar detalhadamente os blocos de resumo, benchmarking regional,
+ * severidades e pilares de Ishikawa presentes no template oficial de diagnóstico antes da exportação.
+ * Ref: Obsidian note [[sdd-relatorio-tela-diagnostico.md]]
  */
 
 "use client";

@@ -1,8 +1,8 @@
 /**
  * @file src/types/relatorio.ts
  * @description Definições de tipos e estruturas de dados para a customização e geração de relatórios PDF.
- * Mapeia os filtros granulares conforme especificado em INTEGRATION.md (ReportFilterPayload).
- * Ref: Obsidian note [[sdd-relatorio-produtor-pdf.md]]
+ * Mapeia os filtros granulares conforme especificado em INTEGRATION.md (ReportFilterPayload) e no SDD oficial.
+ * Ref: Obsidian note [[sdd-relatorio-tela-diagnostico.md]]
  */
 
 export interface SecaoResumoFilter {
