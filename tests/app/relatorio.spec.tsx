@@ -62,8 +62,7 @@ describe('Página de Customização de Relatório PDF (/relatorio)', () => {
     expect(screen.getByText(/Sistema: pasto/i)).toBeInTheDocument();
     expect(screen.getByText('1. Resumo Executivo & Inteligência')).toBeInTheDocument();
     expect(screen.getByText('2. Benchmarking Regional')).toBeInTheDocument();
-    expect(screen.getByText('3. Simulações & Otimizações de Cenários')).toBeInTheDocument();
-    expect(screen.getByText('4. Matriz Ishikawa & 6 Pilares de Causa Raiz')).toBeInTheDocument();
+    expect(screen.getByText('3. Matriz Ishikawa & 6 Pilares de Causa Raiz')).toBeInTheDocument();
 
     // Botões de Ação
     expect(screen.getByRole('button', { name: /Baixar Relatório em PDF/i })).toBeInTheDocument();

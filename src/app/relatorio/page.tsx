@@ -735,27 +735,14 @@ export default function RelatorioPage() {
 
           {/* SEÇÃO 3: ISHIKAWA & RECOMENDAÇÕES */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs hover:border-emerald-200 transition-colors lg:col-span-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-700">
-                  <GitFork size={20} />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">3. Matriz Ishikawa & 6 Pilares de Causa Raiz</h2>
-                  <p className="text-xs text-slate-500">Filtragem de indicadores, severidades e práticas recomendadas</p>
-                </div>
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+                <GitFork size={20} />
               </div>
-
-              {/* Toggle de Análise da Causa */}
-              <label className="inline-flex items-center gap-2.5 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={filters.secao_ishikawa.incluir_analise_causa}
-                  onChange={toggleIshikawaAnaliseCausa}
-                  className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
-                />
-                <span className="text-xs font-semibold text-slate-700">Incluir Texto de Análise da Causa</span>
-              </label>
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">3. Matriz Ishikawa & 6 Pilares de Causa Raiz</h2>
+                <p className="text-xs text-slate-500">Filtragem de severidades e detalhamento das análises de causa raiz</p>
+              </div>
             </div>
 
             {/* Filtro de Severidades */}
@@ -789,116 +776,29 @@ export default function RelatorioPage() {
               </div>
             </div>
 
-            {/* Indicadores Ishikawa e seus 6 Pilares */}
-            <div className="space-y-4">
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
-                Indicadores e Seleção Granular dos 6 Pilares:
-              </span>
-
-              <div className="space-y-3">
-                {INDICADORES_ISHIKAWA_DEFAULT_LIST.map(({ slug, label }) => {
-                  const ind = filters.secao_ishikawa.indicadores[slug] || {
-                    incluir: true,
-                    pilares: {
-                      mao_de_obra: true,
-                      metodos: true,
-                      maquinas: true,
-                      meio_ambiente: true,
-                      medicao: true,
-                      materia_prima: true,
-                    },
-                  };
-                  const isExpanded = !!expandedIshikawa[slug];
-
-                  const activePilaresCount = Object.values(ind.pilares).filter(Boolean).length;
-
-                  return (
-                    <div
-                      key={slug}
-                      className={`border rounded-2xl transition-all ${
-                        ind.incluir
-                          ? 'border-slate-200 bg-white'
-                          : 'border-slate-200 bg-slate-50/50 opacity-60'
-                      }`}
-                    >
-                      <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={ind.incluir}
-                            onChange={() => toggleIndicadorIshikawa(slug)}
-                            className="w-5 h-5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
-                          />
-                          <div>
-                            <span className="text-sm font-bold text-slate-800 block">{label}</span>
-                            <span className="text-xs text-slate-500">
-                              {ind.incluir ? `${activePilaresCount} de 6 pilares ativos` : 'Indicador excluído do relatório'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {ind.incluir && (
-                          <div className="flex items-center gap-2 self-end sm:self-center">
-                            <button
-                              type="button"
-                              onClick={() => toggleAllPilaresForIndicator(slug, true)}
-                              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-                            >
-                              Todos Pilares
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => toggleAllPilaresForIndicator(slug, false)}
-                              className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-                            >
-                              Nenhum Pilar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setExpandedIshikawa((prev) => ({ ...prev, [slug]: !prev[slug] }))
-                              }
-                              className="p-1 text-slate-400 hover:text-slate-700 rounded-lg transition-colors cursor-pointer"
-                              aria-label="Expandir ou recolher pilares"
-                            >
-                              {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Pilares Colapsáveis */}
-                      {ind.incluir && isExpanded && (
-                        <div className="px-4 pb-4 pt-1 border-t border-slate-100">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mt-2">
-                            {(Object.keys(PILARES_ISHIKAWA_LABELS) as Array<keyof PilaresIshikawaFilter>).map((pilar) => {
-                              const isPilarActive = ind.pilares[pilar];
-                              return (
-                                <label
-                                  key={pilar}
-                                  className={`flex items-center gap-2 p-2 rounded-xl border text-xs cursor-pointer transition-colors ${
-                                    isPilarActive
-                                      ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900 font-medium'
-                                      : 'bg-slate-50 border-slate-200 text-slate-400'
-                                  }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={isPilarActive}
-                                    onChange={() => togglePilarIshikawa(slug, pilar)}
-                                    className="w-3.5 h-3.5 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
-                                  />
-                                  <span>{PILARES_ISHIKAWA_LABELS[pilar]}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+            {/* Opção em Destaque: Texto de Análise da Causa */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/60 border-2 border-emerald-200/80 hover:border-emerald-300 transition-all shadow-xs">
+              <label className="flex items-start sm:items-center justify-between gap-4 cursor-pointer">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100/90 text-emerald-700 flex items-center justify-center shrink-0">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <span className="text-sm sm:text-base font-bold text-slate-900 block">
+                      Texto de Análise da Causa
+                    </span>
+                    <span className="text-xs text-slate-600">
+                      Incluir os pareceres descritivos e diagnósticos aprofundados dos pilares de causa raiz no relatório executivo
+                    </span>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={filters.secao_ishikawa.incluir_analise_causa}
+                  onChange={toggleIshikawaAnaliseCausa}
+                  className="w-5 h-5 text-emerald-600 border-slate-300 rounded-md focus:ring-emerald-500 cursor-pointer shrink-0 mt-1 sm:mt-0"
+                />
+              </label>
             </div>
           </div>
         </div>
