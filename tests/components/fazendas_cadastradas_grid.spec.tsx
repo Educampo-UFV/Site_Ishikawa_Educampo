@@ -93,7 +93,7 @@ describe('FazendasCadastradasGrid', () => {
 
     // Assert (State: Loading)
     expect(screen.getByText(/Processando.../i)).toBeInTheDocument();
-    expect(mockDiagnostico).toHaveBeenCalledWith('Fazenda Boa Vista');
+    expect(mockDiagnostico).toHaveBeenCalledWith('Fazenda Boa Vista', 'Fazenda Boa Vista');
 
     // Clean up async call
     resolveDiagnostico();
@@ -123,5 +123,49 @@ describe('FazendasCadastradasGrid', () => {
     await waitFor(() => {
       expect(screen.getByText('Falha de conexão com BFF')).toBeInTheDocument();
     });
+  });
+
+  it('deve isolar o estado de erro e loading entre fazendas homônimas com mesmo nome', async () => {
+    // Arrange: Duas fazendas com o mesmo nome exato "Fazenda Santa Tereza", mas IDs/emails distintos
+    const user = userEvent.setup();
+    const mockDiagnostico = jest.fn().mockImplementation((id: string) => {
+      if (id === 'uuid-gabrielly-gmail') {
+        return Promise.reject(new Error('Falha ao acionar a API de Diagnóstico.'));
+      }
+      return Promise.resolve();
+    });
+
+    const fazendasHomonimas = [
+      { id: 'uuid-gabrielly-gmail', nome: 'Fazenda Santa Tereza', email: 'gabriellylunatsousa@gmail.com' },
+      { id: 'uuid-gabrielly-ufv', nome: 'Fazenda Santa Tereza', email: 'gabrielly.sousa@ufv.br' },
+    ];
+
+    render(
+      <FazendasCadastradasGrid
+        fazendas={fazendasHomonimas}
+        onIniciarDiagnostico={mockDiagnostico}
+      />
+    );
+
+    const cards = screen.getAllByTestId('fazenda-card');
+    expect(cards).toHaveLength(2);
+
+    // Act: Clica em "Iniciar Diagnóstico" apenas no card do Gmail
+    const btnGmail = screen.getByRole('button', { name: /Iniciar Diagnóstico para Fazenda Santa Tereza \(gabriellylunatsousa@gmail\.com\)/i });
+    await user.click(btnGmail);
+
+    // Assert: O erro deve ser exibido APENAS no primeiro card
+    await waitFor(() => {
+      expect(screen.getByText('Falha ao acionar a API de Diagnóstico.')).toBeInTheDocument();
+    });
+
+    // Garante que só há 1 elemento de erro na tela inteira, e não 2
+    const erros = screen.getAllByText('Falha ao acionar a API de Diagnóstico.');
+    expect(erros).toHaveLength(1);
+    expect(cards[0]).toContainElement(erros[0]);
+    expect(cards[1]).not.toContainElement(erros[0]);
+
+    // Valida que o mock foi chamado com o UUID prioritário da hierarquia defensiva
+    expect(mockDiagnostico).toHaveBeenCalledWith('uuid-gabrielly-gmail', 'Fazenda Santa Tereza');
   });
 });

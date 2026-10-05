@@ -1,4 +1,4 @@
-import { cadastrarFazendaSchema } from '../../src/lib/schemas';
+import { cadastrarFazendaSchema, fazendaSchema, MENSAGENS_VALIDACAO } from '../../src/lib/schemas';
 
 describe('cadastrarFazendaSchema Validation Unit Tests', () => {
   it('should pass validation for a completely valid producer input payload', () => {
@@ -90,7 +90,7 @@ describe('cadastrarFazendaSchema Validation Unit Tests', () => {
     if (!result.success) {
       const herdError = result.error.issues.find(issue => issue.path.includes('total_rebanho'));
       expect(herdError).toBeDefined();
-      expect(herdError?.message).toBe('O total do rebanho não pode ser menor que o total de vacas');
+      expect(herdError?.message).toBe(MENSAGENS_VALIDACAO.REBANHO_MENOR_QUE_VACAS);
     }
   });
 
@@ -124,4 +124,87 @@ describe('cadastrarFazendaSchema Validation Unit Tests', () => {
       expect(emailError?.message).toBe('Insira um e-mail válido');
     }
   });
+});
+
+/**
+ * Contrato unificado Front + API (gt=0).
+ * @see Obsidian: 02-auditorias/pivots-and-bugs/2026-10-05-validacao-cadastro-produtor-e-contratos-diagnostico.md
+ */
+describe('Contrato gt=0: cadastrarFazendaSchema', () => {
+  const base = {
+    email: 'produtor@fazenda.com',
+    senha: 'senhaSegura123',
+    nome_fazenda: 'Fazenda Santa Tereza',
+    sistema_producao: 'compost-barn',
+    regiao_sebrae: 'sul',
+    total_vacas: 50,
+    percentual_lactacao: 70,
+    total_rebanho: 60,
+    area_atividade: 10,
+    numero_trabalhadores: 2,
+    producao_vaca: 25,
+    preco_recebido: 2.8,
+    preco_referencia: 2.7,
+    ccs: 200,
+  };
+
+  it.each([
+    ['producao_vaca', 0, MENSAGENS_VALIDACAO.PRODUCAO_VACA],
+    ['preco_recebido', 0, MENSAGENS_VALIDACAO.PRECO_RECEBIDO],
+    ['preco_referencia', 0, MENSAGENS_VALIDACAO.PRECO_REFERENCIA],
+    ['ccs', 0, MENSAGENS_VALIDACAO.CCS],
+    ['ccs', -10, MENSAGENS_VALIDACAO.CCS],
+    ['total_rebanho', 0, MENSAGENS_VALIDACAO.TOTAL_REBANHO],
+    ['area_atividade', 0, MENSAGENS_VALIDACAO.AREA],
+    ['numero_trabalhadores', 0, MENSAGENS_VALIDACAO.TRABALHADORES],
+    ['percentual_lactacao', 0, MENSAGENS_VALIDACAO.PERCENTUAL_LACTACAO],
+    ['percentual_lactacao', 105, MENSAGENS_VALIDACAO.PERCENTUAL_LACTACAO],
+    ['producao_vaca', '', MENSAGENS_VALIDACAO.PRODUCAO_VACA],
+  ])('rejeita %s = %p', (campo, valor, mensagem) => {
+    const result = cadastrarFazendaSchema.safeParse({ ...base, [campo]: valor });
+    expect(result.success).toBe(false);
+    const issue = result.error?.issues.find((i) => i.path.includes(campo as string));
+    expect(issue?.message).toBe(mensagem);
+  });
+
+  it('rejeita total_vacas = 0', () => {
+    const result = cadastrarFazendaSchema.safeParse({ ...base, total_vacas: 0 });
+    expect(result.error?.issues.some((i) => i.message === MENSAGENS_VALIDACAO.TOTAL_VACAS)).toBe(true);
+  });
+
+  it('aceita médias decimais (CT10)', () => {
+    const result = cadastrarFazendaSchema.safeParse({ ...base, total_vacas: 85.5, total_rebanho: 90.3, numero_trabalhadores: 2.5 });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe('Contrato gt=0: fazendaSchema (página de Ajustes)', () => {
+  const base = {
+    nome_fazenda: 'Fazenda Santa Tereza',
+    sistema_producao: 'compost-barn',
+    regiao: 'sul',
+    total_vacas: 50,
+    percentual_lactacao: 70,
+    animais_rebanho: 60,
+    area_atividade: 10,
+    mao_obra_total: 2.5,
+    producao_vaca: 25,
+    preco_leite: 2.8,
+    preco_referencia: 2.7,
+    preco_concentrado: 1.5,
+    ccs: 200,
+  };
+
+  it('aceita payload válido com decimais', () => {
+    expect(fazendaSchema.safeParse(base).success).toBe(true);
+  });
+
+  it.each(['producao_vaca', 'preco_leite', 'preco_referencia', 'ccs', 'area_atividade', 'mao_obra_total', 'percentual_lactacao'])(
+    'rejeita %s = 0',
+    (campo) => {
+      const result = fazendaSchema.safeParse({ ...base, [campo]: 0 });
+      expect(result.success).toBe(false);
+      expect(result.error?.issues.some((i) => i.path.includes(campo))).toBe(true);
+    },
+  );
 });
