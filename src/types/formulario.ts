@@ -38,6 +38,18 @@ export function getFazendaEmail(item: FazendaCadastradaItem): string {
   return '';
 }
 
+/**
+ * Extrai o identificador único da fazenda aplicando a hierarquia defensiva:
+ * Prioridade: ID (UUID) -> E-mail -> Nome
+ * @see Obsidian: 02-auditorias/pivots-and-bugs/2026-10-05-desambiguacao-fazendas-homonimas-e-chave-defensiva.md
+ */
+export function getFazendaId(item: FazendaCadastradaItem): string {
+  if (typeof item === 'object' && item !== null) {
+    return item.id || item.email || item.nome;
+  }
+  return String(item);
+}
+
 export function getOptionValue(item: SistemaProducaoItem | RegiaoSebraeItem): string {
   if (typeof item === 'object' && item !== null && 'value' in item) {
     return item.value;

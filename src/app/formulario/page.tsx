@@ -25,140 +25,27 @@ import {
   getOptionLabel,
 } from '@/types/formulario';
 
-/**
- * Mapeamento direto entre as regiões da API Ishikawa (value/label) e a API ML (Zod Enum).
- */
-export const MAP_TO_ML_REGIAO: Record<string, string> = {
-  'centro': 'centro',
-  'centro oeste e sudoeste': 'centro-oeste e sudoeste',
-  'jequitinhonha e mucuri': 'jequitinhonha e mucuri',
-  'noroeste e alto paranaiba': 'noroeste e alto paranaiba',
-  'norte': 'norte',
-  'norte de minas': 'norte',
-  'rio doce e vale do aco': 'rio doce e vale do aco',
-  'sul': 'sul',
-  'sul de minas': 'sul',
-  'triangulo': 'triangulo',
-  'triangulo mineiro': 'triangulo',
-  'zona da mata e vertentes': 'zona da mata e vertentes',
-  'zona da mata': 'zona da mata e vertentes',
+import {
+  fetchOpcoesFormulario,
+  fetchFazendaDetalhes,
+  mapFarmApiToFormData,
+  mapToMlRegion,
+  mapToMlSystem,
+  findIshikawaOptionValue,
+  MAP_TO_ML_REGIAO,
+  MAP_TO_ML_SISTEMA,
+  DEFAULT_SISTEMAS,
+  DEFAULT_REGIOES,
+} from '@/lib/fazendaService';
+
+export {
+  MAP_TO_ML_REGIAO,
+  MAP_TO_ML_SISTEMA,
+  mapToMlRegion,
+  mapToMlSystem,
+  mapFarmApiToFormData,
+  findIshikawaOptionValue,
 };
-
-export const MAP_TO_ML_SISTEMA: Record<string, string> = {
-  'compost-barn': 'compost-barn',
-  'confinado-sem-estrutura': 'confinado-sem-estrutura',
-  'semiconfinado': 'semiconfinado',
-  'compost barn - free stall': 'compost-barn',
-};
-
-function normalizeText(str: string): string {
-  if (!str) return '';
-  return str
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/_/g, ' ')
-    .trim();
-}
-
-export function mapToMlRegion(raw: string): string {
-  if (!raw) return '';
-  const norm = normalizeText(raw);
-  if (MAP_TO_ML_REGIAO[norm]) return MAP_TO_ML_REGIAO[norm];
-
-  for (const [key, target] of Object.entries(MAP_TO_ML_REGIAO)) {
-    if (norm.includes(key) || key.includes(norm)) return target;
-  }
-  return norm;
-}
-
-export function mapToMlSystem(raw: string): string {
-  if (!raw) return '';
-  const norm = normalizeText(raw);
-  if (MAP_TO_ML_SISTEMA[norm]) return MAP_TO_ML_SISTEMA[norm];
-
-  for (const [key, target] of Object.entries(MAP_TO_ML_SISTEMA)) {
-    if (norm.includes(key) || key.includes(norm)) return target;
-  }
-  return norm;
-}
-
-function findIshikawaOptionValue(raw: string, optionsList: (SistemaProducaoItem | RegiaoSebraeItem)[]): string {
-  if (!raw) return '';
-  const clean = String(raw).trim();
-  const norm = normalizeText(clean);
-
-  for (const item of optionsList) {
-    const val = getOptionValue(item);
-    const lbl = getOptionLabel(item);
-    const valNorm = normalizeText(val);
-    const lblNorm = normalizeText(lbl);
-
-    if (val === clean || lbl === clean || valNorm === norm || lblNorm === norm) {
-      return val;
-    }
-  }
-
-  for (const item of optionsList) {
-    const val = getOptionValue(item);
-    const lbl = getOptionLabel(item);
-    const valNorm = normalizeText(val);
-    const lblNorm = normalizeText(lbl);
-
-    if (valNorm.includes(norm) || norm.includes(valNorm) || lblNorm.includes(norm) || norm.includes(lblNorm)) {
-      return val;
-    }
-  }
-
-  return clean;
-}
-
-const DEFAULT_SISTEMAS = ['semiconfinado', 'compost-barn', 'confinado-sem-estrutura'];
-const DEFAULT_REGIOES: RegiaoSebraeItem[] = [
-  { value: 'centro', label: 'Centro' },
-  { value: 'centro_oeste_e_sudoeste', label: 'Centro Oeste E Sudoeste' },
-  { value: 'jequitinhonha_e_mucuri', label: 'Jequitinhonha E Mucuri' },
-  { value: 'noroeste_e_alto_paranaiba', label: 'Noroeste E Alto Paranaiba' },
-  { value: 'norte', label: 'Norte de Minas' },
-  { value: 'rio_doce_e_vale_do_aco', label: 'Rio Doce E Vale Do Aco' },
-  { value: 'sul', label: 'Sul de Minas' },
-  { value: 'triangulo', label: 'Triângulo Mineiro' },
-  { value: 'zona_da_mata_e_vertentes', label: 'Zona Da Mata E Vertentes' },
-];
-
-function mapFarmApiToFormData(
-  data: FazendaDetalhadaResponse | any, 
-  opcoesRegioes: RegiaoSebraeItem[] = DEFAULT_REGIOES,
-  opcoesSistemas: SistemaProducaoItem[] = DEFAULT_SISTEMAS
-) {
-  const dadosObj = data?.dados ?? data;
-  const rawRegiao = dadosObj?.regiao_sebrae ?? dadosObj?.regiao ?? data?.regiao_sebrae ?? data?.regiao ?? '';
-  const rawSistema = dadosObj?.sistema_producao ?? data?.sistema_producao ?? '';
-
-  const listRegioes = opcoesRegioes.length > 0 ? opcoesRegioes : DEFAULT_REGIOES;
-  const listSistemas = opcoesSistemas.length > 0 ? opcoesSistemas : DEFAULT_SISTEMAS;
-
-  const matchedRegiao = findIshikawaOptionValue(rawRegiao, listRegioes);
-  const matchedSistema = findIshikawaOptionValue(rawSistema, listSistemas);
-
-  return {
-    id_fazenda: data?.id_fazenda ?? data?.id ?? dadosObj?.id_fazenda ?? dadosObj?.id ?? undefined,
-    nome_fazenda: data?.nome ?? data?.nome_fazenda ?? '',
-    email: data?.email ?? dadosObj?.email ?? '',
-    sistema_producao: matchedSistema,
-    total_vacas: dadosObj?.total_vacas ?? 0,
-    percentual_lactacao: dadosObj?.percentual_lactacao ?? 0,
-    animais_rebanho: dadosObj?.total_rebanho ?? dadosObj?.animais_rebanho ?? 0,
-    area_atividade: dadosObj?.area_atividade ?? 0,
-    mao_obra_total: dadosObj?.numero_trabalhadores ?? dadosObj?.mao_obra_total ?? 1,
-    producao_vaca: dadosObj?.producao_vaca ?? 0,
-    preco_leite: dadosObj?.preco_recebido ?? dadosObj?.preco_leite ?? 0,
-    preco_referencia: dadosObj?.preco_referencia ?? 0,
-    preco_concentrado: dadosObj?.custo_concentrado ?? dadosObj?.preco_concentrado ?? 1.81,
-    ccs: dadosObj?.ccs ?? 0,
-    regiao: matchedRegiao,
-  };
-}
 
 export default function FormularioPage() {
   const router = useRouter();
@@ -173,23 +60,14 @@ export default function FormularioPage() {
   const [isLoadingOpcoes, setIsLoadingOpcoes] = useState(false);
   const [isErrorApi, setIsErrorApi] = useState(false);
   const [isLoadingFarmData, setIsLoadingFarmData] = useState(false);
-  const cacheFazendas = useRef<Record<string, ReturnType<typeof mapFarmApiToFormData>>>({});
+  const cacheFazendas = useRef<Record<string, any>>({});
 
   const fetchOpcoes = async () => {
     setIsLoadingOpcoes(true);
     setIsErrorApi(false);
     try {
-      const res = await fetch('/api/formularios');
-      if (res.ok) {
-        const data: FormularioOpcoesResponse = await res.json();
-        setOpcoes({
-          sistemas_producao: data?.sistemas_producao || [],
-          regioes_sebrae: data?.regioes_sebrae || [],
-          fazendas_cadastradas: data?.fazendas_cadastradas || []
-        });
-      } else {
-        setIsErrorApi(true);
-      }
+      const data = await fetchOpcoesFormulario();
+      setOpcoes(data);
     } catch (error) {
       console.error('Erro ao buscar opções do formulário:', error);
       setIsErrorApi(true);
@@ -238,26 +116,15 @@ export default function FormularioPage() {
     router.push('/carregando');
   };
 
-  const handleIniciarDiagnosticoDirect = async (nome: string) => {
-    let farmDataMapped: any;
+  const handleIniciarDiagnosticoDirect = async (identificador: string, _nome: string) => {
+    let payloadParaMl: any;
 
-    if (cacheFazendas.current[nome]) {
-      farmDataMapped = cacheFazendas.current[nome];
+    if (cacheFazendas.current[identificador]) {
+      payloadParaMl = cacheFazendas.current[identificador];
     } else {
-      const res = await fetch(`/api/formularios?nome=${encodeURIComponent(nome)}`);
-      if (!res.ok) {
-        throw new Error('Não foi possível carregar os dados da fazenda.');
-      }
-      const data: FazendaDetalhadaResponse = await res.json();
-      farmDataMapped = mapFarmApiToFormData(data, regioesDisponiveis, sistemasDisponiveis);
-      cacheFazendas.current[nome] = farmDataMapped;
+      payloadParaMl = await fetchFazendaDetalhes(identificador, regioesDisponiveis, sistemasDisponiveis);
+      cacheFazendas.current[identificador] = payloadParaMl;
     }
-
-    const payloadParaMl = {
-      ...farmDataMapped,
-      regiao: mapToMlRegion(farmDataMapped.regiao),
-      sistema_producao: mapToMlSystem(farmDataMapped.sistema_producao),
-    };
 
     const validacao = fazendaSchema.safeParse(payloadParaMl);
     if (!validacao.success) {
