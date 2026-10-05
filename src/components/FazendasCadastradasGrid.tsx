@@ -8,13 +8,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FazendaCadastradaItem, getFazendaNome, getFazendaEmail } from '@/types/formulario';
+import { FazendaCadastradaItem, getFazendaNome, getFazendaEmail, getFazendaId } from '@/types/formulario';
 import { Home, Play, Loader2, AlertCircle, Search } from 'lucide-react';
 
 export interface FazendasCadastradasGridProps {
   fazendas: FazendaCadastradaItem[];
   onCarregarFormulario?: (nome: string) => void;
-  onIniciarDiagnostico: (nome: string) => Promise<void>;
+  onIniciarDiagnostico: (identificador: string, nome: string) => Promise<void>;
   isLoadingGlobal?: boolean;
 }
 
@@ -24,7 +24,7 @@ interface FazendaCardProps {
   isLoadingThis: boolean;
   isLoadingGlobal: boolean;
   erro?: string;
-  onDiagnostico: (nome: string) => void;
+  onDiagnostico: () => void;
 }
 
 const FazendaCard: React.FC<FazendaCardProps> = ({
@@ -36,6 +36,7 @@ const FazendaCard: React.FC<FazendaCardProps> = ({
   onDiagnostico,
 }) => {
   const isDisabled = isLoadingThis || isLoadingGlobal;
+  const ariaLabel = email ? `Iniciar Diagnóstico para ${nome} (${email})` : `Iniciar Diagnóstico para ${nome}`;
 
   return (
     <div
@@ -64,10 +65,10 @@ const FazendaCard: React.FC<FazendaCardProps> = ({
       <div className="flex flex-col gap-2 mt-3 pt-2.5 sm:mt-4 sm:pt-3 border-t border-gray-100">
         <button
           type="button"
-          onClick={() => onDiagnostico(nome)}
+          onClick={onDiagnostico}
           disabled={isDisabled}
           className="w-full min-h-[42px] sm:min-h-[44px] flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold text-sm py-2.5 px-3 rounded-lg shadow-sm transition-colors active:scale-[0.99]"
-          aria-label={`Iniciar Diagnóstico para ${nome}`}
+          aria-label={ariaLabel}
         >
           {isLoadingThis ? (
             <>
@@ -107,14 +108,14 @@ export const FazendasCadastradasGrid: React.FC<FazendasCadastradasGridProps> = (
     return nome.includes(term) || email.includes(term);
   });
 
-  const handleDiagnostico = async (nome: string) => {
-    setLoadingFarm(nome);
-    setErroFarm((prev) => ({ ...prev, [nome]: '' }));
+  const handleDiagnostico = async (identificador: string, nome: string) => {
+    setLoadingFarm(identificador);
+    setErroFarm((prev) => ({ ...prev, [identificador]: '' }));
     try {
-      await onIniciarDiagnostico(nome);
+      await onIniciarDiagnostico(identificador, nome);
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Falha ao iniciar diagnóstico';
-      setErroFarm((prev) => ({ ...prev, [nome]: msg }));
+      setErroFarm((prev) => ({ ...prev, [identificador]: msg }));
     } finally {
       setLoadingFarm(null);
     }
@@ -158,18 +159,19 @@ export const FazendasCadastradasGrid: React.FC<FazendasCadastradasGridProps> = (
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" data-testid="fazendas-grid-container">
-          {fazendasFiltradas.map((item, idx) => {
+          {fazendasFiltradas.map((item) => {
+            const farmId = getFazendaId(item);
             const nome = getFazendaNome(item);
             const email = getFazendaEmail(item);
             return (
               <FazendaCard
-                key={idx}
+                key={farmId}
                 nome={nome}
                 email={email}
-                isLoadingThis={loadingFarm === nome}
+                isLoadingThis={loadingFarm === farmId}
                 isLoadingGlobal={isLoadingGlobal}
-                erro={erroFarm[nome]}
-                onDiagnostico={handleDiagnostico}
+                erro={erroFarm[farmId]}
+                onDiagnostico={() => handleDiagnostico(farmId, nome)}
               />
             );
           })}

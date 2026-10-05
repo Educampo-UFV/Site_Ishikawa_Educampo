@@ -26,7 +26,7 @@ function buildBackendUrl(baseUrl: string, nome: string | null): string {
  */
 export async function GET(request: NextRequest) {
   try {
-    const nome = request.nextUrl.searchParams.get('nome');
+    const nome = request.nextUrl.searchParams.get('identificador') || request.nextUrl.searchParams.get('nome') || request.nextUrl.searchParams.get('id');
     const baseUrl = process.env.API_BASE_URL;
     const apiKey = process.env.API_TOKEN || process.env.API_KEY;
 

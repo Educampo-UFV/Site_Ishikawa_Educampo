@@ -26,6 +26,7 @@ import {
   getOptionValue, 
   getOptionLabel 
 } from '@/types/formulario';
+import { fetchOpcoesFormulario, DEFAULT_SISTEMAS, DEFAULT_REGIOES } from '@/lib/fazendaService';
 
 /**
  * Componente auxiliar genérico para renderizar um rótulo (label) com uma dica (tooltip) interativa acessível ao toque.
@@ -66,23 +67,8 @@ const CampoNumericoAjuste = ({ id, label, unidade, dica, value, onChange, classN
   </div>
 );
 
-const DEFAULT_SISTEMAS_OPCOES: SistemaProducaoItem[] = [
-  { value: 'compost-barn', label: 'Compost Barn' },
-  { value: 'semiconfinado', label: 'Semi-confinado' },
-  { value: 'confinado-sem-estrutura', label: 'Confinado' },
-];
-
-const DEFAULT_REGIOES_OPCOES: RegiaoSebraeItem[] = [
-  { value: 'triangulo', label: 'Triângulo Mineiro' },
-  { value: 'rio doce e vale do aco', label: 'Rio Doce e Vale do Aço' },
-  { value: 'noroeste e alto paranaiba', label: 'Noroeste e Alto Paranaíba' },
-  { value: 'centro', label: 'Centro' },
-  { value: 'centro-oeste e sudoeste', label: 'Centro-Oeste e Sudoeste' },
-  { value: 'sul', label: 'Sul' },
-  { value: 'norte', label: 'Norte' },
-  { value: 'zona da mata e vertentes', label: 'Zona da Mata e Vertentes' },
-  { value: 'jequitinhonha e mucuri', label: 'Jequitinhonha e Mucuri' },
-];
+const DEFAULT_SISTEMAS_OPCOES = DEFAULT_SISTEMAS;
+const DEFAULT_REGIOES_OPCOES = DEFAULT_REGIOES;
 
 /**
  * Página de Ajustes de Dados da Fazenda.
@@ -129,27 +115,16 @@ export default function AjustesPage() {
   const [cooldown, setCooldown] = useState(0);
 
   /**
-   * Efeito colateral para carregar as opções dinâmicas de formulário (sistemas de produção e regiões).
+   * Efeito colateral para carregar as opções dinâmicas de formulário utilizando o serviço centralizado.
    */
   useEffect(() => {
     let isMounted = true;
-    fetchComResiliencia('/api/formularios', { method: 'GET' }, 1, 500, 2000, 3000)
-      .then(async (res) => {
-        if (res.ok) {
-          const data: FormularioOpcoesResponse = await res.json();
-          if (isMounted) {
-            if (Array.isArray(data.sistemas_producao) && data.sistemas_producao.length > 0) {
-              setOpcoesSistemas(data.sistemas_producao);
-            }
-            if (Array.isArray(data.regioes_sebrae) && data.regioes_sebrae.length > 0) {
-              setOpcoesRegioes(data.regioes_sebrae);
-            }
-          }
-        }
-      })
-      .catch(() => {
-        // Mantém as opções de fallback estáticas em caso de inconsistência no fetch
-      });
+    fetchOpcoesFormulario().then((data) => {
+      if (isMounted) {
+        setOpcoesSistemas(data.sistemas_producao);
+        setOpcoesRegioes(data.regioes_sebrae);
+      }
+    });
 
     return () => {
       isMounted = false;
