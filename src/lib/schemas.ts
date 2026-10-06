@@ -9,6 +9,7 @@
 
 import { z } from 'zod';
 import { FAZENDA_LIMITS } from './constants';
+import { validateEmail } from './emailValidation';
 
 /**
  * Enum para os sistemas de produção suportados pela API.
@@ -35,6 +36,9 @@ export const RegiaoEnum = z.enum([
  * @see Obsidian: 02-auditorias/pivots-and-bugs/2026-10-05-validacao-cadastro-produtor-e-contratos-diagnostico.md
  */
 export const MENSAGENS_VALIDACAO = {
+  NOME_FAZENDA_OBRIGATORIO: 'O nome da fazenda é obrigatório',
+  NOME_FAZENDA_ESPACO_INICIAL: 'O nome da fazenda não pode começar com espaço em branco',
+  EMAIL_INVALIDO: 'Insira um e-mail válido (ex: produtor@fazenda.com.br)',
   PRODUCAO_VACA: 'A produção por vaca deve ser maior que zero (ex: 25.0).',
   PRECO_RECEBIDO: 'O preço recebido deve ser maior que zero (ex: 2.80).',
   PRECO_REFERENCIA: 'O preço de referência deve ser maior que zero (ex: 2.70).',
@@ -55,6 +59,26 @@ const numeroPositivo = (mensagem: string) =>
   z.coerce.number({ error: mensagem }).positive(mensagem);
 
 /**
+ * Validador estrito para o nome da fazenda:
+ * - Não pode ser vazio
+ * - Não pode iniciar com espaço em branco
+ * - Deve ter no mínimo 1 caractere significativo
+ * - Limita ao tamanho máximo configurado
+ * - Aplica trim ao final da cadeia
+ */
+const nomeFazendaValidator = (maxLength = FAZENDA_LIMITS.NOME_MAX_LENGTH) =>
+  z.string()
+    .min(1, MENSAGENS_VALIDACAO.NOME_FAZENDA_OBRIGATORIO)
+    .refine((val) => !val.startsWith(' '), {
+      message: MENSAGENS_VALIDACAO.NOME_FAZENDA_ESPACO_INICIAL,
+    })
+    .refine((val) => val.trim().length >= 1, {
+      message: MENSAGENS_VALIDACAO.NOME_FAZENDA_OBRIGATORIO,
+    })
+    .max(maxLength, `O nome deve ter no máximo ${maxLength} caracteres`)
+    .transform((val) => val.trim());
+
+/**
  * Schema principal para os dados da fazenda.
  * @description
  * Aplica limites superiores e inferiores para prevenir erros de digitação e
@@ -62,9 +86,7 @@ const numeroPositivo = (mensagem: string) =>
  */
 export const fazendaSchema = z.object({
   id_fazenda: z.string().optional(),
-  nome_fazenda: z.string().trim()
-    .min(1, 'O nome da fazenda é obrigatório')
-    .max(FAZENDA_LIMITS.NOME_MAX_LENGTH, `O nome deve ter no máximo ${FAZENDA_LIMITS.NOME_MAX_LENGTH} caracteres`),
+  nome_fazenda: nomeFazendaValidator(),
 
   sistema_producao: SistemaProducaoEnum,
 
@@ -89,7 +111,16 @@ export const fazendaSchema = z.object({
 
   ccs: numeroPositivo(MENSAGENS_VALIDACAO.CCS).max(FAZENDA_LIMITS.CCS_MAX),
 
-  email: z.string().email('Insira um e-mail válido').optional().or(z.literal('')),
+  email: z.string().optional().or(z.literal('')).superRefine((val, ctx) => {
+    if (!val) return;
+    const res = validateEmail(val);
+    if (!res.isValid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: res.error || MENSAGENS_VALIDACAO.EMAIL_INVALIDO,
+      });
+    }
+  }),
 
   regiao: RegiaoEnum,
 }).superRefine((data, ctx) => {
@@ -128,9 +159,17 @@ export type FazendaFormData = z.infer<typeof fazendaSchema>;
  * Schema para o cadastro expansível de novos produtores rurais/fazenda (POST /api/produtores).
  */
 export const cadastrarFazendaSchema = z.object({
-  email: z.string().min(1, 'O e-mail é obrigatório').email('Insira um e-mail válido'),
+  email: z.string().min(1, 'O e-mail é obrigatório').superRefine((val, ctx) => {
+    const res = validateEmail(val);
+    if (!res.isValid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: res.error || MENSAGENS_VALIDACAO.EMAIL_INVALIDO,
+      });
+    }
+  }),
   senha: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
-  nome_fazenda: z.string().trim().min(1, 'O nome da fazenda é obrigatório'),
+  nome_fazenda: nomeFazendaValidator(),
   sistema_producao: z.string().min(1, 'Selecione um sistema de produção'),
   regiao_sebrae: z.string().min(1, 'Selecione uma região SEBRAE'),
   total_vacas: numeroPositivo(MENSAGENS_VALIDACAO.TOTAL_VACAS),
