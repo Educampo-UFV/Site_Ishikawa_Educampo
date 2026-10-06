@@ -336,5 +336,107 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
 
     jest.useRealTimers();
   });
+
+  it('deve exibir erro de validação Zod quando o nome da fazenda for composto apenas por espaços em branco', async () => {
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+
+    fireEvent.change(screen.getByLabelText(/^E-mail do Produtor/i), { target: { value: 'teste@fazenda.com' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: 'senhaSegura123' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar Senha/i), { target: { value: 'senhaSegura123' } });
+    fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: '     ' } });
+    fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
+    fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
+    fireEvent.change(screen.getByLabelText(/Total de Vacas/i), { target: { value: '50' } });
+    fireEvent.change(screen.getByLabelText(/Perc. em Lactação/i), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText(/Total do Rebanho/i), { target: { value: '60' } });
+    fireEvent.change(screen.getByLabelText(/Área da Atividade/i), { target: { value: '10' } });
+    fireEvent.change(screen.getByLabelText(/Mão de Obra/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/Produção por Vaca/i), { target: { value: '25' } });
+    fireEvent.change(screen.getByLabelText(/Preço Recebido/i), { target: { value: '2.80' } });
+    fireEvent.change(screen.getByLabelText(/Preço Referência/i), { target: { value: '2.50' } });
+    fireEvent.change(screen.getByLabelText(/Qualidade CCS/i), { target: { value: '150' } });
+
+    fireEvent.click(screen.getByTestId('cadastrar-fazenda-submit-btn'));
+
+    // Assert - espaços são bloqueados no input; campo vazio + required impede o submit
+    expect((screen.getByLabelText(/Nome da Fazenda/i) as HTMLInputElement).value).toBe('');
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('deve remover espaços iniciais do nome da fazenda durante a digitação', () => {
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+    const nomeInput = screen.getByLabelText(/Nome da Fazenda/i) as HTMLInputElement;
+
+    fireEvent.change(nomeInput, { target: { value: '   Fazenda Boa Vista' } });
+
+    expect(nomeInput.value).toBe('Fazenda Boa Vista');
+  });
+
+  it('deve aceitar campos numéricos com vírgula e ponto e formatá-los corretamente como floats para a API', async () => {
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'prod-123' }),
+    });
+
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+
+    fireEvent.change(screen.getByLabelText(/^E-mail do Produtor/i), { target: { value: 'produtor@fazenda.com.br' } });
+    fireEvent.change(screen.getByLabelText(/^Senha/i), { target: { value: 'senha123' } });
+    fireEvent.change(screen.getByLabelText(/Confirmar Senha/i), { target: { value: 'senha123' } });
+    fireEvent.change(screen.getByLabelText(/Nome da Fazenda/i), { target: { value: 'Fazenda Decimal' } });
+    fireEvent.change(screen.getByLabelText(/Sistema de Produção/i), { target: { value: 'compost-barn' } });
+    fireEvent.change(screen.getByLabelText(/Região SEBRAE/i), { target: { value: 'triangulo' } });
+    
+    // Inserindo com vírgula e com ponto
+    fireEvent.change(screen.getByLabelText(/Total de Vacas/i), { target: { value: '50,5' } });
+    fireEvent.change(screen.getByLabelText(/Perc. em Lactação/i), { target: { value: '80.5' } });
+    fireEvent.change(screen.getByLabelText(/Total do Rebanho/i), { target: { value: '60,5' } });
+    fireEvent.change(screen.getByLabelText(/Área da Atividade/i), { target: { value: '10.5' } });
+    fireEvent.change(screen.getByLabelText(/Mão de Obra/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/Produção por Vaca/i), { target: { value: '25,5' } });
+    fireEvent.change(screen.getByLabelText(/Preço Recebido/i), { target: { value: '2,85' } });
+    fireEvent.change(screen.getByLabelText(/Preço Referência/i), { target: { value: '2.50' } });
+    fireEvent.change(screen.getByLabelText(/Qualidade CCS/i), { target: { value: '150' } });
+
+    fireEvent.click(screen.getByTestId('cadastrar-fazenda-submit-btn'));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/produtores', expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: expect.any(String),
+      }));
+    });
+
+    const callBody = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body);
+    expect(callBody.preco_recebido).toBe(2.85);
+    expect(callBody.total_vacas).toBe(50.5);
+    expect(callBody.producao_vaca).toBe(25.5);
+    expect(callBody.preco_referencia).toBe(2.5);
+  });
 });
 

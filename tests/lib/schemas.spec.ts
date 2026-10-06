@@ -75,4 +75,9 @@ describe('Validações Zod: fazendaSchema', () => {
     const dadosInvalidos = { ...dadosValidos, sistema_producao: 'compost_barn' };
     expect(() => fazendaSchema.parse(dadosInvalidos)).toThrow();
   });
+
+  it('deve rejeitar nome da fazenda contendo apenas espaços em branco', () => {
+    const dadosInvalidos = { ...dadosValidos, nome_fazenda: '    ' };
+    expect(() => fazendaSchema.parse(dadosInvalidos)).toThrow();
+  });
 });

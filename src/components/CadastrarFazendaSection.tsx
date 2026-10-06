@@ -9,6 +9,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, PlusCircle, CheckCircle, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { NumericFormat } from 'react-number-format';
 import { cadastrarFazendaSchema, CadastrarFazendaFormData } from '@/lib/schemas';
 import { SistemaProducaoItem, RegiaoSebraeItem } from '@/types/formulario';
 import { parseApiError } from '@/lib/apiUtils';
@@ -51,6 +52,25 @@ interface FormInputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
+const CustomNumericInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  (props, ref) => {
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      e.target.select();
+      props.onFocus?.(e);
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (typeof e.target.value === 'string' && e.target.value.includes(',')) {
+        e.target.value = e.target.value.replace(',', '.');
+      }
+      props.onChange?.(e);
+    };
+
+    return <input {...props} ref={ref} onFocus={handleFocus} onChange={handleChange} />;
+  }
+);
+CustomNumericInput.displayName = 'CustomNumericInput';
+
 const FormInput: React.FC<FormInputProps> = ({
   id,
   name,
@@ -68,33 +88,54 @@ const FormInput: React.FC<FormInputProps> = ({
   onChange,
 }) => {
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (type === 'number') {
-      e.target.select();
-    }
+    e.target.select();
   };
+
+  const isNumeric = type === 'number';
 
   return (
     <div className={className}>
       <label htmlFor={id} className="block text-xs font-semibold text-gray-700 mb-1">
         {label}
       </label>
-      <input
-        id={id}
-        name={name}
-        type={type}
-        inputMode={inputMode}
-        required={required}
-        value={value}
-        onChange={onChange}
-        onFocus={handleFocus}
-        placeholder={placeholder}
-        min={min}
-        max={max}
-        step={step}
-        className={`w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
-          error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
-        }`}
-      />
+      {isNumeric ? (
+        <NumericFormat
+          id={id}
+          name={name}
+          customInput={CustomNumericInput}
+          type="text"
+          inputMode={inputMode || 'decimal'}
+          allowNegative={false}
+          decimalScale={3}
+          allowedDecimalSeparators={[',', '.']}
+          decimalSeparator="."
+          required={required}
+          value={value === '' || value === undefined ? '' : value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={`w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
+            error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
+          }`}
+        />
+      ) : (
+        <input
+          id={id}
+          name={name}
+          type={type}
+          inputMode={inputMode}
+          required={required}
+          value={value}
+          onChange={onChange}
+          onFocus={handleFocus}
+          placeholder={placeholder}
+          min={min}
+          max={max}
+          step={step}
+          className={`w-full px-3 py-2 text-xs sm:text-sm min-h-[42px] border rounded-lg focus:ring-2 focus:ring-emerald-500 ${
+            error ? 'border-red-500 bg-red-50/50' : 'border-gray-300'
+          }`}
+        />
+      )}
       {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
     </div>
   );
@@ -280,6 +321,18 @@ const FormSelect: React.FC<FormSelectProps> = ({
   </div>
 );
 
+const NUMERIC_FIELDS = new Set<string>([
+  'total_vacas',
+  'percentual_lactacao',
+  'total_rebanho',
+  'area_atividade',
+  'numero_trabalhadores',
+  'producao_vaca',
+  'preco_recebido',
+  'preco_referencia',
+  'ccs',
+]);
+
 const INITIAL_STATE: CadastrarFazendaFormData = {
   email: '',
   senha: '',
@@ -323,9 +376,14 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
 
     setFormData((prev) => {
       let parsedValue: any = value;
-      if (type === 'number') {
-        if (value === '') {
+      if (name === 'nome_fazenda' && typeof parsedValue === 'string') {
+        parsedValue = parsedValue.replace(/^\s+/, '');
+      } else if (NUMERIC_FIELDS.has(name) || type === 'number') {
+        if (value === '' || value === null || value === undefined) {
           parsedValue = '';
+        } else if (typeof value === 'string') {
+          const normalized = value.trim().replace(',', '.');
+          parsedValue = normalized === '' ? '' : Number(normalized);
         } else {
           parsedValue = Number(value);
         }
