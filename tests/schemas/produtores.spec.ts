@@ -124,6 +124,66 @@ describe('cadastrarFazendaSchema Validation Unit Tests', () => {
       expect(emailError?.message).toBe('Insira um e-mail válido');
     }
   });
+
+  it('should reject validation when nome_fazenda contains only whitespace', () => {
+    // Arrange
+    const whitespaceNamePayload = {
+      email: 'produtor@fazenda.com',
+      senha: 'senhaSegura123',
+      nome_fazenda: '    ',
+      sistema_producao: 'Confinado',
+      regiao_sebrae: 'Sul de Minas',
+      total_vacas: 50,
+      percentual_lactacao: 70,
+      total_rebanho: 60,
+      area_atividade: 10,
+      numero_trabalhadores: 2,
+      producao_vaca: 25,
+      preco_recebido: 2.80,
+      preco_referencia: 2.50,
+      ccs: 150,
+    };
+
+    // Act
+    const result = cadastrarFazendaSchema.safeParse(whitespaceNamePayload);
+
+    // Assert
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const nameError = result.error.issues.find(issue => issue.path.includes('nome_fazenda'));
+      expect(nameError).toBeDefined();
+      expect(nameError?.message).toBe('O nome da fazenda é obrigatório');
+    }
+  });
+
+  it('should trim leading and trailing whitespace from nome_fazenda when valid', () => {
+    // Arrange
+    const validWithSpaces = {
+      email: 'produtor@fazenda.com',
+      senha: 'senhaSegura123',
+      nome_fazenda: '  Fazenda Bela Vista  ',
+      sistema_producao: 'Confinado',
+      regiao_sebrae: 'Sul de Minas',
+      total_vacas: 50,
+      percentual_lactacao: 70,
+      total_rebanho: 60,
+      area_atividade: 10,
+      numero_trabalhadores: 2,
+      producao_vaca: 25,
+      preco_recebido: 2.80,
+      preco_referencia: 2.50,
+      ccs: 150,
+    };
+
+    // Act
+    const result = cadastrarFazendaSchema.safeParse(validWithSpaces);
+
+    // Assert
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.nome_fazenda).toBe('Fazenda Bela Vista');
+    }
+  });
 });
 
 /**

@@ -62,7 +62,7 @@ const numeroPositivo = (mensagem: string) =>
  */
 export const fazendaSchema = z.object({
   id_fazenda: z.string().optional(),
-  nome_fazenda: z.string()
+  nome_fazenda: z.string().trim()
     .min(1, 'O nome da fazenda é obrigatório')
     .max(FAZENDA_LIMITS.NOME_MAX_LENGTH, `O nome deve ter no máximo ${FAZENDA_LIMITS.NOME_MAX_LENGTH} caracteres`),
 
@@ -130,7 +130,7 @@ export type FazendaFormData = z.infer<typeof fazendaSchema>;
 export const cadastrarFazendaSchema = z.object({
   email: z.string().min(1, 'O e-mail é obrigatório').email('Insira um e-mail válido'),
   senha: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
-  nome_fazenda: z.string().min(1, 'O nome da fazenda é obrigatório'),
+  nome_fazenda: z.string().trim().min(1, 'O nome da fazenda é obrigatório'),
   sistema_producao: z.string().min(1, 'Selecione um sistema de produção'),
   regiao_sebrae: z.string().min(1, 'Selecione uma região SEBRAE'),
   total_vacas: numeroPositivo(MENSAGENS_VALIDACAO.TOTAL_VACAS),
