@@ -121,7 +121,159 @@ describe('cadastrarFazendaSchema Validation Unit Tests', () => {
     if (!result.success) {
       const emailError = result.error.issues.find(issue => issue.path.includes('email'));
       expect(emailError).toBeDefined();
-      expect(emailError?.message).toBe('Insira um e-mail válido');
+      expect(emailError?.message).toContain('Insira um e-mail válido');
+    }
+  });
+
+  it('should reject validation when email has popular provider typo (@gmail.cos)', () => {
+    // Arrange
+    const payload = {
+      email: 'produtor@gmail.cos',
+      senha: 'senhaSegura123',
+      nome_fazenda: 'Fazenda Esperança',
+      sistema_producao: 'Confinado',
+      regiao_sebrae: 'Sul de Minas',
+      total_vacas: 50,
+      percentual_lactacao: 70,
+      total_rebanho: 60,
+      area_atividade: 10,
+      numero_trabalhadores: 2,
+      producao_vaca: 25,
+      preco_recebido: 2.80,
+      preco_referencia: 2.50,
+      ccs: 150,
+    };
+
+    // Act
+    const result = cadastrarFazendaSchema.safeParse(payload);
+
+    // Assert
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const emailError = result.error.issues.find(issue => issue.path.includes('email'));
+      expect(emailError).toBeDefined();
+      expect(emailError?.message).toContain('Parece haver um erro de digitação no domínio do e-mail');
+    }
+  });
+
+  it('should reject validation when email has invalid TLD (@fazenda.cos)', () => {
+    // Arrange
+    const payload = {
+      email: 'produtor@fazenda.cos',
+      senha: 'senhaSegura123',
+      nome_fazenda: 'Fazenda Esperança',
+      sistema_producao: 'Confinado',
+      regiao_sebrae: 'Sul de Minas',
+      total_vacas: 50,
+      percentual_lactacao: 70,
+      total_rebanho: 60,
+      area_atividade: 10,
+      numero_trabalhadores: 2,
+      producao_vaca: 25,
+      preco_recebido: 2.80,
+      preco_referencia: 2.50,
+      ccs: 150,
+    };
+
+    // Act
+    const result = cadastrarFazendaSchema.safeParse(payload);
+
+    // Assert
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const emailError = result.error.issues.find(issue => issue.path.includes('email'));
+      expect(emailError).toBeDefined();
+      expect(emailError?.message).toContain('Extensão de domínio inválida');
+    }
+  });
+
+  it('should reject validation when nome_fazenda starts with whitespace', () => {
+    // Arrange
+    const leadingSpacePayload = {
+      email: 'produtor@fazenda.com',
+      senha: 'senhaSegura123',
+      nome_fazenda: ' Fazenda Bela Vista',
+      sistema_producao: 'Confinado',
+      regiao_sebrae: 'Sul de Minas',
+      total_vacas: 50,
+      percentual_lactacao: 70,
+      total_rebanho: 60,
+      area_atividade: 10,
+      numero_trabalhadores: 2,
+      producao_vaca: 25,
+      preco_recebido: 2.80,
+      preco_referencia: 2.50,
+      ccs: 150,
+    };
+
+    // Act
+    const result = cadastrarFazendaSchema.safeParse(leadingSpacePayload);
+
+    // Assert
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const nameError = result.error.issues.find(issue => issue.path.includes('nome_fazenda'));
+      expect(nameError).toBeDefined();
+      expect(nameError?.message).toBe(MENSAGENS_VALIDACAO.NOME_FAZENDA_ESPACO_INICIAL);
+    }
+  });
+
+  it('should reject validation when nome_fazenda contains only whitespace', () => {
+    // Arrange
+    const whitespaceNamePayload = {
+      email: 'produtor@fazenda.com',
+      senha: 'senhaSegura123',
+      nome_fazenda: '    ',
+      sistema_producao: 'Confinado',
+      regiao_sebrae: 'Sul de Minas',
+      total_vacas: 50,
+      percentual_lactacao: 70,
+      total_rebanho: 60,
+      area_atividade: 10,
+      numero_trabalhadores: 2,
+      producao_vaca: 25,
+      preco_recebido: 2.80,
+      preco_referencia: 2.50,
+      ccs: 150,
+    };
+
+    // Act
+    const result = cadastrarFazendaSchema.safeParse(whitespaceNamePayload);
+
+    // Assert
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const nameError = result.error.issues.find(issue => issue.path.includes('nome_fazenda'));
+      expect(nameError).toBeDefined();
+    }
+  });
+
+  it('should trim trailing whitespace from nome_fazenda when valid', () => {
+    // Arrange
+    const validWithTrailingSpaces = {
+      email: 'produtor@fazenda.com',
+      senha: 'senhaSegura123',
+      nome_fazenda: 'Fazenda Bela Vista   ',
+      sistema_producao: 'Confinado',
+      regiao_sebrae: 'Sul de Minas',
+      total_vacas: 50,
+      percentual_lactacao: 70,
+      total_rebanho: 60,
+      area_atividade: 10,
+      numero_trabalhadores: 2,
+      producao_vaca: 25,
+      preco_recebido: 2.80,
+      preco_referencia: 2.50,
+      ccs: 150,
+    };
+
+    // Act
+    const result = cadastrarFazendaSchema.safeParse(validWithTrailingSpaces);
+
+    // Assert
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.nome_fazenda).toBe('Fazenda Bela Vista');
     }
   });
 });
@@ -207,4 +359,21 @@ describe('Contrato gt=0: fazendaSchema (página de Ajustes)', () => {
       expect(result.error?.issues.some((i) => i.path.includes(campo))).toBe(true);
     },
   );
+
+  it('rejeita nome_fazenda iniciando com espaço em branco', () => {
+    const result = fazendaSchema.safeParse({ ...base, nome_fazenda: ' Fazenda Santa Tereza' });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.message === MENSAGENS_VALIDACAO.NOME_FAZENDA_ESPACO_INICIAL)).toBe(true);
+  });
+
+  it('rejeita email com typo quando preenchido', () => {
+    const result = fazendaSchema.safeParse({ ...base, email: 'produtor@gmail.cos' });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((i) => i.path.includes('email'))).toBe(true);
+  });
+
+  it('aceita email institucional legítimo quando preenchido', () => {
+    const result = fazendaSchema.safeParse({ ...base, email: 'consultor@ufv.br' });
+    expect(result.success).toBe(true);
+  });
 });
