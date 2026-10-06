@@ -157,7 +157,10 @@ export default function AjustesPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFeedback(null); // Limpa o feedback ao alterar qualquer campo
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const sanitizedValue = (name === 'nome_fazenda' && typeof value === 'string')
+      ? value.replace(/^\s+/, '')
+      : value;
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
   };
 
   /**

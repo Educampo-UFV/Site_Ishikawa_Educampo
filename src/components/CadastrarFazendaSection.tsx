@@ -376,7 +376,9 @@ export const CadastrarFazendaSection: React.FC<CadastrarFazendaSectionProps> = (
 
     setFormData((prev) => {
       let parsedValue: any = value;
-      if (NUMERIC_FIELDS.has(name) || type === 'number') {
+      if (name === 'nome_fazenda' && typeof parsedValue === 'string') {
+        parsedValue = parsedValue.replace(/^\s+/, '');
+      } else if (NUMERIC_FIELDS.has(name) || type === 'number') {
         if (value === '' || value === null || value === undefined) {
           parsedValue = '';
         } else if (typeof value === 'string') {

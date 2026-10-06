@@ -366,10 +366,26 @@ describe('CadastrarFazendaSection Component Unit Tests', () => {
 
     fireEvent.click(screen.getByTestId('cadastrar-fazenda-submit-btn'));
 
-    await waitFor(() => {
-      expect(screen.getByText('O nome da fazenda é obrigatório')).toBeInTheDocument();
-    });
+    // Assert - espaços são bloqueados no input; campo vazio + required impede o submit
+    expect((screen.getByLabelText(/Nome da Fazenda/i) as HTMLInputElement).value).toBe('');
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('deve remover espaços iniciais do nome da fazenda durante a digitação', () => {
+    render(
+      <CadastrarFazendaSection
+        sistemasDisponiveis={mockSistemas}
+        regioesDisponiveis={mockRegioes}
+        onSuccess={mockOnSuccess}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('toggle-cadastrar-fazenda-btn'));
+    const nomeInput = screen.getByLabelText(/Nome da Fazenda/i) as HTMLInputElement;
+
+    fireEvent.change(nomeInput, { target: { value: '   Fazenda Boa Vista' } });
+
+    expect(nomeInput.value).toBe('Fazenda Boa Vista');
   });
 
   it('deve aceitar campos numéricos com vírgula e ponto e formatá-los corretamente como floats para a API', async () => {
