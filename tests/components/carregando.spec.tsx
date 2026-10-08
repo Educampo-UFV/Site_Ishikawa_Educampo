@@ -132,7 +132,7 @@ describe('Tela de Carregamento (CarregandoPage)', () => {
     expect(mockPush).toHaveBeenCalledWith('/selecao');
   });
 
-  it('deve exibir mensagem de erro e redirecionar para /formulario quando as APIs de processamento falham', async () => {
+  it('deve exibir mensagem de erro, botões de ação e permitir voltar ao formulário quando as APIs de processamento falham', async () => {
     // Cenário: O fetchComResiliencia esgotou seus retries internos e propagou o erro.
     mockFetchComResiliencia.mockRejectedValue(new Error('Falha transitória do servidor (Status: 502)'));
 
@@ -140,40 +140,68 @@ describe('Tela de Carregamento (CarregandoPage)', () => {
       render(<CarregandoPage />);
     });
 
-    // Aguarda o processamento falhar e exibir a mensagem de erro
+    // Aguarda o processamento falhar e exibir a mensagem de erro e botões
     await waitFor(() => {
       expect(screen.getByText(/Ocorreu um erro ao processar os dados/i)).toBeInTheDocument();
+      expect(screen.getByTestId('btn-tentar-novamente')).toBeInTheDocument();
+      expect(screen.getByTestId('btn-voltar-formulario')).toBeInTheDocument();
     });
 
-    // Avança os 3000ms do redirecionamento de fallback
+    // Clicar em Voltar ao Formulário deve acionar o router.push('/formulario')
     await act(async () => {
-      jest.advanceTimersByTime(3000);
+      screen.getByTestId('btn-voltar-formulario').click();
     });
 
     expect(mockPush).toHaveBeenCalledWith('/formulario');
   });
 
-  it('deve exibir mensagem de erro quando as respostas das APIs retornam ok=false', async () => {
-    // Cenário: As APIs responderam mas com status de erro (ex: 400, 422)
+  it('deve permitir tentar novamente com sucesso ao clicar no botão Tentar Novamente', async () => {
+    // Cenário: A primeira tentativa falha, usuário clica em retry e a segunda sucede
+    mockFetchComResiliencia.mockRejectedValueOnce(new Error('Falha na comunicação com o serviço externo OpenRouter'));
+
+    await act(async () => {
+      render(<CarregandoPage />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('btn-tentar-novamente')).toBeInTheDocument();
+    });
+
+    // Configura o mock para responder com sucesso na segunda tentativa
     mockFetchComResiliencia.mockImplementation(async (url: string) => {
-      if (url === "/api/diagnostico") return { ok: false, status: 400 };
+      if (url === "/api/diagnostico") return { ok: true, json: async () => ({ task_id: "retry-123" }) };
+      if (url.includes("/status/")) return { ok: true, json: async () => ({ status: "completed", result: { diag: "ok" } }) };
       if (url === "/api/simulacao") return { ok: true, json: async () => ({ sim: "ok" }) };
       if (url === "/api/parametros-painel") return { ok: true, json: async () => ({ param: "ok" }) };
       return { ok: true };
     });
 
-    render(<CarregandoPage />);
+    // Clica em Tentar Novamente
+    await act(async () => {
+      screen.getByTestId('btn-tentar-novamente').click();
+    });
 
-    // O throw "Falha ao iniciar o processamento do diagnóstico" é capturado
+    // Drena microtasks da chamada inicial pós-retry
+    await act(async () => {
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
+
+    // Avança o delay do setTimeout do polling (3500ms)
+    await act(async () => {
+      jest.advanceTimersByTime(3500);
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
+
+    // Aguarda o sucesso da retentativa
     await waitFor(() => {
-      expect(screen.getByText(/Ocorreu um erro ao processar os dados/i)).toBeInTheDocument();
+      expect(mockSetDiagnosticoIA).toHaveBeenCalledWith({ diag: 'ok' });
     });
 
     await act(async () => {
-      jest.advanceTimersByTime(3000);
+      jest.advanceTimersByTime(1500);
     });
 
-    expect(mockPush).toHaveBeenCalledWith('/formulario');
+    expect(mockPush).toHaveBeenCalledWith('/selecao');
   });
 
   it('deve atualizar a barra de progresso e filtrar mensagens redundantes de contagem', async () => {
