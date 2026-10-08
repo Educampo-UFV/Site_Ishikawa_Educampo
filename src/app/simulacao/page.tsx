@@ -11,7 +11,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '@/components/ui/Navbar';
-import { useFazendaStore } from '@/store/useFazendaStore';
+import { useFazendaStore, ValoresSimulacao } from '@/store/useFazendaStore';
 import {
   TrendingUp,
   TrendingDown,
@@ -191,7 +191,13 @@ const BarChartSimulacao = ({
  * descartáveis sem corromper o diagnóstico original do produtor.
  */
 export default function SimulacaoPage() {
-  const { dadosFazenda, resultadoSimulacao, setResultadoSimulacao } = useFazendaStore();
+  const {
+    dadosFazenda,
+    resultadoSimulacao,
+    setResultadoSimulacao,
+    valoresSimulacao,
+    setValoresSimulacao,
+  } = useFazendaStore();
 
   /**
    * Estados para os acordeões dos grupos de variáveis.
@@ -211,23 +217,47 @@ export default function SimulacaoPage() {
   }, []);
 
   /**
-   * Estado local para a Simulação (não altera a store principal para não estragar o diagnóstico real do produtor).
+   * Estado local para a Simulação (inicializa com valoresSimulacao persistidos na store ou herda dadosFazenda).
    */
-  const [simulacao, setSimulacao] = useState({
-    total_vacas: dadosFazenda?.total_vacas || 100,
-    percentual_lactacao: dadosFazenda?.percentual_lactacao || 85,
-    producao_vaca: dadosFazenda?.producao_vaca || 30.0,
-    preco_recebido: dadosFazenda?.preco_leite || 3.00,
-    area_atividade: dadosFazenda?.area_atividade || 10.0,
-    ccs: dadosFazenda?.ccs || 150,
-    numero_trabalhadores: dadosFazenda?.mao_obra_total || 2,
-    custo_concentrado: dadosFazenda?.preco_concentrado || 2.00,
+  const [simulacao, setSimulacao] = useState<ValoresSimulacao>(() => {
+    if (valoresSimulacao) {
+      return valoresSimulacao;
+    }
+    return {
+      total_vacas: dadosFazenda?.total_vacas || 100,
+      percentual_lactacao: dadosFazenda?.percentual_lactacao || 85,
+      producao_vaca: dadosFazenda?.producao_vaca || 30.0,
+      preco_recebido: dadosFazenda?.preco_leite || 3.00,
+      area_atividade: dadosFazenda?.area_atividade || 10.0,
+      ccs: dadosFazenda?.ccs || 150,
+      numero_trabalhadores: dadosFazenda?.mao_obra_total || 2,
+      custo_concentrado: dadosFazenda?.preco_concentrado || 2.00,
+    };
   });
 
   /**
-   * Sincroniza o estado inicial da simulação assim que dadosFazenda for rehidratado pelo Zustand (sessionStorage).
+   * Sincroniza o estado inicial da simulação assim que valoresSimulacao ou dadosFazenda forem reidratados pelo Zustand (sessionStorage).
    */
   useEffect(() => {
+    if (valoresSimulacao) {
+      setSimulacao((prev) => {
+        if (
+          prev.total_vacas === valoresSimulacao.total_vacas &&
+          prev.percentual_lactacao === valoresSimulacao.percentual_lactacao &&
+          prev.producao_vaca === valoresSimulacao.producao_vaca &&
+          prev.preco_recebido === valoresSimulacao.preco_recebido &&
+          prev.area_atividade === valoresSimulacao.area_atividade &&
+          prev.ccs === valoresSimulacao.ccs &&
+          prev.numero_trabalhadores === valoresSimulacao.numero_trabalhadores &&
+          prev.custo_concentrado === valoresSimulacao.custo_concentrado
+        ) {
+          return prev;
+        }
+        return valoresSimulacao;
+      });
+      return;
+    }
+
     if (dadosFazenda) {
       setSimulacao((prev) => {
         const novoTotalVacas = dadosFazenda.total_vacas || 100;
@@ -265,6 +295,7 @@ export default function SimulacaoPage() {
       });
     }
   }, [
+    valoresSimulacao,
     dadosFazenda?.total_vacas,
     dadosFazenda?.percentual_lactacao,
     dadosFazenda?.producao_vaca,
@@ -276,11 +307,11 @@ export default function SimulacaoPage() {
   ]);
 
   /**
-   * @description Restaura os valores da simulação para os originais do produtor.
+   * @description Restaura os valores da simulação para os originais do produtor e sincroniza a store.
    */
   const restaurarValoresOriginais = () => {
     if (dadosFazenda) {
-      const valoresOriginais = {
+      const valoresOriginais: ValoresSimulacao = {
         total_vacas: dadosFazenda.total_vacas || 100,
         percentual_lactacao: dadosFazenda.percentual_lactacao || 85,
         producao_vaca: dadosFazenda.producao_vaca || 30.0,
@@ -291,6 +322,7 @@ export default function SimulacaoPage() {
         custo_concentrado: dadosFazenda.preco_concentrado || 2.00,
       };
       setSimulacao(valoresOriginais);
+      setValoresSimulacao(valoresOriginais);
       executarSimulacao(valoresOriginais);
     }
   };
@@ -428,11 +460,16 @@ export default function SimulacaoPage() {
 
   /**
    * @description Manipula a alteração dos inputs do tipo `range` injetando
-   * valores numéricos válidos no estado da simulação.
+   * valores numéricos válidos no estado da simulação e persistindo na store global.
    */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setSimulacao(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+    const novoValor = parseFloat(value) || 0;
+    setSimulacao((prev) => {
+      const novoEstado = { ...prev, [name]: novoValor };
+      setValoresSimulacao(novoEstado);
+      return novoEstado;
+    });
   };
 
   /**
@@ -456,6 +493,7 @@ export default function SimulacaoPage() {
       if (num !== simulacao[chave]) {
         const novoEstado = { ...simulacao, [chave]: num };
         setSimulacao(novoEstado);
+        setValoresSimulacao(novoEstado);
         executarSimulacao(novoEstado);
       }
     }
