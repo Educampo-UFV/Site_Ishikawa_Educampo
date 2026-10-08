@@ -11,7 +11,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '@/components/ui/Navbar';
-import { useFazendaStore } from '@/store/useFazendaStore';
+import { useFazendaStore, ValoresSimulacao } from '@/store/useFazendaStore';
 import {
   TrendingUp,
   TrendingDown,
@@ -26,10 +26,67 @@ import {
 import Link from 'next/link';
 import { formatSidebarNumber } from '@/lib/formatters';
 import { TooltipContextual } from '@/components/ui/TooltipContextual';
+import type { FazendaFormData } from '@/lib/schemas';
 
 /** Valores padrões canônicos para fallback do formulário de simulação */
 const DEFAULT_CANONICAL_SISTEMA_PRODUCAO = 'compost-barn';
 const DEFAULT_CANONICAL_REGIAO_SEBRAE = 'triangulo';
+
+/**
+ * Valores padrão para simulação caso dadosFazenda não forneça os campos.
+ */
+export const VALORES_SIMULACAO_DEFAULT: ValoresSimulacao = {
+  total_vacas: 100,
+  percentual_lactacao: 85,
+  producao_vaca: 30.0,
+  preco_recebido: 3.00,
+  area_atividade: 10.0,
+  ccs: 150,
+  numero_trabalhadores: 2,
+  custo_concentrado: 2.00,
+};
+
+/**
+ * Extrai os valores de simulação com base nos dados da fazenda cadastrada,
+ * aplicando fallbacks seguros para cada variável caso ausente.
+ */
+export function extrairValoresSimulacao(
+  dados?: Partial<FazendaFormData> | null
+): ValoresSimulacao {
+  if (!dados) {
+    return { ...VALORES_SIMULACAO_DEFAULT };
+  }
+  return {
+    total_vacas: dados.total_vacas || VALORES_SIMULACAO_DEFAULT.total_vacas,
+    percentual_lactacao: dados.percentual_lactacao || VALORES_SIMULACAO_DEFAULT.percentual_lactacao,
+    producao_vaca: dados.producao_vaca || VALORES_SIMULACAO_DEFAULT.producao_vaca,
+    preco_recebido: dados.preco_leite || VALORES_SIMULACAO_DEFAULT.preco_recebido,
+    area_atividade: dados.area_atividade || VALORES_SIMULACAO_DEFAULT.area_atividade,
+    ccs: dados.ccs || VALORES_SIMULACAO_DEFAULT.ccs,
+    numero_trabalhadores: dados.mao_obra_total || VALORES_SIMULACAO_DEFAULT.numero_trabalhadores,
+    custo_concentrado: dados.preco_concentrado || VALORES_SIMULACAO_DEFAULT.custo_concentrado,
+  };
+}
+
+/**
+ * Compara se dois conjuntos de ValoresSimulacao possuem exatamente os mesmos valores.
+ * Evita re-renderizações e ciclos desnecessários de estado.
+ */
+export function saoValoresSimulacaoIguais(
+  a: ValoresSimulacao,
+  b: ValoresSimulacao
+): boolean {
+  return (
+    a.total_vacas === b.total_vacas &&
+    a.percentual_lactacao === b.percentual_lactacao &&
+    a.producao_vaca === b.producao_vaca &&
+    a.preco_recebido === b.preco_recebido &&
+    a.area_atividade === b.area_atividade &&
+    a.ccs === b.ccs &&
+    a.numero_trabalhadores === b.numero_trabalhadores &&
+    a.custo_concentrado === b.custo_concentrado
+  );
+}
 
 /**
  * @description Renderiza um gráfico de barra comparativo puro, sem dependências.
@@ -191,7 +248,13 @@ const BarChartSimulacao = ({
  * descartáveis sem corromper o diagnóstico original do produtor.
  */
 export default function SimulacaoPage() {
-  const { dadosFazenda, resultadoSimulacao, setResultadoSimulacao } = useFazendaStore();
+  const {
+    dadosFazenda,
+    resultadoSimulacao,
+    setResultadoSimulacao,
+    valoresSimulacao,
+    setValoresSimulacao,
+  } = useFazendaStore();
 
   /**
    * Estados para os acordeões dos grupos de variáveis.
@@ -211,60 +274,27 @@ export default function SimulacaoPage() {
   }, []);
 
   /**
-   * Estado local para a Simulação (não altera a store principal para não estragar o diagnóstico real do produtor).
+   * Estado local para a Simulação (inicializa com valoresSimulacao persistidos na store ou herda dadosFazenda).
    */
-  const [simulacao, setSimulacao] = useState({
-    total_vacas: dadosFazenda?.total_vacas || 100,
-    percentual_lactacao: dadosFazenda?.percentual_lactacao || 85,
-    producao_vaca: dadosFazenda?.producao_vaca || 30.0,
-    preco_recebido: dadosFazenda?.preco_leite || 3.00,
-    area_atividade: dadosFazenda?.area_atividade || 10.0,
-    ccs: dadosFazenda?.ccs || 150,
-    numero_trabalhadores: dadosFazenda?.mao_obra_total || 2,
-    custo_concentrado: dadosFazenda?.preco_concentrado || 2.00,
+  const [simulacao, setSimulacao] = useState<ValoresSimulacao>(() => {
+    return valoresSimulacao || extrairValoresSimulacao(dadosFazenda);
   });
 
   /**
-   * Sincroniza o estado inicial da simulação assim que dadosFazenda for rehidratado pelo Zustand (sessionStorage).
+   * Sincroniza o estado inicial da simulação assim que valoresSimulacao ou dadosFazenda forem reidratados pelo Zustand (sessionStorage).
    */
   useEffect(() => {
+    if (valoresSimulacao) {
+      setSimulacao((prev) => (saoValoresSimulacaoIguais(prev, valoresSimulacao) ? prev : valoresSimulacao));
+      return;
+    }
+
     if (dadosFazenda) {
-      setSimulacao((prev) => {
-        const novoTotalVacas = dadosFazenda.total_vacas || 100;
-        const novoPercentualLactacao = dadosFazenda.percentual_lactacao || 85;
-        const novaProducaoVaca = dadosFazenda.producao_vaca || 30.0;
-        const novoPrecoRecebido = dadosFazenda.preco_leite || 3.00;
-        const novaAreaAtividade = dadosFazenda.area_atividade || 10.0;
-        const novoCcs = dadosFazenda.ccs || 150;
-        const novoNumeroTrabalhadores = dadosFazenda.mao_obra_total || 2;
-        const novoCustoConcentrado = dadosFazenda.preco_concentrado || 2.00;
-
-        if (
-          prev.total_vacas === novoTotalVacas &&
-          prev.percentual_lactacao === novoPercentualLactacao &&
-          prev.producao_vaca === novaProducaoVaca &&
-          prev.preco_recebido === novoPrecoRecebido &&
-          prev.area_atividade === novaAreaAtividade &&
-          prev.ccs === novoCcs &&
-          prev.numero_trabalhadores === novoNumeroTrabalhadores &&
-          prev.custo_concentrado === novoCustoConcentrado
-        ) {
-          return prev;
-        }
-
-        return {
-          total_vacas: novoTotalVacas,
-          percentual_lactacao: novoPercentualLactacao,
-          producao_vaca: novaProducaoVaca,
-          preco_recebido: novoPrecoRecebido,
-          area_atividade: novaAreaAtividade,
-          ccs: novoCcs,
-          numero_trabalhadores: novoNumeroTrabalhadores,
-          custo_concentrado: novoCustoConcentrado,
-        };
-      });
+      const novosValores = extrairValoresSimulacao(dadosFazenda);
+      setSimulacao((prev) => (saoValoresSimulacaoIguais(prev, novosValores) ? prev : novosValores));
     }
   }, [
+    valoresSimulacao,
     dadosFazenda?.total_vacas,
     dadosFazenda?.percentual_lactacao,
     dadosFazenda?.producao_vaca,
@@ -276,21 +306,13 @@ export default function SimulacaoPage() {
   ]);
 
   /**
-   * @description Restaura os valores da simulação para os originais do produtor.
+   * @description Restaura os valores da simulação para os originais do produtor e sincroniza a store.
    */
   const restaurarValoresOriginais = () => {
     if (dadosFazenda) {
-      const valoresOriginais = {
-        total_vacas: dadosFazenda.total_vacas || 100,
-        percentual_lactacao: dadosFazenda.percentual_lactacao || 85,
-        producao_vaca: dadosFazenda.producao_vaca || 30.0,
-        preco_recebido: dadosFazenda.preco_leite || 3.00,
-        area_atividade: dadosFazenda.area_atividade || 10.0,
-        ccs: dadosFazenda.ccs || 150,
-        numero_trabalhadores: dadosFazenda.mao_obra_total || 2,
-        custo_concentrado: dadosFazenda.preco_concentrado || 2.00,
-      };
+      const valoresOriginais = extrairValoresSimulacao(dadosFazenda);
       setSimulacao(valoresOriginais);
+      setValoresSimulacao(valoresOriginais);
       executarSimulacao(valoresOriginais);
     }
   };
@@ -428,11 +450,16 @@ export default function SimulacaoPage() {
 
   /**
    * @description Manipula a alteração dos inputs do tipo `range` injetando
-   * valores numéricos válidos no estado da simulação.
+   * valores numéricos válidos no estado da simulação e persistindo na store global.
    */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setSimulacao(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
+    const novoValor = parseFloat(value) || 0;
+    setSimulacao((prev) => {
+      const novoEstado = { ...prev, [name]: novoValor };
+      setValoresSimulacao(novoEstado);
+      return novoEstado;
+    });
   };
 
   /**
@@ -448,17 +475,17 @@ export default function SimulacaoPage() {
    */
   const handleEditBlur = (chave: ParamKey) => {
     setParamEditando(null);
-    let num = parseFloat(valorTemp);
-    if (!isNaN(num)) {
-      const param = getParam(chave);
-      if (num < param.min) num = param.min;
-      if (num > param.max) num = param.max;
-      if (num !== simulacao[chave]) {
-        const novoEstado = { ...simulacao, [chave]: num };
-        setSimulacao(novoEstado);
-        executarSimulacao(novoEstado);
-      }
-    }
+    const num = parseFloat(valorTemp);
+    if (isNaN(num)) return;
+
+    const param = getParam(chave);
+    const clampedValor = Math.min(Math.max(num, param.min), param.max);
+    if (clampedValor === simulacao[chave]) return;
+
+    const novoEstado = { ...simulacao, [chave]: clampedValor };
+    setSimulacao(novoEstado);
+    setValoresSimulacao(novoEstado);
+    executarSimulacao(novoEstado);
   };
 
   /**

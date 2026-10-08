@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import SimulacaoPage from '../../src/app/simulacao/page';
 import { useFazendaStore } from '../../src/store/useFazendaStore';
 
@@ -105,6 +105,8 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
         },
         resultadoSimulacao: mockNovaRespostaSimulacao,
         setResultadoSimulacao: jest.fn(),
+        valoresSimulacao: null,
+        setValoresSimulacao: jest.fn(),
       };
       return selector ? selector(state) : state;
     });
@@ -223,5 +225,98 @@ describe('Dashboard de Simulação (SimulacaoPage)', () => {
     fireEvent.click(btnConcluir);
 
     expect(screen.queryByTestId('mobile-drawer-modal')).not.toBeInTheDocument();
+  });
+
+  it('Deve priorizar e renderizar valoresSimulacao persistidos na store ao invés dos dadosFazenda originais', () => {
+    (useFazendaStore as unknown as jest.Mock).mockImplementation((selector) => {
+      const state = {
+        dadosFazenda: mockDadosIniciais,
+        diagnosticoIA: null,
+        resultadoSimulacao: mockNovaRespostaSimulacao,
+        setResultadoSimulacao: jest.fn(),
+        valoresSimulacao: {
+          total_vacas: 140,
+          percentual_lactacao: 90,
+          producao_vaca: 35,
+          preco_recebido: 3.5,
+          area_atividade: 15,
+          ccs: 200,
+          numero_trabalhadores: 3,
+          custo_concentrado: 2.5,
+        },
+        setValoresSimulacao: jest.fn(),
+      };
+      return selector ? selector(state) : state;
+    });
+
+    render(<SimulacaoPage />);
+
+    expect(screen.getByLabelText(/Quantidade de Vacas/i)).toHaveValue('140');
+    expect(screen.getByLabelText(/Percentual em Lactação/i)).toHaveValue('90');
+    expect(screen.getByLabelText(/Produção por vaca/i)).toHaveValue('35');
+  });
+
+  it('Deve persistir os novos valores na store via setValoresSimulacao ao alterar um slider', async () => {
+    const setValoresSimulacaoMock = jest.fn();
+    (useFazendaStore as unknown as jest.Mock).mockImplementation((selector) => {
+      const state = {
+        dadosFazenda: mockDadosIniciais,
+        diagnosticoIA: null,
+        resultadoSimulacao: mockNovaRespostaSimulacao,
+        setResultadoSimulacao: jest.fn(),
+        valoresSimulacao: null,
+        setValoresSimulacao: setValoresSimulacaoMock,
+      };
+      return selector ? selector(state) : state;
+    });
+
+    render(<SimulacaoPage />);
+
+    const inputVacas = screen.getByLabelText(/Quantidade de Vacas/i);
+    fireEvent.change(inputVacas, { target: { value: '120' } });
+
+    expect(setValoresSimulacaoMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        total_vacas: 120,
+      })
+    );
+  });
+
+  it('Deve atualizar valoresSimulacao na store com os dados originais ao clicar em Restaurar Valores', async () => {
+    const setValoresSimulacaoMock = jest.fn();
+    (useFazendaStore as unknown as jest.Mock).mockImplementation((selector) => {
+      const state = {
+        dadosFazenda: mockDadosIniciais,
+        diagnosticoIA: null,
+        resultadoSimulacao: mockNovaRespostaSimulacao,
+        setResultadoSimulacao: jest.fn(),
+        valoresSimulacao: {
+          total_vacas: 140,
+          percentual_lactacao: 90,
+          producao_vaca: 35,
+          preco_recebido: 3.5,
+          area_atividade: 15,
+          ccs: 200,
+          numero_trabalhadores: 3,
+          custo_concentrado: 2.5,
+        },
+        setValoresSimulacao: setValoresSimulacaoMock,
+      };
+      return selector ? selector(state) : state;
+    });
+
+    render(<SimulacaoPage />);
+
+    const btnRestore = screen.getByTitle(/Restaurar valores originais/i);
+    await act(async () => {
+      fireEvent.click(btnRestore);
+    });
+
+    expect(setValoresSimulacaoMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        total_vacas: 100,
+        producao_vaca: 30,
+      })
+    );
   });
 });
