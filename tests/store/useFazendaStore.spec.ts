@@ -92,4 +92,47 @@ describe('Zustand Store: useFazendaStore', () => {
     expect(useFazendaStore.getState().dadosFazenda).toBeNull();
     expect(useFazendaStore.getState().diagnosticoIA).toBeNull();
   });
+
+  describe('Persistência dos Sliders de Simulação (valoresSimulacao)', () => {
+    const mockValoresSimulacao = {
+      total_vacas: 140,
+      percentual_lactacao: 88,
+      producao_vaca: 32.5,
+      preco_recebido: 3.50,
+      area_atividade: 12.0,
+      ccs: 180,
+      numero_trabalhadores: 3,
+      custo_concentrado: 2.15,
+    };
+
+    it('deve iniciar com valoresSimulacao nulo (null)', () => {
+      const estado = useFazendaStore.getState();
+      expect(estado.valoresSimulacao).toBeNull();
+    });
+
+    it('deve armazenar os valores da simulação via setValoresSimulacao', () => {
+      useFazendaStore.getState().setValoresSimulacao(mockValoresSimulacao);
+
+      const estadoAtual = useFazendaStore.getState();
+      expect(estadoAtual.valoresSimulacao).toEqual(mockValoresSimulacao);
+      expect(estadoAtual.valoresSimulacao?.total_vacas).toBe(140);
+    });
+
+    it('deve garantir isolamento entre dadosFazenda e valoresSimulacao', () => {
+      useFazendaStore.getState().setDadosFazenda(dadosMock as any);
+      useFazendaStore.getState().setValoresSimulacao(mockValoresSimulacao);
+
+      const estadoAtual = useFazendaStore.getState();
+      expect(estadoAtual.dadosFazenda?.total_vacas).toBe(100);
+      expect(estadoAtual.valoresSimulacao?.total_vacas).toBe(140);
+    });
+
+    it('deve resetar valoresSimulacao para null quando limparDados for chamado', () => {
+      useFazendaStore.getState().setValoresSimulacao(mockValoresSimulacao);
+      expect(useFazendaStore.getState().valoresSimulacao).not.toBeNull();
+
+      useFazendaStore.getState().limparDados();
+      expect(useFazendaStore.getState().valoresSimulacao).toBeNull();
+    });
+  });
 });
