@@ -11,6 +11,20 @@ import { FazendaFormData } from '../lib/schemas';
 import { AiTelemetry } from '../lib/apiUtils';
 
 /**
+ * Valores manipulados nos sliders e inputs da tela de simulação.
+ */
+export interface ValoresSimulacao {
+  total_vacas: number;
+  percentual_lactacao: number;
+  producao_vaca: number;
+  preco_recebido: number;
+  area_atividade: number;
+  ccs: number;
+  numero_trabalhadores: number;
+  custo_concentrado: number;
+}
+
+/**
  * Interface que define a estrutura do estado da fazenda e suas ações.
  */
 interface FazendaState {
@@ -24,6 +38,8 @@ interface FazendaState {
   telemetry: AiTelemetry | null;
   /** Flag de saúde da API externa. */
   apiHealthy: boolean;
+  /** Valores manipulados nos sliders da simulação. */
+  valoresSimulacao: ValoresSimulacao | null;
 
   /** Define os dados da fazenda no estado global. */
   setDadosFazenda: (dados: FazendaFormData) => void;
@@ -35,6 +51,8 @@ interface FazendaState {
   setTelemetry: (telemetry: AiTelemetry | null) => void;
   /** Sinaliza que a API externa foi confirmada como saudável (healthy). */
   setApiHealthy: (healthy: boolean) => void;
+  /** Define os valores da simulação no estado global. */
+  setValoresSimulacao: (valores: ValoresSimulacao | null) => void;
   /** Reseta a store para o estado inicial (limpeza de sessão). */
   limparDados: () => void;
 }
@@ -47,6 +65,7 @@ export const useFazendaStore = create<FazendaState>()(
       resultadoSimulacao: null,
       telemetry: null,
       apiHealthy: false,
+      valoresSimulacao: null,
 
       setDadosFazenda: (dados) => {
         set({ dadosFazenda: dados });
@@ -68,8 +87,19 @@ export const useFazendaStore = create<FazendaState>()(
         set({ apiHealthy: healthy });
       },
 
+      setValoresSimulacao: (valores) => {
+        set({ valoresSimulacao: valores });
+      },
+
       limparDados: () => {
-        set({ dadosFazenda: null, diagnosticoIA: null, resultadoSimulacao: null, telemetry: null, apiHealthy: false });
+        set({
+          dadosFazenda: null,
+          diagnosticoIA: null,
+          resultadoSimulacao: null,
+          telemetry: null,
+          apiHealthy: false,
+          valoresSimulacao: null,
+        });
       },
     }),
     {
