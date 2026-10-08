@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       : data.session_token || data.access_token || data.token || data.consultant_id || data.consultant?.id || 'session-valid';
 
     const consultantData = data.consultant || {
-      id: data.consultant_id || 'consultant-default-uuid',
+      id: data.consultant_id || data.id || '',
       email: data.email || email,
     };
 

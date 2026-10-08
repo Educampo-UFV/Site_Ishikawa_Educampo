@@ -91,7 +91,30 @@ export async function parseApiError(response: Response): Promise<ApiErrorResult>
   let userMessage: string = DEFAULT_ERROR_MESSAGES.GENERIC_SERVER_ERROR;
 
   try {
-    const data: ApiErrorPayload = await response.json();
+    const data: any = await response.json();
+
+    // Suporte ao envelope EducampoBaseException: { sucesso: false, erro: { codigo, mensagem, detalhes } }
+    if (data && typeof data === "object" && data.erro && typeof data.erro === "object") {
+      const err = data.erro;
+      errorCode = err.codigo || errorCode;
+      userMessage = err.mensagem || userMessage;
+
+      if (Array.isArray(err.detalhes) && err.detalhes.length > 0) {
+        const primeiroDetalhe = err.detalhes[0];
+        if (typeof primeiroDetalhe === "string") {
+          userMessage = `${err.mensagem} (${primeiroDetalhe})`;
+        } else if (Array.isArray(primeiroDetalhe)) {
+          Object.assign(fieldErrors, parsePydanticFieldErrors(primeiroDetalhe));
+        }
+      }
+
+      return {
+        errorCode,
+        userMessage,
+        fieldErrors,
+        httpStatus,
+      };
+    }
 
     if (httpStatus === HTTP_STATUS.UNPROCESSABLE_ENTITY && Array.isArray(data.detail)) {
       return {
@@ -102,9 +125,9 @@ export async function parseApiError(response: Response): Promise<ApiErrorResult>
       };
     }
 
-    if (data.error_code || data.message || typeof data.detail === "string") {
+    if (data.error_code || data.message || typeof data.detail === "string" || typeof data.error === "string") {
       errorCode = data.error_code || (httpStatus === HTTP_STATUS.SERVICE_UNAVAILABLE ? "SERVICE_UNAVAILABLE" : "BUSINESS_ERROR");
-      userMessage = data.message || (typeof data.detail === "string" ? data.detail : userMessage);
+      userMessage = data.message || (typeof data.detail === "string" ? data.detail : (typeof data.error === "string" ? data.error : userMessage));
 
       if (data.details && typeof data.details === "object") {
         for (const [key, val] of Object.entries(data.details)) {
